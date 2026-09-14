@@ -80,7 +80,7 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .theme-toggle .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); display:inline-block;}
 
 /* MAIN */
-.main{flex:1; padding:36px 44px; overflow-y:auto;}
+.main{flex:1; min-width:0; padding:36px 44px; overflow-y:auto;}
 .view{display:none;}
 .view.active{display:block;}
 
@@ -116,6 +116,26 @@ tr:last-child td{border-bottom:none;}
 .status.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
 .status.concluida{background:rgba(47,184,114,.15); color:var(--ok);}
 
+.placa-chip{
+  font-family:'Inter',sans-serif; letter-spacing:.5px; white-space:nowrap; display:inline-block;
+  background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:3px 8px; font-size:13px;
+}
+
+.status-select{
+  border-radius:20px; font-weight:700; font-size:12px; padding:6px 10px; border:1px solid transparent; cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.status-select.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
+.status-select.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
+.status-select.concluida{background:rgba(47,184,114,.15); color:var(--ok);}
+
+.pago-chip{
+  background:rgba(47,184,114,.15); color:var(--ok); padding:5px 10px; border-radius:20px;
+  font-size:12px; font-weight:600; white-space:nowrap; display:inline-block;
+}
+
+.icon-row{display:flex; gap:4px; align-items:center; white-space:nowrap;}
+
 /* BUTTONS */
 .btn-primary{
   background:var(--accent); color:#fff; border:none; padding:11px 18px;
@@ -127,8 +147,12 @@ tr:last-child td{border-bottom:none;}
   padding:9px 16px; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer;
 }
 .btn-ghost:hover{background:var(--surface-2);}
-.btn-icon{background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px;}
-.btn-icon:hover{color:var(--accent);}
+.btn-icon{background:none; border:none; color:var(--text-dim); cursor:pointer; padding:6px; border-radius:6px; display:inline-flex;}
+.btn-icon svg{width:17px; height:17px; display:block;}
+.btn-icon:hover{background:var(--surface-2); color:var(--text);}
+.btn-icon.whats{color:#25D366;}
+.btn-icon.whats:hover{background:rgba(37,211,102,.12); color:#25D366;}
+.btn-icon.danger:hover{background:rgba(255,59,23,.12); color:var(--accent);}
 
 /* MODAL */
 .modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:50;}
@@ -237,7 +261,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="panel">
         <div class="table-wrap">
           <table id="tabelaClientes">
-            <thead><tr><th>Nome</th><th>Telefone</th><th>Veículo</th><th>Placa</th><th></th></tr></thead>
+            <thead><tr><th>Nome</th><th>Telefone</th><th>Veículo</th><th>Placa</th><th>Ações</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -256,7 +280,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="panel">
         <div class="table-wrap">
           <table id="tabelaOrdens">
-            <thead><tr><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Status</th><th>Valor</th><th></th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Status</th><th>Valor</th><th>Recebimento</th><th>Ações</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -270,7 +294,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL CLIENTE -->
 <div class="modal" id="modalCliente">
   <div class="modal-box">
-    <h3>Novo cliente</h3>
+    <h3 id="tituloModalCliente">Novo cliente</h3>
     <form id="formCliente">
       <label>Nome completo
         <input type="text" name="nome" required>
@@ -297,7 +321,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL ORDEM -->
 <div class="modal" id="modalOrdem">
   <div class="modal-box">
-    <h3>Nova ordem de serviço</h3>
+    <h3 id="tituloModalOrdem">Nova ordem de serviço</h3>
     <form id="formOrdem">
       <label>Cliente
         <select name="clienteId" id="selectCliente" required></select>
@@ -320,6 +344,31 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar OS</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL RECEBIMENTO -->
+<div class="modal" id="modalRecebimento">
+  <div class="modal-box">
+    <h3>Registrar recebimento</h3>
+    <form id="formRecebimento">
+      <p style="margin-bottom:14px; color:var(--text-dim); font-size:14px;">
+        Valor da OS: <strong id="recebimentoValor" style="color:var(--text);"></strong>
+      </p>
+      <label>Forma de pagamento
+        <select name="forma">
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Pix">Pix</option>
+          <option value="Cartão de débito">Cartão de débito</option>
+          <option value="Cartão de crédito">Cartão de crédito</option>
+          <option value="Boleto">Boleto</option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn-primary">Confirmar recebimento</button>
       </div>
     </form>
   </div>
@@ -367,6 +416,11 @@ const DB = {
     if(error){ alert('Erro ao salvar cliente: ' + error.message); return null; }
     return data[0];
   },
+  async atualizarCliente(id, c){
+    const { data, error } = await supabaseClient.from('clientes').update(c).eq('id', id).select();
+    if(error){ alert('Erro ao atualizar cliente: ' + error.message); return null; }
+    return data[0];
+  },
   async excluirCliente(id){
     const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
     if(error){ alert('Erro ao excluir cliente: ' + error.message); }
@@ -381,11 +435,29 @@ const DB = {
     if(error){ alert('Erro ao salvar OS: ' + error.message); return null; }
     return data[0];
   },
+  async atualizarOrdem(id, o){
+    const { data, error } = await supabaseClient.from('ordens').update(o).eq('id', id).select();
+    if(error){ alert('Erro ao atualizar OS: ' + error.message); return null; }
+    return data[0];
+  },
   async excluirOrdem(id){
     const { error } = await supabaseClient.from('ordens').delete().eq('id', id);
     if(error){ alert('Erro ao excluir OS: ' + error.message); }
   },
 };
+
+/* ==========================================================
+   ÍCONES E HELPERS
+   ========================================================== */
+const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
+
+function linkWhats(telefone){
+  let d = (telefone || '').replace(/\D/g, '');
+  if(d.length <= 11) d = '55' + d; // assume Brasil quando não tem código do país
+  return `https://wa.me/${d}`;
+}
 
 /* ==========================================================
    TEMA (claro / escuro)
@@ -424,9 +496,26 @@ function fecharModal(id){ document.getElementById(id).classList.remove('active')
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('.modal').classList.remove('active')));
 document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if(e.target === m) m.classList.remove('active'); }));
 
-document.getElementById('btnNovoCliente').addEventListener('click', () => abrirModal('modalCliente'));
-document.getElementById('btnNovaOrdem').addEventListener('click', () => {
-  preencherSelectClientes();
+/* ==========================================================
+   ESTADO
+   ========================================================== */
+let stateClientes = [];
+let stateOrdens = [];
+let editingClienteId = null;
+let editingOrdemId = null;
+let recebendoOrdemId = null;
+
+document.getElementById('btnNovoCliente').addEventListener('click', () => {
+  editingClienteId = null;
+  document.getElementById('formCliente').reset();
+  document.getElementById('tituloModalCliente').textContent = 'Novo cliente';
+  abrirModal('modalCliente');
+});
+document.getElementById('btnNovaOrdem').addEventListener('click', async () => {
+  editingOrdemId = null;
+  document.getElementById('formOrdem').reset();
+  document.getElementById('tituloModalOrdem').textContent = 'Nova ordem de serviço';
+  await preencherSelectClientes();
   abrirModal('modalOrdem');
 });
 
@@ -436,19 +525,37 @@ document.getElementById('btnNovaOrdem').addEventListener('click', () => {
 document.getElementById('formCliente').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
-  const novo = await DB.criarCliente({
+  const dados = {
     nome: f.get('nome'),
     telefone: f.get('telefone'),
     veiculo: f.get('veiculo'),
     placa: f.get('placa').toUpperCase(),
-  });
-  if(!novo) return;
+  };
+  const ok = editingClienteId
+    ? await DB.atualizarCliente(editingClienteId, dados)
+    : await DB.criarCliente(dados);
+  if(!ok) return;
   e.target.reset();
+  editingClienteId = null;
   fecharModal('modalCliente');
   render();
 });
 
+function abrirEdicaoCliente(id){
+  const c = stateClientes.find(x => x.id === id);
+  if(!c) return;
+  editingClienteId = id;
+  const f = document.getElementById('formCliente');
+  f.nome.value = c.nome;
+  f.telefone.value = c.telefone;
+  f.veiculo.value = c.veiculo;
+  f.placa.value = c.placa;
+  document.getElementById('tituloModalCliente').textContent = 'Editar cliente';
+  abrirModal('modalCliente');
+}
+
 async function excluirCliente(id){
+  if(!confirm('Excluir este cliente?')) return;
   await DB.excluirCliente(id);
   render();
 }
@@ -458,7 +565,7 @@ async function excluirCliente(id){
    ========================================================== */
 async function preencherSelectClientes(){
   const sel = document.getElementById('selectCliente');
-  const clientes = await DB.getClientes();
+  const clientes = stateClientes.length ? stateClientes : await DB.getClientes();
   sel.innerHTML = clientes.length
     ? clientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
     : '<option value="">Cadastre um cliente primeiro</option>';
@@ -468,28 +575,72 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
   const clienteId = Number(f.get('clienteId'));
-  const clientes = await DB.getClientes();
-  const cliente = clientes.find(c => c.id === clienteId);
+  const cliente = stateClientes.find(c => c.id === clienteId);
   if(!cliente) return;
 
-  const nova = await DB.criarOrdem({
+  const dados = {
     cliente_id: clienteId,
     cliente_nome: cliente.nome,
     veiculo: cliente.veiculo,
     servico: f.get('servico'),
     valor: Number(f.get('valor')),
     status: f.get('status'),
-  });
-  if(!nova) return;
+  };
+  const ok = editingOrdemId
+    ? await DB.atualizarOrdem(editingOrdemId, dados)
+    : await DB.criarOrdem(dados);
+  if(!ok) return;
   e.target.reset();
+  editingOrdemId = null;
   fecharModal('modalOrdem');
   render();
 });
 
+async function abrirEdicaoOrdem(id){
+  const o = stateOrdens.find(x => x.id === id);
+  if(!o) return;
+  editingOrdemId = id;
+  await preencherSelectClientes();
+  const f = document.getElementById('formOrdem');
+  f.clienteId.value = o.cliente_id;
+  f.servico.value = o.servico;
+  f.valor.value = o.valor;
+  f.status.value = o.status;
+  document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
+  abrirModal('modalOrdem');
+}
+
 async function excluirOrdem(id){
+  if(!confirm('Excluir esta ordem de serviço?')) return;
   await DB.excluirOrdem(id);
   render();
 }
+
+// Muda o status direto na tabela (Aberta → Em andamento → Concluída)
+async function mudarStatusOrdem(id, status){
+  await DB.atualizarOrdem(id, { status });
+  render();
+}
+
+// Recebimento: marca a OS como paga, com forma de pagamento e data
+function abrirRecebimento(id){
+  const o = stateOrdens.find(x => x.id === id);
+  if(!o) return;
+  recebendoOrdemId = id;
+  document.getElementById('recebimentoValor').textContent = moeda(o.valor);
+  abrirModal('modalRecebimento');
+}
+document.getElementById('formRecebimento').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  await DB.atualizarOrdem(recebendoOrdemId, {
+    pago: true,
+    forma_pagamento: f.get('forma'),
+    data_pagamento: new Date().toISOString(),
+  });
+  fecharModal('modalRecebimento');
+  render();
+});
 
 const statusLabel = { aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
 const moeda = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
@@ -500,6 +651,8 @@ const moeda = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' 
 async function render(){
   const clientes = await DB.getClientes();
   const ordens = await DB.getOrdens();
+  stateClientes = clientes;
+  stateOrdens = ordens;
 
   // stats
   document.getElementById('statClientes').textContent = clientes.length;
@@ -511,8 +664,13 @@ async function render(){
   const corpoClientes = document.querySelector('#tabelaClientes tbody');
   corpoClientes.innerHTML = clientes.map(c => `
     <tr>
-      <td>${c.nome}</td><td>${c.telefone}</td><td>${c.veiculo}</td><td>${c.placa}</td>
-      <td><button class="btn-icon" onclick="excluirCliente(${c.id})">Excluir</button></td>
+      <td>${c.nome}</td><td>${c.telefone}</td><td>${c.veiculo}</td>
+      <td><span class="placa-chip">${c.placa}</span></td>
+      <td class="icon-row">
+        <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoCliente(${c.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirCliente(${c.id})">${ICON_DELETE}</button>
+      </td>
     </tr>`).join('');
   document.getElementById('clientesEmpty').style.display = clientes.length ? 'none' : 'block';
 
@@ -520,14 +678,26 @@ async function render(){
   const linhaOrdem = o => `
     <tr>
       <td>${o.cliente_nome}</td><td>${o.veiculo}</td><td>${o.servico}</td>
-      <td><span class="status ${o.status}">${statusLabel[o.status]}</span></td>
+      <td>
+        <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
+          <option value="aberta" ${o.status==='aberta'?'selected':''}>Aberta</option>
+          <option value="andamento" ${o.status==='andamento'?'selected':''}>Em andamento</option>
+          <option value="concluida" ${o.status==='concluida'?'selected':''}>Concluída</option>
+        </select>
+      </td>
       <td>${moeda(o.valor)}</td>
-      <td><button class="btn-icon" onclick="excluirOrdem(${o.id})">Excluir</button></td>
+      <td>${o.pago
+        ? `<span class="pago-chip">Pago${o.forma_pagamento ? ' · ' + o.forma_pagamento : ''}</span>`
+        : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
+      <td class="icon-row">
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
+      </td>
     </tr>`;
   document.querySelector('#tabelaOrdens tbody').innerHTML = ordens.map(linhaOrdem).join('');
   document.getElementById('ordensEmpty').style.display = ordens.length ? 'none' : 'block';
 
-  // tabela recentes (dashboard, sem coluna de excluir, últimas 5)
+  // tabela recentes (dashboard, sem coluna de ação, últimas 5)
   document.querySelector('#tabelaRecentes tbody').innerHTML = ordens.slice(0,5).map(o => `
     <tr>
       <td>${o.cliente_nome}</td><td>${o.veiculo}</td><td>${o.servico}</td>
