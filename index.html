@@ -336,10 +336,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
    ========================================================== */
 const SUPABASE_URL = "https://hjjsirgvoldcynaqvsuf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Q06_CiDxAmO74yhbQ7m8EQ_nejkF1BA";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function testarConexao(){
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("clientes")
     .insert([{ nome: "Cliente Teste", telefone: "11999999999" }])
     .select();
@@ -358,31 +358,31 @@ async function testarConexao(){
    ========================================================== */
 const DB = {
   async getClientes(){
-    const { data, error } = await supabase.from('clientes').select('*').order('id', { ascending:false });
+    const { data, error } = await supabaseClient.from('clientes').select('*').order('id', { ascending:false });
     if(error){ console.error(error); alert('Erro ao carregar clientes: ' + error.message); return []; }
     return data;
   },
   async criarCliente(c){
-    const { data, error } = await supabase.from('clientes').insert([c]).select();
+    const { data, error } = await supabaseClient.from('clientes').insert([c]).select();
     if(error){ alert('Erro ao salvar cliente: ' + error.message); return null; }
     return data[0];
   },
   async excluirCliente(id){
-    const { error } = await supabase.from('clientes').delete().eq('id', id);
+    const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
     if(error){ alert('Erro ao excluir cliente: ' + error.message); }
   },
   async getOrdens(){
-    const { data, error } = await supabase.from('ordens').select('*').order('id', { ascending:false });
+    const { data, error } = await supabaseClient.from('ordens').select('*').order('id', { ascending:false });
     if(error){ console.error(error); alert('Erro ao carregar ordens: ' + error.message); return []; }
     return data;
   },
   async criarOrdem(o){
-    const { data, error } = await supabase.from('ordens').insert([o]).select();
+    const { data, error } = await supabaseClient.from('ordens').insert([o]).select();
     if(error){ alert('Erro ao salvar OS: ' + error.message); return null; }
     return data[0];
   },
   async excluirOrdem(id){
-    const { error } = await supabase.from('ordens').delete().eq('id', id);
+    const { error } = await supabaseClient.from('ordens').delete().eq('id', id);
     if(error){ alert('Erro ao excluir OS: ' + error.message); }
   },
 };
