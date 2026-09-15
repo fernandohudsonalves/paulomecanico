@@ -104,7 +104,7 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .view-head .btn-primary{position:absolute; right:0; top:0;}
 
 /* CARDS */
-.cards{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;}
+.cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:16px; margin-bottom:32px;}
 .card{
   background:var(--surface); border:1px solid var(--border); border-radius:10px;
   padding:20px; display:flex; flex-direction:column; gap:6px;
@@ -152,6 +152,28 @@ tr:last-child td{border-bottom:none;}
 }
 
 .icon-row{display:flex; gap:4px; align-items:center; white-space:nowrap;}
+
+.itens-lista{border:1px solid var(--border); border-radius:8px; margin-bottom:12px; max-height:160px; overflow-y:auto;}
+.item-linha{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border); font-size:13px;}
+.item-linha:last-child{border-bottom:none;}
+.item-linha span:first-child{flex:1;}
+
+/* CRM DO CLIENTE */
+.crm-tabs{display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:14px;}
+.crm-tab{background:none; border:none; color:var(--text-dim); font-weight:600; font-size:13px; padding:8px 4px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;}
+.crm-tab.active{color:var(--accent); border-bottom-color:var(--accent);}
+.crm-panel{display:none; overflow-y:auto;}
+.crm-panel.active{display:block;}
+#formInteracao{border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:14px; background:var(--surface-2);}
+.timeline-item{display:flex; gap:10px; padding:10px 4px; border-bottom:1px solid var(--border);}
+.timeline-item:last-child{border-bottom:none;}
+.timeline-icon{font-size:16px; line-height:1;}
+.timeline-body{flex:1; font-size:13px;}
+.timeline-body .t-head{display:flex; justify-content:space-between; gap:8px; font-weight:600;}
+.timeline-body .t-meta{color:var(--text-dim); font-size:11px; margin-top:2px;}
+.timeline-body .t-desc{margin-top:4px; color:var(--text);}
+.timeline-body img{max-width:160px; border-radius:6px; margin-top:6px; display:block;}
+.timeline-body a{color:var(--accent);}
 
 /* BOTÃO FLUTUANTE WHATSAPP + BUSCA */
 /* BOTÃO ADMINISTRAÇÃO (topo direito) */
@@ -243,6 +265,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="nav-sub" id="sub-cadastros">
           <button class="nav-item" data-view="clientes">Clientes</button>
           <button class="nav-item" data-view="fornecedores">Fornecedores</button>
+          <button class="nav-item" data-view="estoque">Estoque</button>
+          <button class="nav-item" data-view="servicos">Serviços</button>
         </div>
       </div>
 
@@ -252,6 +276,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </button>
         <div class="nav-sub" id="sub-operacao">
           <button class="nav-item" data-view="ordens">Ordens de Serviço</button>
+          <button class="nav-item" data-view="agenda">Agenda</button>
         </div>
       </div>
 
@@ -303,6 +328,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="card accent">
           <span class="card-num" id="statConcluidas">0</span>
           <span class="card-label">OS concluídas</span>
+        </div>
+        <div class="card">
+          <span class="card-num" id="statAgenda7d">0</span>
+          <span class="card-label">Agendamentos (7 dias)</span>
         </div>
       </div>
 
@@ -358,6 +387,25 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
     </section>
 
+    <!-- AGENDA -->
+    <section class="view" id="view-agenda">
+      <header class="view-head">
+        <h1>Agenda</h1>
+        <p>Horários marcados e revisões periódicas</p>
+        <button class="btn-primary" id="btnNovoAgendamento">+ Novo agendamento</button>
+      </header>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table id="tabelaAgenda">
+            <thead><tr><th>Data/Hora</th><th>Cliente</th><th>Veículo</th><th>Tipo</th><th>Serviço</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="agendaEmpty">Nenhum agendamento cadastrado ainda.</p>
+      </div>
+    </section>
+
     <!-- FORNECEDORES -->
     <section class="view" id="view-fornecedores">
       <header class="view-head">
@@ -374,6 +422,44 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="fornecedoresEmpty">Nenhum fornecedor cadastrado ainda.</p>
+      </div>
+    </section>
+
+    <!-- ESTOQUE -->
+    <section class="view" id="view-estoque">
+      <header class="view-head">
+        <h1>Estoque</h1>
+        <p>Peças e produtos</p>
+        <button class="btn-primary" id="btnNovoEstoque">+ Novo item</button>
+      </header>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table id="tabelaEstoque">
+            <thead><tr><th>Item</th><th>Quantidade</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="estoqueEmpty">Nenhum item cadastrado ainda.</p>
+      </div>
+    </section>
+
+    <!-- SERVIÇOS -->
+    <section class="view" id="view-servicos">
+      <header class="view-head">
+        <h1>Serviços</h1>
+        <p>Catálogo de serviços — preço padrão e tempo estimado</p>
+        <button class="btn-primary" id="btnNovoServico">+ Novo serviço</button>
+      </header>
+
+      <div class="panel">
+        <div class="table-wrap">
+          <table id="tabelaServicos">
+            <thead><tr><th>Serviço</th><th>Categoria</th><th>Preço padrão</th><th>Tempo estimado</th><th>Ações</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="servicosEmpty">Nenhum serviço cadastrado ainda.</p>
       </div>
     </section>
 
@@ -548,17 +634,39 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL ORDEM -->
 <div class="modal" id="modalOrdem">
-  <div class="modal-box">
+  <div class="modal-box" style="width:540px;">
     <h3 id="tituloModalOrdem">Nova ordem de serviço</h3>
     <form id="formOrdem">
       <label>Cliente
         <select name="clienteId" id="selectCliente" required></select>
       </label>
       <label>Descrição do serviço
-        <textarea name="servico" rows="3" placeholder="Ex: Troca de óleo e filtro" required></textarea>
+        <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e filtro" required></textarea>
       </label>
+
+      <label>Itens (mão de obra e peças)</label>
+      <div id="itensOrdemLista" class="itens-lista"></div>
       <div class="grid2">
-        <label>Valor (R$)
+        <label>Tipo
+          <select id="itemTipoSelect">
+            <option value="servico">Serviço (mão de obra)</option>
+            <option value="peca">Peça (estoque)</option>
+          </select>
+        </label>
+        <label>Item
+          <select id="itemRefSelect"></select>
+        </label>
+      </div>
+      <div class="grid2" style="align-items:end;">
+        <label>Quantidade
+          <input type="number" id="itemQtdInput" value="1" min="1" step="1">
+        </label>
+        <button type="button" class="btn-ghost" id="btnAddItem" style="margin-bottom:14px;">+ Adicionar item</button>
+      </div>
+      <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:-8px 0 14px;"></p>
+
+      <div class="grid2">
+        <label>Valor total (R$)
           <input type="number" name="valor" step="0.01" placeholder="0,00" required>
         </label>
         <label>Status
@@ -602,6 +710,107 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   </div>
 </div>
 
+<!-- MODAL CRM DO CLIENTE -->
+<div class="modal" id="modalHistorico">
+  <div class="modal-box" style="width:600px; max-height:88vh; display:flex; flex-direction:column;">
+    <h3 id="tituloHistorico">Cliente</h3>
+
+    <div class="crm-tabs">
+      <button type="button" class="crm-tab active" data-crmtab="os">Ordens de Serviço</button>
+      <button type="button" class="crm-tab" data-crmtab="timeline">Linha do tempo</button>
+    </div>
+
+    <div class="crm-panel active" id="crmTabOs">
+      <div class="table-wrap">
+        <table id="tabelaHistorico">
+          <thead><tr><th>Data</th><th>Serviço</th><th>Status</th><th>Valor</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="empty" id="historicoEmpty">Nenhuma ordem de serviço registrada para esse cliente ainda.</p>
+    </div>
+
+    <div class="crm-panel" id="crmTabTimeline">
+      <form id="formInteracao">
+        <div class="grid2">
+          <label>Tipo
+            <select name="tipo">
+              <option value="mensagem">Conversa</option>
+              <option value="autorizacao">Autorização de serviço</option>
+              <option value="orcamento">Orçamento</option>
+              <option value="pagamento">Pagamento / acerto</option>
+              <option value="anexo">Anexo (foto/arquivo)</option>
+              <option value="observacao">Observação</option>
+            </select>
+          </label>
+          <label>Valor (R$, opcional)
+            <input type="number" name="valor" step="0.01">
+          </label>
+        </div>
+        <label>Título
+          <input type="text" name="titulo" placeholder="Ex: Aprovou troca da bateria">
+        </label>
+        <label>Descrição
+          <textarea name="descricao" rows="2"></textarea>
+        </label>
+        <label>Anexo (foto ou arquivo, opcional)
+          <input type="file" name="arquivo" id="interacaoArquivo" accept="image/*,application/pdf">
+        </label>
+        <div class="modal-actions" style="justify-content:flex-start;">
+          <button type="submit" class="btn-primary">+ Adicionar ao histórico</button>
+        </div>
+      </form>
+      <div id="timelineLista"></div>
+      <p class="empty" id="timelineEmpty">Nenhum registro na linha do tempo ainda.</p>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGENDAMENTO -->
+<div class="modal" id="modalAgendamento">
+  <div class="modal-box">
+    <h3 id="tituloModalAgendamento">Novo agendamento</h3>
+    <form id="formAgendamento">
+      <label>Cliente
+        <select name="clienteId" id="selectClienteAgenda" required></select>
+      </label>
+      <div class="grid2">
+        <label>Data e hora
+          <input type="datetime-local" name="dataHora" required>
+        </label>
+        <label>Tipo
+          <select name="tipo">
+            <option value="agendamento">Agendamento</option>
+            <option value="revisao">Revisão periódica</option>
+          </select>
+        </label>
+      </div>
+      <label>Serviço previsto
+        <input type="text" name="servico" placeholder="Ex: Revisão dos 10.000 km">
+      </label>
+      <label>Observações
+        <textarea name="observacoes" rows="2"></textarea>
+      </label>
+      <label>Status
+        <select name="status">
+          <option value="agendado">Agendado</option>
+          <option value="confirmado">Confirmado</option>
+          <option value="concluido">Concluído</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar agendamento</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- MODAL FORNECEDOR -->
 <div class="modal" id="modalFornecedor">
   <div class="modal-box">
@@ -624,6 +833,65 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar fornecedor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL ESTOQUE -->
+<div class="modal" id="modalEstoque">
+  <div class="modal-box">
+    <h3 id="tituloModalEstoque">Novo item</h3>
+    <form id="formEstoque">
+      <label>Nome do item
+        <input type="text" name="nome" placeholder="Ex: Filtro de óleo" required>
+      </label>
+      <div class="grid2">
+        <label>Quantidade
+          <input type="number" name="quantidade" step="1" required>
+        </label>
+        <label>Qtd. mínima (alerta)
+          <input type="number" name="quantidade_minima" step="1" value="0">
+        </label>
+      </div>
+      <div class="grid2">
+        <label>Preço de custo (R$)
+          <input type="number" name="preco_custo" step="0.01">
+        </label>
+        <label>Preço de venda (R$)
+          <input type="number" name="preco_venda" step="0.01">
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL SERVIÇO -->
+<div class="modal" id="modalServico">
+  <div class="modal-box">
+    <h3 id="tituloModalServico">Novo serviço</h3>
+    <form id="formServico">
+      <label>Nome do serviço
+        <input type="text" name="nome" placeholder="Ex: Troca de óleo" required>
+      </label>
+      <label>Categoria
+        <input type="text" name="categoria" placeholder="Ex: Manutenção, Elétrica...">
+      </label>
+      <div class="grid2">
+        <label>Preço padrão (R$)
+          <input type="number" name="preco_padrao" step="0.01" required>
+        </label>
+        <label>Tempo estimado (horas)
+          <input type="number" name="tempo_estimado_horas" step="0.25" placeholder="Ex: 1.5">
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar serviço</button>
       </div>
     </form>
   </div>
@@ -795,6 +1063,53 @@ DB.fornecedores = crud('fornecedores');
 DB.contasPagar = crud('contas_pagar');
 DB.contasReceber = crud('contas_receber');
 
+DB.estoque = crud('estoque');
+DB.agendamentos = crud('agendamentos');
+DB.servicos = crud('servicos');
+
+DB.interacoes = {
+  async listar(clienteId){
+    const { data, error } = await supabaseClient.from('interacoes_cliente').select('*').eq('cliente_id', clienteId).order('created_at', { ascending:false });
+    if(error){ console.error(error); return []; }
+    return data;
+  },
+  async criar(obj){
+    const { data, error } = await supabaseClient.from('interacoes_cliente').insert([obj]).select();
+    if(error){ alert('Erro ao salvar no histórico: ' + error.message); return null; }
+    return data[0];
+  },
+  async excluir(id){
+    const { error } = await supabaseClient.from('interacoes_cliente').delete().eq('id', id);
+    if(error){ alert('Erro ao excluir: ' + error.message); }
+  },
+  async enviarAnexo(file){
+    const caminho = `${Date.now()}_${file.name}`;
+    const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file);
+    if(error){ alert('Erro ao enviar anexo: ' + error.message); return null; }
+    const { data } = supabaseClient.storage.from('anexos').getPublicUrl(caminho);
+    return data.publicUrl;
+  },
+};
+
+DB.ordemItens = {
+  async listar(ordemId){
+    const { data, error } = await supabaseClient.from('ordem_itens').select('*').eq('ordem_id', ordemId).order('id');
+    if(error){ console.error(error); return []; }
+    return data;
+  },
+  async substituir(ordemId, itens){
+    await supabaseClient.from('ordem_itens').delete().eq('ordem_id', ordemId);
+    if(itens.length){
+      const linhas = itens.map(i => ({
+        ordem_id: ordemId, tipo: i.tipo, referencia_id: i.referencia_id,
+        descricao: i.descricao, quantidade: i.quantidade, valor_unitario: i.valor_unitario, valor_total: i.valor_total,
+      }));
+      const { error } = await supabaseClient.from('ordem_itens').insert(linhas);
+      if(error){ alert('Erro ao salvar itens da OS: ' + error.message); }
+    }
+  },
+};
+
 DB.perfil = {
   async obter(){
     const { data, error } = await supabaseClient.from('perfil').select('*').eq('id', 1).single();
@@ -814,6 +1129,8 @@ DB.perfil = {
 const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
+const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l4 2"/></svg>';
+const ICON_CALENDAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
 
 function linkWhats(telefone){
   let d = (telefone || '').replace(/\D/g, '');
@@ -870,12 +1187,19 @@ let stateOrdens = [];
 let stateFornecedores = [];
 let stateContasPagar = [];
 let stateContasReceber = [];
+let stateEstoque = [];
+let stateAgendamentos = [];
+let stateServicos = [];
+let itensOrdemAtual = [];
 let editingClienteId = null;
 let editingOrdemId = null;
 let recebendoOrdemId = null;
 let editingFornecedorId = null;
 let editingContaPagarId = null;
 let editingContaReceberId = null;
+let editingEstoqueId = null;
+let editingAgendamentoId = null;
+let editingServicoId = null;
 
 document.getElementById('btnNovoCliente').addEventListener('click', () => {
   editingClienteId = null;
@@ -887,7 +1211,10 @@ document.getElementById('btnNovaOrdem').addEventListener('click', async () => {
   editingOrdemId = null;
   document.getElementById('formOrdem').reset();
   document.getElementById('tituloModalOrdem').textContent = 'Nova ordem de serviço';
+  itensOrdemAtual = [];
   await preencherSelectClientes();
+  preencherSelectItemRef();
+  renderItensOrdem();
   abrirModal('modalOrdem');
 });
 document.getElementById('btnNovoFornecedor').addEventListener('click', () => {
@@ -909,6 +1236,25 @@ document.getElementById('btnNovaContaReceber').addEventListener('click', () => {
   document.getElementById('tituloModalContaReceber').textContent = 'Nova conta a receber';
   preencherSelectClientesReceber();
   abrirModal('modalContaReceber');
+});
+document.getElementById('btnNovoEstoque').addEventListener('click', () => {
+  editingEstoqueId = null;
+  document.getElementById('formEstoque').reset();
+  document.getElementById('tituloModalEstoque').textContent = 'Novo item';
+  abrirModal('modalEstoque');
+});
+document.getElementById('btnNovoAgendamento').addEventListener('click', () => {
+  editingAgendamentoId = null;
+  document.getElementById('formAgendamento').reset();
+  document.getElementById('tituloModalAgendamento').textContent = 'Novo agendamento';
+  preencherSelectClientesAgenda();
+  abrirModal('modalAgendamento');
+});
+document.getElementById('btnNovoServico').addEventListener('click', () => {
+  editingServicoId = null;
+  document.getElementById('formServico').reset();
+  document.getElementById('tituloModalServico').textContent = 'Novo serviço';
+  abrirModal('modalServico');
 });
 
 /* ==========================================================
@@ -982,8 +1328,10 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     ? await DB.atualizarOrdem(editingOrdemId, dados)
     : await DB.criarOrdem(dados);
   if(!ok) return;
+  await DB.ordemItens.substituir(ok.id, itensOrdemAtual);
   e.target.reset();
   editingOrdemId = null;
+  itensOrdemAtual = [];
   fecharModal('modalOrdem');
   render();
 });
@@ -993,12 +1341,20 @@ async function abrirEdicaoOrdem(id){
   if(!o) return;
   editingOrdemId = id;
   await preencherSelectClientes();
+  preencherSelectItemRef();
   const f = document.getElementById('formOrdem');
   f.clienteId.value = o.cliente_id;
   f.servico.value = o.servico;
   f.valor.value = o.valor;
   f.status.value = o.status;
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
+
+  const itensSalvos = await DB.ordemItens.listar(id);
+  itensOrdemAtual = itensSalvos.map(i => {
+    const cat = i.tipo === 'servico' ? stateServicos.find(s => s.id === i.referencia_id) : null;
+    return { ...i, tempo: cat ? Number(cat.tempo_estimado_horas) || 0 : 0 };
+  });
+  renderItensOrdem();
   abrirModal('modalOrdem');
 }
 
@@ -1006,6 +1362,63 @@ async function excluirOrdem(id){
   if(!confirm('Excluir esta ordem de serviço?')) return;
   await DB.excluirOrdem(id);
   render();
+}
+
+/* ==========================================================
+   ITENS DA OS — mão de obra (serviços) e peças (estoque)
+   ========================================================== */
+function preencherSelectItemRef(){
+  const tipo = document.getElementById('itemTipoSelect').value;
+  const sel = document.getElementById('itemRefSelect');
+  if(tipo === 'servico'){
+    sel.innerHTML = stateServicos.length
+      ? stateServicos.map(s => `<option value="${s.id}" data-preco="${s.preco_padrao}" data-tempo="${s.tempo_estimado_horas||0}" data-nome="${s.nome}">${s.nome} — ${moeda(s.preco_padrao)}</option>`).join('')
+      : '<option value="">Cadastre um serviço primeiro</option>';
+  } else {
+    sel.innerHTML = stateEstoque.length
+      ? stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
+      : '<option value="">Cadastre um item de estoque primeiro</option>';
+  }
+}
+document.getElementById('itemTipoSelect').addEventListener('change', preencherSelectItemRef);
+
+document.getElementById('btnAddItem').addEventListener('click', () => {
+  const tipo = document.getElementById('itemTipoSelect').value;
+  const opt = document.getElementById('itemRefSelect').selectedOptions[0];
+  if(!opt || !opt.value) return;
+  const qtd = Number(document.getElementById('itemQtdInput').value) || 1;
+  const preco = Number(opt.dataset.preco) || 0;
+  itensOrdemAtual.push({
+    tipo, referencia_id: Number(opt.value), descricao: opt.dataset.nome,
+    quantidade: qtd, valor_unitario: preco, valor_total: +(preco * qtd).toFixed(2),
+    tempo: Number(opt.dataset.tempo) || 0,
+  });
+  document.getElementById('itemQtdInput').value = 1;
+  renderItensOrdem();
+});
+
+function removerItemOrdem(idx){
+  itensOrdemAtual.splice(idx, 1);
+  renderItensOrdem();
+}
+
+function renderItensOrdem(){
+  const cont = document.getElementById('itensOrdemLista');
+  cont.innerHTML = itensOrdemAtual.length
+    ? itensOrdemAtual.map((i, idx) => `
+      <div class="item-linha">
+        <span>${i.tipo === 'servico' ? '🔧' : '🔩'} ${i.descricao} × ${i.quantidade}</span>
+        <span>${moeda(i.valor_total)}</span>
+        <button type="button" class="btn-icon danger" onclick="removerItemOrdem(${idx})">${ICON_DELETE}</button>
+      </div>`).join('')
+    : '<p class="empty" style="padding:10px;">Nenhum item adicionado ainda.</p>';
+
+  const totalValor = itensOrdemAtual.reduce((acc, i) => acc + i.valor_total, 0);
+  const totalTempo = itensOrdemAtual.filter(i => i.tipo === 'servico').reduce((acc, i) => acc + (i.tempo || 0) * i.quantidade, 0);
+  if(itensOrdemAtual.length) document.querySelector('#formOrdem [name="valor"]').value = totalValor.toFixed(2);
+  document.getElementById('tempoEstimadoTexto').textContent = totalTempo
+    ? `⏱ Tempo estimado de mão de obra: ${totalTempo}h`
+    : '';
 }
 
 // Muda o status direto na tabela (Aberta → Em andamento → Concluída)
@@ -1170,6 +1583,267 @@ async function mudarStatusContaReceber(id, status){
 }
 
 /* ==========================================================
+   ESTOQUE
+   ========================================================== */
+document.getElementById('formEstoque').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const dados = {
+    nome: f.get('nome'),
+    quantidade: Number(f.get('quantidade')),
+    quantidade_minima: Number(f.get('quantidade_minima') || 0),
+    preco_custo: Number(f.get('preco_custo') || 0),
+    preco_venda: Number(f.get('preco_venda') || 0),
+  };
+  const ok = editingEstoqueId
+    ? await DB.estoque.atualizar(editingEstoqueId, dados)
+    : await DB.estoque.criar(dados);
+  if(!ok) return;
+  e.target.reset();
+  editingEstoqueId = null;
+  fecharModal('modalEstoque');
+  render();
+});
+function abrirEdicaoEstoque(id){
+  const x = stateEstoque.find(i => i.id === id);
+  if(!x) return;
+  editingEstoqueId = id;
+  const f = document.getElementById('formEstoque');
+  f.nome.value = x.nome; f.quantidade.value = x.quantidade; f.quantidade_minima.value = x.quantidade_minima;
+  f.preco_custo.value = x.preco_custo; f.preco_venda.value = x.preco_venda;
+  document.getElementById('tituloModalEstoque').textContent = 'Editar item';
+  abrirModal('modalEstoque');
+}
+async function excluirEstoque(id){
+  if(!confirm('Excluir este item do estoque?')) return;
+  await DB.estoque.excluir(id);
+  render();
+}
+
+/* ==========================================================
+   SERVIÇOS — catálogo (preço padrão e tempo estimado)
+   ========================================================== */
+document.getElementById('formServico').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const dados = {
+    nome: f.get('nome'),
+    categoria: f.get('categoria'),
+    preco_padrao: Number(f.get('preco_padrao')),
+    tempo_estimado_horas: Number(f.get('tempo_estimado_horas') || 0),
+  };
+  const ok = editingServicoId
+    ? await DB.servicos.atualizar(editingServicoId, dados)
+    : await DB.servicos.criar(dados);
+  if(!ok) return;
+  e.target.reset();
+  editingServicoId = null;
+  fecharModal('modalServico');
+  render();
+});
+function abrirEdicaoServico(id){
+  const x = stateServicos.find(s => s.id === id);
+  if(!x) return;
+  editingServicoId = id;
+  const f = document.getElementById('formServico');
+  f.nome.value = x.nome; f.categoria.value = x.categoria || '';
+  f.preco_padrao.value = x.preco_padrao; f.tempo_estimado_horas.value = x.tempo_estimado_horas || '';
+  document.getElementById('tituloModalServico').textContent = 'Editar serviço';
+  abrirModal('modalServico');
+}
+async function excluirServico(id){
+  if(!confirm('Excluir este serviço do catálogo?')) return;
+  await DB.servicos.excluir(id);
+  render();
+}
+
+/* ==========================================================
+   AGENDA — agendamentos e revisões periódicas
+   ========================================================== */
+function preencherSelectClientesAgenda(){
+  const sel = document.getElementById('selectClienteAgenda');
+  const atual = sel.value;
+  sel.innerHTML = stateClientes.length
+    ? stateClientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
+    : '<option value="">Cadastre um cliente primeiro</option>';
+  sel.value = atual;
+}
+document.getElementById('formAgendamento').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const clienteId = Number(f.get('clienteId'));
+  const cliente = stateClientes.find(c => c.id === clienteId);
+  if(!cliente) return;
+  const dados = {
+    cliente_id: clienteId,
+    cliente_nome: cliente.nome,
+    veiculo: cliente.veiculo,
+    data_hora: new Date(f.get('dataHora')).toISOString(),
+    tipo: f.get('tipo'),
+    servico: f.get('servico'),
+    observacoes: f.get('observacoes'),
+    status: f.get('status'),
+  };
+  const ok = editingAgendamentoId
+    ? await DB.agendamentos.atualizar(editingAgendamentoId, dados)
+    : await DB.agendamentos.criar(dados);
+  if(!ok) return;
+  e.target.reset();
+  editingAgendamentoId = null;
+  fecharModal('modalAgendamento');
+  render();
+});
+function abrirEdicaoAgendamento(id){
+  const x = stateAgendamentos.find(a => a.id === id);
+  if(!x) return;
+  editingAgendamentoId = id;
+  preencherSelectClientesAgenda();
+  const f = document.getElementById('formAgendamento');
+  f.clienteId.value = x.cliente_id || '';
+  f.dataHora.value = x.data_hora ? x.data_hora.slice(0,16) : '';
+  f.tipo.value = x.tipo; f.servico.value = x.servico || ''; f.observacoes.value = x.observacoes || ''; f.status.value = x.status;
+  document.getElementById('tituloModalAgendamento').textContent = 'Editar agendamento';
+  abrirModal('modalAgendamento');
+}
+async function excluirAgendamento(id){
+  if(!confirm('Excluir este agendamento?')) return;
+  await DB.agendamentos.excluir(id);
+  render();
+}
+async function mudarStatusAgendamento(id, status){
+  await DB.agendamentos.atualizar(id, { status });
+  render();
+}
+// Cria um lembrete de revisão periódica a partir de uma OS concluída (padrão: +6 meses)
+async function agendarRevisao(ordemId){
+  const o = stateOrdens.find(x => x.id === ordemId);
+  if(!o) return;
+  const meses = prompt('Agendar revisão periódica para daqui quantos meses?', '6');
+  if(meses === null) return;
+  const data = new Date();
+  data.setMonth(data.getMonth() + (Number(meses) || 6));
+  await DB.agendamentos.criar({
+    cliente_id: o.cliente_id,
+    cliente_nome: o.cliente_nome,
+    veiculo: o.veiculo,
+    data_hora: data.toISOString(),
+    tipo: 'revisao',
+    servico: `Revisão periódica (após: ${o.servico})`,
+    status: 'agendado',
+  });
+  alert('Revisão agendada para ' + dataBR(data.toISOString().slice(0,10)) + '!');
+  render();
+}
+
+/* ==========================================================
+   CRM DO CLIENTE — histórico de OS + linha do tempo completa
+   ========================================================== */
+let crmClienteAtualId = null;
+
+document.querySelectorAll('.crm-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.crm-tab').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.crm-panel').forEach(p => p.classList.toggle('active', p.id === 'crmTab' + (btn.dataset.crmtab === 'os' ? 'Os' : 'Timeline')));
+  });
+});
+
+async function abrirHistorico(clienteId){
+  const c = stateClientes.find(x => x.id === clienteId);
+  if(!c) return;
+  crmClienteAtualId = clienteId;
+  document.getElementById('tituloHistorico').textContent = `${c.nome} — ${c.veiculo} · ${c.placa}`;
+
+  const ordensDoCliente = stateOrdens.filter(o => o.cliente_id === clienteId)
+    .sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+  document.querySelector('#tabelaHistorico tbody').innerHTML = ordensDoCliente.map(o => `
+    <tr>
+      <td>${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}</td>
+      <td>${o.servico}</td>
+      <td><span class="status ${o.status}">${statusLabel[o.status]}</span></td>
+      <td>${moeda(o.valor)}</td>
+    </tr>`).join('');
+  document.getElementById('historicoEmpty').style.display = ordensDoCliente.length ? 'none' : 'block';
+
+  await carregarTimeline(clienteId);
+  abrirModal('modalHistorico');
+}
+
+const TIMELINE_ICONS = { mensagem:'💬', autorizacao:'✅', orcamento:'📋', pagamento:'💰', anexo:'📎', observacao:'📝' };
+const TIMELINE_LABELS = { mensagem:'Conversa', autorizacao:'Autorização', orcamento:'Orçamento', pagamento:'Pagamento/Acerto', anexo:'Anexo', observacao:'Observação' };
+
+async function carregarTimeline(clienteId){
+  const itens = await DB.interacoes.listar(clienteId);
+  const cont = document.getElementById('timelineLista');
+  cont.innerHTML = itens.map(i => {
+    const dataHora = new Date(i.created_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const ehImagem = i.anexo_url && /\.(jpg|jpeg|png|gif|webp)$/i.test(i.anexo_url);
+    return `
+    <div class="timeline-item">
+      <span class="timeline-icon">${TIMELINE_ICONS[i.tipo] || '•'}</span>
+      <div class="timeline-body">
+        <div class="t-head">
+          <span>${i.titulo || TIMELINE_LABELS[i.tipo] || i.tipo}${i.valor ? ' · ' + moeda(i.valor) : ''}</span>
+          <button type="button" class="btn-icon danger" onclick="excluirInteracao(${i.id})">${ICON_DELETE}</button>
+        </div>
+        <div class="t-meta">${TIMELINE_LABELS[i.tipo] || i.tipo} · ${dataHora}</div>
+        ${i.descricao ? `<div class="t-desc">${i.descricao}</div>` : ''}
+        ${i.anexo_url ? (ehImagem ? `<img src="${i.anexo_url}" alt="anexo">` : `<a href="${i.anexo_url}" target="_blank">Ver anexo</a>`) : ''}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('timelineEmpty').style.display = itens.length ? 'none' : 'block';
+}
+
+document.getElementById('formInteracao').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const arquivo = document.getElementById('interacaoArquivo').files[0];
+  let anexoUrl = null;
+  if(arquivo){
+    anexoUrl = await DB.interacoes.enviarAnexo(arquivo);
+  }
+  const ok = await DB.interacoes.criar({
+    cliente_id: crmClienteAtualId,
+    tipo: f.get('tipo'),
+    titulo: f.get('titulo'),
+    descricao: f.get('descricao'),
+    valor: f.get('valor') ? Number(f.get('valor')) : null,
+    anexo_url: anexoUrl,
+  });
+  if(!ok) return;
+  e.target.reset();
+  await carregarTimeline(crmClienteAtualId);
+});
+
+async function excluirInteracao(id){
+  if(!confirm('Excluir este registro do histórico?')) return;
+  await DB.interacoes.excluir(id);
+  await carregarTimeline(crmClienteAtualId);
+}
+
+// Notifica o cliente sobre o status da OS via WhatsApp e registra a conversa no CRM
+async function notificarStatusOrdem(ordemId){
+  const o = stateOrdens.find(x => x.id === ordemId);
+  if(!o) return;
+  const cliente = stateClientes.find(c => c.id === o.cliente_id);
+  if(!cliente) return;
+  const mensagens = {
+    aberta: `Olá ${cliente.nome}! Sua ordem de serviço para o veículo ${o.veiculo} foi aberta. Serviço: ${o.servico}. Qualquer novidade te avisamos por aqui!`,
+    andamento: `Olá ${cliente.nome}! Seu veículo ${o.veiculo} está em andamento na oficina (${o.servico}). Assim que finalizar, te avisamos.`,
+    concluida: `Olá ${cliente.nome}! Seu veículo ${o.veiculo} está pronto! Serviço: ${o.servico}. Valor: ${moeda(o.valor)}. Pode vir buscar quando puder 🚗`,
+  };
+  const msg = mensagens[o.status] || `Olá ${cliente.nome}! Atualização sobre a OS do veículo ${o.veiculo}: status ${statusLabel[o.status]}.`;
+  window.open(`${linkWhats(cliente.telefone)}?text=${encodeURIComponent(msg)}`, '_blank');
+  await DB.interacoes.criar({
+    cliente_id: cliente.id,
+    ordem_id: o.id,
+    tipo: 'mensagem',
+    titulo: `Notificação de status: ${statusLabel[o.status]}`,
+    descricao: msg,
+  });
+}
+
+/* ==========================================================
    RENDERIZAÇÃO
    ========================================================== */
 async function render(){
@@ -1178,17 +1852,28 @@ async function render(){
   const fornecedores = await DB.fornecedores.listar();
   const contasPagar = await DB.contasPagar.listar();
   const contasReceber = await DB.contasReceber.listar();
+  const estoque = await DB.estoque.listar();
+  const agendamentos = await DB.agendamentos.listar();
+  const servicos = await DB.servicos.listar();
   stateClientes = clientes;
   stateOrdens = ordens;
   stateFornecedores = fornecedores;
   stateContasPagar = contasPagar;
   stateContasReceber = contasReceber;
+  stateEstoque = estoque;
+  stateAgendamentos = agendamentos;
+  stateServicos = servicos;
 
   // stats
   document.getElementById('statClientes').textContent = clientes.length;
   document.getElementById('statAbertas').textContent = ordens.filter(o => o.status === 'aberta').length;
   document.getElementById('statAndamento').textContent = ordens.filter(o => o.status === 'andamento').length;
   document.getElementById('statConcluidas').textContent = ordens.filter(o => o.status === 'concluida').length;
+  const em7dias = new Date(); em7dias.setDate(em7dias.getDate() + 7);
+  document.getElementById('statAgenda7d').textContent = agendamentos.filter(a =>
+    a.status !== 'cancelado' && a.status !== 'concluido' &&
+    new Date(a.data_hora) >= new Date() && new Date(a.data_hora) <= em7dias
+  ).length;
 
   // tabela clientes
   const corpoClientes = document.querySelector('#tabelaClientes tbody');
@@ -1198,6 +1883,7 @@ async function render(){
       <td><span class="placa-chip">${c.placa}</span></td>
       <td class="icon-row">
         <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
+        <button class="btn-icon" title="Histórico e CRM do cliente" onclick="abrirHistorico(${c.id})">${ICON_HISTORY}</button>
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoCliente(${c.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirCliente(${c.id})">${ICON_DELETE}</button>
       </td>
@@ -1220,6 +1906,8 @@ async function render(){
         ? `<span class="pago-chip">Pago${o.forma_pagamento ? ' · ' + o.forma_pagamento : ''}</span>`
         : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
       <td class="icon-row">
+        <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
+        ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
       </td>
@@ -1280,6 +1968,60 @@ async function render(){
       </td>
     </tr>`).join('');
   document.getElementById('receberEmpty').style.display = contasReceber.length ? 'none' : 'block';
+
+  // tabela estoque
+  document.querySelector('#tabelaEstoque tbody').innerHTML = estoque.map(x => {
+    const baixo = Number(x.quantidade) <= Number(x.quantidade_minima);
+    return `
+    <tr>
+      <td>${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
+      <td>${x.quantidade}</td>
+      <td>${moeda(x.preco_custo || 0)}</td>
+      <td>${moeda(x.preco_venda || 0)}</td>
+      <td class="icon-row">
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoEstoque(${x.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirEstoque(${x.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('estoqueEmpty').style.display = estoque.length ? 'none' : 'block';
+
+  // tabela serviços (catálogo)
+  document.querySelector('#tabelaServicos tbody').innerHTML = servicos.map(s => `
+    <tr>
+      <td>${s.nome}</td><td>${s.categoria || '—'}</td><td>${moeda(s.preco_padrao)}</td>
+      <td>${s.tempo_estimado_horas ? s.tempo_estimado_horas + 'h' : '—'}</td>
+      <td class="icon-row">
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoServico(${s.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirServico(${s.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('servicosEmpty').style.display = servicos.length ? 'none' : 'block';
+
+  // tabela agenda
+  const tipoLabel = { agendamento:'Agendamento', revisao:'Revisão' };
+  const statusAgendaLabel = { agendado:'Agendado', confirmado:'Confirmado', concluido:'Concluído', cancelado:'Cancelado' };
+  const agendaOrdenada = [...agendamentos].sort((a,b) => (a.data_hora||'').localeCompare(b.data_hora||''));
+  document.querySelector('#tabelaAgenda tbody').innerHTML = agendaOrdenada.map(a => `
+    <tr>
+      <td>${a.data_hora ? new Date(a.data_hora).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
+      <td>${a.cliente_nome || '—'}</td><td>${a.veiculo || '—'}</td>
+      <td><span class="status ${a.tipo === 'revisao' ? 'andamento' : 'aberta'}">${tipoLabel[a.tipo] || a.tipo}</span></td>
+      <td>${a.servico || '—'}</td>
+      <td>
+        <select class="status-select ${a.status === 'concluido' ? 'concluida' : a.status === 'cancelado' ? '' : 'pendente'}" onchange="mudarStatusAgendamento(${a.id}, this.value)">
+          <option value="agendado" ${a.status==='agendado'?'selected':''}>Agendado</option>
+          <option value="confirmado" ${a.status==='confirmado'?'selected':''}>Confirmado</option>
+          <option value="concluido" ${a.status==='concluido'?'selected':''}>Concluído</option>
+          <option value="cancelado" ${a.status==='cancelado'?'selected':''}>Cancelado</option>
+        </select>
+      </td>
+      <td class="icon-row">
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoAgendamento(${a.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirAgendamento(${a.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('agendaEmpty').style.display = agendamentos.length ? 'none' : 'block';
 
   // ---- relatórios ----
   const hoje = new Date().toISOString().slice(0,10);
