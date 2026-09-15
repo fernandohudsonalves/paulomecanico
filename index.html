@@ -44,6 +44,34 @@ body{
 }
 h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:uppercase;}
 
+.preview-banner{
+  display:none; position:fixed; top:0; left:0; right:0; z-index:100;
+  background:var(--wait); color:#1a1400; font-size:13px; font-weight:600;
+  text-align:center; padding:8px 16px;
+}
+
+.toast-aviso{
+  position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(20px);
+  background:var(--surface-2); color:var(--text); border:1px solid var(--border);
+  padding:12px 20px; border-radius:8px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.35);
+  z-index:200; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+  max-width:80vw; text-align:center;
+}
+.toast-aviso.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+#buscaGlobalInput{width:100%;}
+.busca-global-item{display:flex; justify-content:space-between; align-items:center; padding:10px 8px; border-bottom:1px solid var(--border); cursor:pointer;}
+.busca-global-item:last-child{border-bottom:none;}
+.busca-global-item:hover{background:var(--surface-2);}
+.busca-global-tag{font-size:11px; font-weight:700; text-transform:uppercase; color:var(--accent); background:rgba(255,59,23,.12); padding:2px 8px; border-radius:10px;}
+
+/* IMPRESSÃO DA OS — só a área #areaImpressao aparece ao imprimir */
+#areaImpressao{display:none;}
+@media print{
+  body > *:not(#areaImpressao){display:none !important;}
+  #areaImpressao{display:block !important; position:static; color:#000;}
+}
+
 .app{display:flex; min-height:100vh;}
 
 /* SIDEBAR */
@@ -193,7 +221,22 @@ tr:last-child td{border-bottom:none;}
 }
 .whats-float svg{width:28px; height:28px;}
 .whats-float:hover{filter:brightness(1.08);}
-#modalBuscaWhats #buscaWhatsInput{width:100%; margin-bottom:12px;}
+
+/* PAINEL FLUTUANTE ARRASTÁVEL (busca WhatsApp) */
+.floating-panel{
+  display:none; flex-direction:column;
+  position:fixed; right:26px; bottom:94px; width:320px; max-height:60vh;
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4); z-index:70; overflow:hidden;
+}
+.floating-panel.active{display:flex;}
+.floating-panel-header{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:10px 8px 10px 14px; background:var(--surface-2); border-bottom:1px solid var(--border);
+  cursor:move; user-select:none; font-weight:600; font-size:13px;
+}
+.floating-panel-body{padding:14px; overflow-y:auto;}
+#buscaWhatsInput{width:100%; margin-bottom:12px;}
 #buscaWhatsResultados{max-height:320px; overflow-y:auto;}
 .busca-item{display:flex; justify-content:space-between; align-items:center; padding:10px 6px; border-bottom:1px solid var(--border); cursor:pointer;}
 .busca-item:last-child{border-bottom:none;}
@@ -246,6 +289,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 </style>
 </head>
 <body>
+
+<div id="avisoPreview" class="preview-banner">⚠️ Modo prévia — sem conexão com o banco de dados agora. As telas funcionam normalmente, mas nada é salvo de verdade. Publique no GitHub Pages pra usar valendo.</div>
 
 <div class="app">
 
@@ -575,6 +620,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </form>
         <p id="perfilSalvo" style="display:none; color:var(--ok); font-size:13px; margin-top:12px;">Perfil atualizado ✓</p>
       </div>
+
+      <div class="panel" style="max-width:560px; margin-top:20px;">
+        <div class="panel-head"><h2>Backup e exportação</h2></div>
+        <p style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Baixe uma cópia dos seus dados de vez em quando — é sua garantia caso algo dê errado.</p>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <button type="button" class="btn-primary" id="btnBackupCompleto">⬇ Backup completo (JSON)</button>
+          <button type="button" class="btn-ghost" id="btnExportarClientes">Exportar clientes (CSV)</button>
+          <button type="button" class="btn-ghost" id="btnExportarOrdens">Exportar ordens (CSV)</button>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -588,20 +643,25 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   </svg>
 </button>
 
+<!-- BOTÃO BUSCA GLOBAL (topo direito, atalho Ctrl+K) -->
+<button id="btnBuscaGlobal" class="admin-float" style="right:74px;" title="Buscar em tudo (Ctrl+K)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+</button>
+
 <!-- BOTÃO FLUTUANTE WHATSAPP -->
 <button id="btnWhatsFloat" class="whats-float" title="Buscar cliente no WhatsApp">
   <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>
 </button>
 
-<!-- MODAL BUSCA WHATSAPP -->
-<div class="modal" id="modalBuscaWhats">
-  <div class="modal-box">
-    <h3>Buscar cliente no WhatsApp</h3>
+<!-- PAINEL FLUTUANTE BUSCA WHATSAPP (arrastável) -->
+<div id="painelBuscaWhats" class="floating-panel">
+  <div class="floating-panel-header" id="painelBuscaWhatsHeader">
+    <span>Buscar cliente no WhatsApp</span>
+    <button type="button" class="btn-icon" id="fecharPainelBuscaWhats">✕</button>
+  </div>
+  <div class="floating-panel-body">
     <input type="text" id="buscaWhatsInput" placeholder="Nome, telefone, veículo ou placa...">
     <div id="buscaWhatsResultados"></div>
-    <div class="modal-actions">
-      <button type="button" class="btn-ghost" data-close>Fechar</button>
-    </div>
   </div>
 </div>
 
@@ -667,7 +727,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
       <div class="grid2">
         <label>Valor total (R$)
-          <input type="number" name="valor" step="0.01" placeholder="0,00" required>
+          <input type="number" name="valor" step="0.01" placeholder="0,00" required min="0">
         </label>
         <label>Status
           <select name="status">
@@ -744,7 +804,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
             </select>
           </label>
           <label>Valor (R$, opcional)
-            <input type="number" name="valor" step="0.01">
+            <input type="number" name="valor" step="0.01" min="0">
           </label>
         </div>
         <label>Título
@@ -848,18 +908,18 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Quantidade
-          <input type="number" name="quantidade" step="1" required>
+          <input type="number" name="quantidade" step="1" required min="0">
         </label>
         <label>Qtd. mínima (alerta)
-          <input type="number" name="quantidade_minima" step="1" value="0">
+          <input type="number" name="quantidade_minima" step="1" value="0" min="0">
         </label>
       </div>
       <div class="grid2">
         <label>Preço de custo (R$)
-          <input type="number" name="preco_custo" step="0.01">
+          <input type="number" name="preco_custo" step="0.01" min="0">
         </label>
         <label>Preço de venda (R$)
-          <input type="number" name="preco_venda" step="0.01">
+          <input type="number" name="preco_venda" step="0.01" min="0">
         </label>
       </div>
       <div class="modal-actions">
@@ -883,10 +943,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Preço padrão (R$)
-          <input type="number" name="preco_padrao" step="0.01" required>
+          <input type="number" name="preco_padrao" step="0.01" required min="0">
         </label>
         <label>Tempo estimado (horas)
-          <input type="number" name="tempo_estimado_horas" step="0.25" placeholder="Ex: 1.5">
+          <input type="number" name="tempo_estimado_horas" step="0.25" placeholder="Ex: 1.5" min="0">
         </label>
       </div>
       <div class="modal-actions">
@@ -910,7 +970,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Valor (R$)
-          <input type="number" name="valor" step="0.01" required>
+          <input type="number" name="valor" step="0.01" required min="0">
         </label>
         <label>Vencimento
           <input type="date" name="vencimento">
@@ -943,7 +1003,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Valor (R$)
-          <input type="number" name="valor" step="0.01" required>
+          <input type="number" name="valor" step="0.01" required min="0">
         </label>
         <label>Vencimento
           <input type="date" name="vencimento">
@@ -963,6 +1023,20 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   </div>
 </div>
 
+<!-- MODAL BUSCA GLOBAL (Ctrl+K) -->
+<div class="modal" id="modalBuscaGlobal">
+  <div class="modal-box" style="width:520px;">
+    <input type="text" id="buscaGlobalInput" placeholder="Buscar cliente, OS, fornecedor, serviço, peça...">
+    <div id="buscaGlobalResultados" style="max-height:360px; overflow-y:auto; margin-top:10px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÁREA DE IMPRESSÃO (só aparece quando manda imprimir uma OS) -->
+<div id="areaImpressao"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ==========================================================
@@ -974,7 +1048,47 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
    ========================================================== */
 const SUPABASE_URL = "https://hjjsirgvoldcynaqvsuf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Q06_CiDxAmO74yhbQ7m8EQ_nejkF1BA";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Se a lib do Supabase não carregar (ex: prévia sem internet, CDN bloqueado),
+// criamos um cliente "de mentira" que devolve listas vazias em leituras e um
+// aviso amigável em gravações — assim a INTERFACE nunca trava, só não salva
+// nada de verdade fora de um ambiente com internet até o Supabase.
+let supabaseClient;
+try {
+  if(!window.supabase) throw new Error('Biblioteca do Supabase não carregou (sem internet?)');
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch(err){
+  console.warn('Modo prévia: sem conexão com o Supabase.', err);
+  const banner = document.getElementById('avisoPreview');
+  if(banner){ banner.style.display = 'block'; document.body.style.paddingTop = '38px'; }
+  function cadeiaFalsa(){
+    let escrita = false;
+    const cadeia = {
+      select(){ return cadeia; },
+      insert(){ escrita = true; return cadeia; },
+      update(){ escrita = true; return cadeia; },
+      delete(){ escrita = true; return cadeia; },
+      eq(){ return cadeia; },
+      order(){ return cadeia; },
+      single(){ return Promise.resolve(escrita
+        ? { data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado para salvar de verdade.' } }
+        : { data:null, error:null }); },
+      then(resolve){
+        resolve(escrita
+          ? { data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado para salvar de verdade.' } }
+          : { data:[], error:null });
+      },
+    };
+    return cadeia;
+  }
+  supabaseClient = {
+    from(){ return cadeiaFalsa(); },
+    storage:{ from(){ return {
+      upload(){ return Promise.resolve({ error:{ message:'Anexos não funcionam na prévia — só no site publicado.' } }); },
+      getPublicUrl(){ return { data:{ publicUrl:'' } }; },
+    }; } },
+  };
+}
 
 async function testarConexao(){
   const { data, error } = await supabaseClient
@@ -996,66 +1110,101 @@ async function testarConexao(){
    ========================================================== */
 const DB = {
   async getClientes(){
-    const { data, error } = await supabaseClient.from('clientes').select('*').order('id', { ascending:false });
-    if(error){ console.error(error); alert('Erro ao carregar clientes: ' + error.message); return []; }
-    return data;
+    try {
+      const { data, error } = await supabaseClient.from('clientes').select('*').order('id', { ascending:false });
+      if(error){ console.error(error); return []; }
+      return data || [];
+    } catch(err){ console.error(err); return []; }
   },
   async criarCliente(c){
-    const { data, error } = await supabaseClient.from('clientes').insert([c]).select();
-    if(error){ alert('Erro ao salvar cliente: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('clientes').insert([c]).select();
+      if(error){ alert('Erro ao salvar cliente: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao salvar cliente: ' + mensagemErro(err)); return null; }
   },
   async atualizarCliente(id, c){
-    const { data, error } = await supabaseClient.from('clientes').update(c).eq('id', id).select();
-    if(error){ alert('Erro ao atualizar cliente: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('clientes').update(c).eq('id', id).select();
+      if(error){ alert('Erro ao atualizar cliente: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao atualizar cliente: ' + mensagemErro(err)); return null; }
   },
   async excluirCliente(id){
-    const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
-    if(error){ alert('Erro ao excluir cliente: ' + error.message); }
+    try {
+      const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
+      if(error){ alert('Erro ao excluir cliente: ' + mensagemErro(error)); return false; }
+      return true;
+    } catch(err){ alert('Erro ao excluir cliente: ' + mensagemErro(err)); return false; }
   },
   async getOrdens(){
-    const { data, error } = await supabaseClient.from('ordens').select('*').order('id', { ascending:false });
-    if(error){ console.error(error); alert('Erro ao carregar ordens: ' + error.message); return []; }
-    return data;
+    try {
+      const { data, error } = await supabaseClient.from('ordens').select('*').order('id', { ascending:false });
+      if(error){ console.error(error); return []; }
+      return data || [];
+    } catch(err){ console.error(err); return []; }
   },
   async criarOrdem(o){
-    const { data, error } = await supabaseClient.from('ordens').insert([o]).select();
-    if(error){ alert('Erro ao salvar OS: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('ordens').insert([o]).select();
+      if(error){ alert('Erro ao salvar OS: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao salvar OS: ' + mensagemErro(err)); return null; }
   },
   async atualizarOrdem(id, o){
-    const { data, error } = await supabaseClient.from('ordens').update(o).eq('id', id).select();
-    if(error){ alert('Erro ao atualizar OS: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('ordens').update(o).eq('id', id).select();
+      if(error){ alert('Erro ao atualizar OS: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao atualizar OS: ' + mensagemErro(err)); return null; }
   },
   async excluirOrdem(id){
-    const { error } = await supabaseClient.from('ordens').delete().eq('id', id);
-    if(error){ alert('Erro ao excluir OS: ' + error.message); }
+    try {
+      const { error } = await supabaseClient.from('ordens').delete().eq('id', id);
+      if(error){ alert('Erro ao excluir OS: ' + mensagemErro(error)); return false; }
+      return true;
+    } catch(err){ alert('Erro ao excluir OS: ' + mensagemErro(err)); return false; }
   },
 };
 
 // CRUD genérico, reaproveitado pelas 3 tabelas novas (menos código repetido)
+// Traduz erros comuns do Postgres/Supabase pra mensagens que fazem sentido pro usuário
+function mensagemErro(error){
+  if(!error) return 'Erro desconhecido.';
+  if(error.code === '23503') return 'Não é possível excluir: existem outros registros vinculados a este item (ex: uma OS, conta ou agendamento). Remova ou desvincule antes.';
+  if(error.message && /Failed to fetch|NetworkError|network/i.test(error.message)) return 'Sem conexão com o banco de dados. Verifique sua internet e tente de novo.';
+  return error.message || 'Erro desconhecido.';
+}
+
 function crud(tabela){
   return {
     async listar(){
-      const { data, error } = await supabaseClient.from(tabela).select('*').order('id', { ascending:false });
-      if(error){ console.error(error); alert(`Erro ao carregar ${tabela}: ` + error.message); return []; }
-      return data;
+      try {
+        const { data, error } = await supabaseClient.from(tabela).select('*').order('id', { ascending:false });
+        if(error){ console.error(tabela, error); return []; }
+        return data || [];
+      } catch(err){ console.error(tabela, err); return []; }
     },
     async criar(obj){
-      const { data, error } = await supabaseClient.from(tabela).insert([obj]).select();
-      if(error){ alert(`Erro ao salvar em ${tabela}: ` + error.message); return null; }
-      return data[0];
+      try {
+        const { data, error } = await supabaseClient.from(tabela).insert([obj]).select();
+        if(error){ alert(`Erro ao salvar em ${tabela}: ` + mensagemErro(error)); return null; }
+        return data[0];
+      } catch(err){ alert(`Erro ao salvar em ${tabela}: ` + mensagemErro(err)); return null; }
     },
     async atualizar(id, obj){
-      const { data, error } = await supabaseClient.from(tabela).update(obj).eq('id', id).select();
-      if(error){ alert(`Erro ao atualizar em ${tabela}: ` + error.message); return null; }
-      return data[0];
+      try {
+        const { data, error } = await supabaseClient.from(tabela).update(obj).eq('id', id).select();
+        if(error){ alert(`Erro ao atualizar em ${tabela}: ` + mensagemErro(error)); return null; }
+        return data[0];
+      } catch(err){ alert(`Erro ao atualizar em ${tabela}: ` + mensagemErro(err)); return null; }
     },
     async excluir(id){
-      const { error } = await supabaseClient.from(tabela).delete().eq('id', id);
-      if(error){ alert(`Erro ao excluir em ${tabela}: ` + error.message); }
+      try {
+        const { error } = await supabaseClient.from(tabela).delete().eq('id', id);
+        if(error){ alert(`Erro ao excluir em ${tabela}: ` + mensagemErro(error)); return false; }
+        return true;
+      } catch(err){ alert(`Erro ao excluir em ${tabela}: ` + mensagemErro(err)); return false; }
     },
   };
 }
@@ -1069,57 +1218,74 @@ DB.servicos = crud('servicos');
 
 DB.interacoes = {
   async listar(clienteId){
-    const { data, error } = await supabaseClient.from('interacoes_cliente').select('*').eq('cliente_id', clienteId).order('created_at', { ascending:false });
-    if(error){ console.error(error); return []; }
-    return data;
+    try {
+      const { data, error } = await supabaseClient.from('interacoes_cliente').select('*').eq('cliente_id', clienteId).order('created_at', { ascending:false });
+      if(error){ console.error(error); return []; }
+      return data || [];
+    } catch(err){ console.error(err); return []; }
   },
   async criar(obj){
-    const { data, error } = await supabaseClient.from('interacoes_cliente').insert([obj]).select();
-    if(error){ alert('Erro ao salvar no histórico: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('interacoes_cliente').insert([obj]).select();
+      if(error){ alert('Erro ao salvar no histórico: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao salvar no histórico: ' + mensagemErro(err)); return null; }
   },
   async excluir(id){
-    const { error } = await supabaseClient.from('interacoes_cliente').delete().eq('id', id);
-    if(error){ alert('Erro ao excluir: ' + error.message); }
+    try {
+      const { error } = await supabaseClient.from('interacoes_cliente').delete().eq('id', id);
+      if(error){ alert('Erro ao excluir: ' + mensagemErro(error)); return false; }
+      return true;
+    } catch(err){ alert('Erro ao excluir: ' + mensagemErro(err)); return false; }
   },
   async enviarAnexo(file){
-    const caminho = `${Date.now()}_${file.name}`;
-    const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file);
-    if(error){ alert('Erro ao enviar anexo: ' + error.message); return null; }
-    const { data } = supabaseClient.storage.from('anexos').getPublicUrl(caminho);
-    return data.publicUrl;
+    try {
+      const caminho = `${Date.now()}_${file.name}`;
+      const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file);
+      if(error){ alert('Erro ao enviar anexo: ' + mensagemErro(error)); return null; }
+      const { data } = supabaseClient.storage.from('anexos').getPublicUrl(caminho);
+      return data.publicUrl;
+    } catch(err){ alert('Erro ao enviar anexo: ' + mensagemErro(err)); return null; }
   },
 };
 
 DB.ordemItens = {
   async listar(ordemId){
-    const { data, error } = await supabaseClient.from('ordem_itens').select('*').eq('ordem_id', ordemId).order('id');
-    if(error){ console.error(error); return []; }
-    return data;
+    try {
+      const { data, error } = await supabaseClient.from('ordem_itens').select('*').eq('ordem_id', ordemId).order('id');
+      if(error){ console.error(error); return []; }
+      return data || [];
+    } catch(err){ console.error(err); return []; }
   },
   async substituir(ordemId, itens){
-    await supabaseClient.from('ordem_itens').delete().eq('ordem_id', ordemId);
-    if(itens.length){
-      const linhas = itens.map(i => ({
-        ordem_id: ordemId, tipo: i.tipo, referencia_id: i.referencia_id,
-        descricao: i.descricao, quantidade: i.quantidade, valor_unitario: i.valor_unitario, valor_total: i.valor_total,
-      }));
-      const { error } = await supabaseClient.from('ordem_itens').insert(linhas);
-      if(error){ alert('Erro ao salvar itens da OS: ' + error.message); }
-    }
+    try {
+      await supabaseClient.from('ordem_itens').delete().eq('ordem_id', ordemId);
+      if(itens.length){
+        const linhas = itens.map(i => ({
+          ordem_id: ordemId, tipo: i.tipo, referencia_id: i.referencia_id,
+          descricao: i.descricao, quantidade: i.quantidade, valor_unitario: i.valor_unitario, valor_total: i.valor_total,
+        }));
+        const { error } = await supabaseClient.from('ordem_itens').insert(linhas);
+        if(error){ alert('Erro ao salvar itens da OS: ' + mensagemErro(error)); }
+      }
+    } catch(err){ alert('Erro ao salvar itens da OS: ' + mensagemErro(err)); }
   },
 };
 
 DB.perfil = {
   async obter(){
-    const { data, error } = await supabaseClient.from('perfil').select('*').eq('id', 1).single();
-    if(error){ console.error(error); return null; }
-    return data;
+    try {
+      const { data, error } = await supabaseClient.from('perfil').select('*').eq('id', 1).single();
+      if(error){ console.error(error); return null; }
+      return data;
+    } catch(err){ console.error(err); return null; }
   },
   async salvar(dados){
-    const { data, error } = await supabaseClient.from('perfil').update(dados).eq('id', 1).select();
-    if(error){ alert('Erro ao salvar perfil: ' + error.message); return null; }
-    return data[0];
+    try {
+      const { data, error } = await supabaseClient.from('perfil').update(dados).eq('id', 1).select();
+      if(error){ alert('Erro ao salvar perfil: ' + mensagemErro(error)); return null; }
+      return data[0];
+    } catch(err){ alert('Erro ao salvar perfil: ' + mensagemErro(err)); return null; }
   },
 };
 
@@ -1131,12 +1297,53 @@ const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
 const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l4 2"/></svg>';
 const ICON_CALENDAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
+const ICON_PRINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>';
+const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
 
 function linkWhats(telefone){
   let d = (telefone || '').replace(/\D/g, '');
   if(d.length <= 11) d = '55' + d; // assume Brasil quando não tem código do país
   return `https://wa.me/${d}`;
 }
+
+/* ==========================================================
+   ROBUSTEZ GERAL
+   ========================================================== */
+// Trava o botão "Salvar" de qualquer formulário por um instante após o envio,
+// pra evitar clique duplo criando registro repetido no banco.
+document.addEventListener('submit', e => {
+  const btn = e.target.querySelector('button[type="submit"]');
+  if(btn && !btn.disabled){
+    btn.disabled = true;
+    setTimeout(() => { btn.disabled = false; }, 1000);
+  }
+}, true);
+
+// Toast simples pra avisos que não precisam travar a tela com um alert()
+function mostrarAviso(texto){
+  let caixa = document.getElementById('avisoToast');
+  if(!caixa){
+    caixa = document.createElement('div');
+    caixa.id = 'avisoToast';
+    caixa.className = 'toast-aviso';
+    document.body.appendChild(caixa);
+  }
+  caixa.textContent = texto;
+  caixa.classList.add('show');
+  clearTimeout(caixa._timer);
+  caixa._timer = setTimeout(() => caixa.classList.remove('show'), 4000);
+}
+
+// Erros que escapam dos try/catch (ex: falha de rede no meio de uma ação)
+// não travam mais a tela silenciosamente — pelo menos avisam o usuário.
+window.addEventListener('error', e => {
+  console.error('Erro inesperado:', e.error || e.message);
+  mostrarAviso('Ocorreu um erro inesperado. Se algo não salvou, tente de novo.');
+});
+window.addEventListener('unhandledrejection', e => {
+  console.error('Erro de conexão não tratado:', e.reason);
+  mostrarAviso('Falha de conexão com o banco. Verifique sua internet e tente de novo.');
+});
 
 /* ==========================================================
    TEMA (claro / escuro)
@@ -1190,6 +1397,7 @@ let stateContasReceber = [];
 let stateEstoque = [];
 let stateAgendamentos = [];
 let stateServicos = [];
+let statePerfil = {};
 let itensOrdemAtual = [];
 let editingClienteId = null;
 let editingOrdemId = null;
@@ -1847,14 +2055,16 @@ async function notificarStatusOrdem(ordemId){
    RENDERIZAÇÃO
    ========================================================== */
 async function render(){
-  const clientes = await DB.getClientes();
-  const ordens = await DB.getOrdens();
-  const fornecedores = await DB.fornecedores.listar();
-  const contasPagar = await DB.contasPagar.listar();
-  const contasReceber = await DB.contasReceber.listar();
-  const estoque = await DB.estoque.listar();
-  const agendamentos = await DB.agendamentos.listar();
-  const servicos = await DB.servicos.listar();
+  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos] = await Promise.all([
+    DB.getClientes(),
+    DB.getOrdens(),
+    DB.fornecedores.listar(),
+    DB.contasPagar.listar(),
+    DB.contasReceber.listar(),
+    DB.estoque.listar(),
+    DB.agendamentos.listar(),
+    DB.servicos.listar(),
+  ]);
   stateClientes = clientes;
   stateOrdens = ordens;
   stateFornecedores = fornecedores;
@@ -1907,6 +2117,7 @@ async function render(){
         : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
       <td class="icon-row">
         <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
+        <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
@@ -2074,8 +2285,11 @@ function buscarClientesWhats(termo){
 document.getElementById('btnWhatsFloat').addEventListener('click', () => {
   document.getElementById('buscaWhatsInput').value = '';
   document.getElementById('buscaWhatsResultados').innerHTML = '';
-  abrirModal('modalBuscaWhats');
+  document.getElementById('painelBuscaWhats').classList.add('active');
   setTimeout(() => document.getElementById('buscaWhatsInput').focus(), 50);
+});
+document.getElementById('fecharPainelBuscaWhats').addEventListener('click', () => {
+  document.getElementById('painelBuscaWhats').classList.remove('active');
 });
 document.getElementById('buscaWhatsInput').addEventListener('input', e => {
   const resultados = buscarClientesWhats(e.target.value);
@@ -2093,12 +2307,66 @@ document.getElementById('buscaWhatsInput').addEventListener('input', e => {
     : '<p class="empty">Nenhum cliente encontrado.</p>';
 });
 
+// Arrastar o painel flutuante pela página (pega pelo cabeçalho)
+(function tornarArrastavel(){
+  const painel = document.getElementById('painelBuscaWhats');
+  const cabecalho = document.getElementById('painelBuscaWhatsHeader');
+  let arrastando = false, offsetX = 0, offsetY = 0;
+
+  cabecalho.addEventListener('mousedown', e => {
+    arrastando = true;
+    const rect = painel.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    // troca right/bottom por left/top pra poder posicionar livremente
+    painel.style.left = rect.left + 'px';
+    painel.style.top = rect.top + 'px';
+    painel.style.right = 'auto';
+    painel.style.bottom = 'auto';
+  });
+  document.addEventListener('mousemove', e => {
+    if(!arrastando) return;
+    let x = e.clientX - offsetX;
+    let y = e.clientY - offsetY;
+    x = Math.max(4, Math.min(window.innerWidth - painel.offsetWidth - 4, x));
+    y = Math.max(4, Math.min(window.innerHeight - painel.offsetHeight - 4, y));
+    painel.style.left = x + 'px';
+    painel.style.top = y + 'px';
+  });
+  document.addEventListener('mouseup', () => arrastando = false);
+
+  // suporte a toque (celular/tablet)
+  cabecalho.addEventListener('touchstart', e => {
+    arrastando = true;
+    const t = e.touches[0];
+    const rect = painel.getBoundingClientRect();
+    offsetX = t.clientX - rect.left;
+    offsetY = t.clientY - rect.top;
+    painel.style.left = rect.left + 'px';
+    painel.style.top = rect.top + 'px';
+    painel.style.right = 'auto';
+    painel.style.bottom = 'auto';
+  });
+  document.addEventListener('touchmove', e => {
+    if(!arrastando) return;
+    const t = e.touches[0];
+    let x = t.clientX - offsetX;
+    let y = t.clientY - offsetY;
+    x = Math.max(4, Math.min(window.innerWidth - painel.offsetWidth - 4, x));
+    y = Math.max(4, Math.min(window.innerHeight - painel.offsetHeight - 4, y));
+    painel.style.left = x + 'px';
+    painel.style.top = y + 'px';
+  });
+  document.addEventListener('touchend', () => arrastando = false);
+})();
+
 /* ==========================================================
    ADMINISTRAÇÃO — perfil da oficina
    ========================================================== */
 async function carregarPerfil(){
   const p = await DB.perfil.obter();
   if(!p) return;
+  statePerfil = p;
   const f = document.getElementById('formPerfil');
   f.nome_oficina.value = p.nome_oficina || '';
   f.responsavel.value = p.responsavel || '';
@@ -2118,6 +2386,7 @@ document.getElementById('formPerfil').addEventListener('submit', async e => {
   };
   const ok = await DB.perfil.salvar(dados);
   if(!ok) return;
+  statePerfil = ok;
   const msg = document.getElementById('perfilSalvo');
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', 2500);
@@ -2125,6 +2394,135 @@ document.getElementById('formPerfil').addEventListener('submit', async e => {
 carregarPerfil();
 
 render();
+
+/* ==========================================================
+   BUSCA GLOBAL (Ctrl+K) — procura em clientes, OS, fornecedores,
+   serviços e estoque ao mesmo tempo
+   ========================================================== */
+function buscarGlobal(termo){
+  const t = termo.trim().toLowerCase();
+  if(!t) return [];
+  const resultados = [];
+  stateClientes.forEach(c => {
+    if(`${c.nome} ${c.telefone} ${c.veiculo} ${c.placa}`.toLowerCase().includes(t))
+      resultados.push({ tipo:'Cliente', label:`${c.nome} — ${c.veiculo}`, view:'clientes' });
+  });
+  stateOrdens.forEach(o => {
+    if(`${o.cliente_nome} ${o.servico} ${o.veiculo}`.toLowerCase().includes(t))
+      resultados.push({ tipo:'OS', label:`${o.cliente_nome} — ${o.servico}`, view:'ordens' });
+  });
+  stateFornecedores.forEach(f => {
+    if((f.nome||'').toLowerCase().includes(t))
+      resultados.push({ tipo:'Fornecedor', label:f.nome, view:'fornecedores' });
+  });
+  stateServicos.forEach(s => {
+    if((s.nome||'').toLowerCase().includes(t))
+      resultados.push({ tipo:'Serviço', label:s.nome, view:'servicos' });
+  });
+  stateEstoque.forEach(p => {
+    if((p.nome||'').toLowerCase().includes(t))
+      resultados.push({ tipo:'Estoque', label:p.nome, view:'estoque' });
+  });
+  return resultados.slice(0, 30);
+}
+
+function abrirBuscaGlobal(){
+  document.getElementById('buscaGlobalInput').value = '';
+  document.getElementById('buscaGlobalResultados').innerHTML = '';
+  abrirModal('modalBuscaGlobal');
+  setTimeout(() => document.getElementById('buscaGlobalInput').focus(), 50);
+}
+document.getElementById('btnBuscaGlobal').addEventListener('click', abrirBuscaGlobal);
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+    e.preventDefault();
+    abrirBuscaGlobal();
+  }
+});
+document.getElementById('buscaGlobalInput').addEventListener('input', e => {
+  const resultados = buscarGlobal(e.target.value);
+  const cont = document.getElementById('buscaGlobalResultados');
+  if(!e.target.value.trim()){ cont.innerHTML = ''; return; }
+  cont.innerHTML = resultados.length
+    ? resultados.map(r => `
+      <div class="busca-global-item" onclick="irPara('${r.view}'); fecharModal('modalBuscaGlobal');">
+        <span>${r.label}</span>
+        <span class="busca-global-tag">${r.tipo}</span>
+      </div>`).join('')
+    : '<p class="empty">Nada encontrado.</p>';
+});
+
+/* ==========================================================
+   IMPRIMIR ORDEM DE SERVIÇO
+   ========================================================== */
+async function imprimirOrdem(id){
+  const o = stateOrdens.find(x => x.id === id);
+  if(!o) return;
+  const itens = await DB.ordemItens.listar(id);
+  const linhasHtml = itens.length
+    ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
+    : `<tr><td colspan="4">${o.servico}</td></tr>`;
+  document.getElementById('areaImpressao').innerHTML = `
+    <div style="padding:24px; font-family:Arial,sans-serif; color:#000;">
+      <h2 style="margin:0;">${statePerfil.nome_oficina || 'Oficina'}</h2>
+      <p style="margin:4px 0 16px;">${statePerfil.endereco || ''} ${statePerfil.telefone ? '· ' + statePerfil.telefone : ''}</p>
+      <hr>
+      <p>
+        <strong>Cliente:</strong> ${o.cliente_nome}<br>
+        <strong>Veículo:</strong> ${o.veiculo}<br>
+        <strong>Data:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}<br>
+        <strong>Status:</strong> ${statusLabel[o.status]}
+      </p>
+      <p><strong>Serviço:</strong> ${o.servico}</p>
+      <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
+        <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
+        <tbody>${linhasHtml}</tbody>
+      </table>
+      <p style="text-align:right; font-size:18px; margin-top:16px;"><strong>Total: ${moeda(o.valor)}</strong></p>
+    </div>`;
+  window.print();
+}
+
+/* ==========================================================
+   BACKUP E EXPORTAÇÃO DE DADOS
+   ========================================================== */
+function baixarArquivo(nome, conteudo, tipo){
+  const blob = new Blob([conteudo], { type: tipo });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function paraCSV(linhas){
+  if(!linhas || !linhas.length) return '';
+  const colunas = Object.keys(linhas[0]);
+  const escapar = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  return [colunas.map(escapar).join(','), ...linhas.map(l => colunas.map(c => escapar(l[c])).join(','))].join('\n');
+}
+async function exportarBackupCompleto(){
+  const tabelas = ['clientes','ordens','ordem_itens','fornecedores','contas_pagar','contas_receber','estoque','servicos','agendamentos','interacoes_cliente','perfil'];
+  const backup = {};
+  try {
+    for(const t of tabelas){
+      const { data, error } = await supabaseClient.from(t).select('*');
+      backup[t] = error ? [] : (data || []);
+    }
+    baixarArquivo(`backup-paulo-mecanico-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(backup, null, 2), 'application/json');
+    mostrarAviso('Backup baixado com sucesso!');
+  } catch(err){
+    alert('Erro ao gerar backup: ' + mensagemErro(err));
+  }
+}
+function exportarClientesCSV(){
+  baixarArquivo('clientes.csv', paraCSV(stateClientes), 'text/csv;charset=utf-8');
+}
+function exportarOrdensCSV(){
+  baixarArquivo('ordens.csv', paraCSV(stateOrdens), 'text/csv;charset=utf-8');
+}
+document.getElementById('btnBackupCompleto').addEventListener('click', exportarBackupCompleto);
+document.getElementById('btnExportarClientes').addEventListener('click', exportarClientesCSV);
+document.getElementById('btnExportarOrdens').addEventListener('click', exportarOrdensCSV);
 
 /* ==========================================================
    TELA DE LOGIN — a fazer depois
