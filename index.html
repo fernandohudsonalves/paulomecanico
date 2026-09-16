@@ -154,6 +154,7 @@ tr:last-child td{border-bottom:none;}
 .empty{color:var(--text-dim); text-align:center; padding:20px 0; font-size:14px;}
 
 .status{padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block;}
+.status.orcamento{background:rgba(150,150,255,.15); color:#9aa3ff;}
 .status.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
 .status.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
 .status.concluida{background:rgba(47,184,114,.15); color:var(--ok);}
@@ -167,6 +168,7 @@ tr:last-child td{border-bottom:none;}
   border-radius:20px; font-weight:700; font-size:12px; padding:6px 10px; border:1px solid transparent; cursor:pointer;
   font-family:'Inter',sans-serif;
 }
+.status-select.orcamento{background:rgba(150,150,255,.15); color:#9aa3ff;}
 .status-select.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
 .status-select.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
 .status-select.concluida{background:rgba(47,184,114,.15); color:var(--ok);}
@@ -361,6 +363,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="card">
           <span class="card-num" id="statClientes">0</span>
           <span class="card-label">Clientes cadastrados</span>
+        </div>
+        <div class="card">
+          <span class="card-num" id="statOrcamentos">0</span>
+          <span class="card-label">Orçamentos p/ aprovar</span>
         </div>
         <div class="card">
           <span class="card-num" id="statAbertas">0</span>
@@ -586,6 +592,17 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
         <p class="empty" id="vencidasEmpty">Nenhuma conta vencida. 🎉</p>
       </div>
+
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel-head"><h2>Fluxo de caixa projetado (30 dias)</h2></div>
+        <div class="table-wrap">
+          <table id="tabelaFluxoCaixa">
+            <thead><tr><th>Data</th><th>A receber</th><th>A pagar</th><th>Saldo do dia</th><th>Saldo acumulado</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="fluxoCaixaEmpty">Nenhuma conta a pagar ou receber com vencimento nos próximos 30 dias.</p>
+      </div>
     </section>
 
     <!-- ADMINISTRAÇÃO -->
@@ -731,10 +748,19 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
         <label>Status
           <select name="status">
+            <option value="orcamento">Orçamento (aguardando aprovação)</option>
             <option value="aberta">Aberta</option>
             <option value="andamento">Em andamento</option>
             <option value="concluida">Concluída</option>
           </select>
+        </label>
+      </div>
+      <div class="grid2">
+        <label>Garantia (meses, opcional)
+          <input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3">
+        </label>
+        <label>Nº da nota fiscal (opcional)
+          <input type="text" name="numero_nf" placeholder="Ex: 1234">
         </label>
       </div>
       <div class="modal-actions">
@@ -783,7 +809,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="crm-panel active" id="crmTabOs">
       <div class="table-wrap">
         <table id="tabelaHistorico">
-          <thead><tr><th>Data</th><th>Serviço</th><th>Status</th><th>Valor</th></tr></thead>
+          <thead><tr><th>Data</th><th>Serviço</th><th>Status</th><th>Valor</th><th>Garantia</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -927,6 +953,36 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button type="submit" class="btn-primary">Salvar item</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL MOVIMENTAÇÕES DE ESTOQUE -->
+<div class="modal" id="modalMovimentos">
+  <div class="modal-box" style="width:460px;">
+    <h3 id="tituloMovimentos">Movimentações</h3>
+    <form id="formMovimento">
+      <div class="grid2">
+        <label>Tipo
+          <select name="tipo">
+            <option value="entrada">Entrada (compra/reposição)</option>
+            <option value="saida">Saída (uso/perda/ajuste)</option>
+          </select>
+        </label>
+        <label>Quantidade
+          <input type="number" name="quantidade" min="1" step="1" value="1" required>
+        </label>
+      </div>
+      <label>Motivo (opcional)
+        <input type="text" name="motivo" placeholder="Ex: Compra no fornecedor X">
+      </label>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button type="submit" class="btn-primary">+ Registrar movimentação</button>
+      </div>
+    </form>
+    <div id="movimentosLista" style="margin-top:6px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -1523,6 +1579,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   const clienteId = Number(f.get('clienteId'));
   const cliente = stateClientes.find(c => c.id === clienteId);
   if(!cliente) return;
+  const criandoNova = !editingOrdemId;
 
   const dados = {
     cliente_id: clienteId,
@@ -1531,18 +1588,34 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     servico: f.get('servico'),
     valor: Number(f.get('valor')),
     status: f.get('status'),
+    garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
+    numero_nf: f.get('numero_nf') || null,
   };
   const ok = editingOrdemId
     ? await DB.atualizarOrdem(editingOrdemId, dados)
     : await DB.criarOrdem(dados);
   if(!ok) return;
   await DB.ordemItens.substituir(ok.id, itensOrdemAtual);
+  if(criandoNova) await baixarEstoquePorItens(itensOrdemAtual, ok.id);
   e.target.reset();
   editingOrdemId = null;
   itensOrdemAtual = [];
   fecharModal('modalOrdem');
   render();
 });
+
+// Dá baixa automática no estoque das peças usadas numa OS nova (só na criação, pra não descontar 2x em edições)
+async function baixarEstoquePorItens(itens, ordemId){
+  for(const i of itens){
+    if(i.tipo !== 'peca') continue;
+    const item = stateEstoque.find(p => p.id === i.referencia_id);
+    if(!item) continue;
+    await DB.estoque.atualizar(item.id, { quantidade: Math.max(0, Number(item.quantidade) - i.quantidade) });
+    await supabaseClient.from('estoque_movimentos').insert([{
+      estoque_id: item.id, tipo:'saida', quantidade: i.quantidade, motivo:'Uso em OS', ordem_id: ordemId,
+    }]);
+  }
+}
 
 async function abrirEdicaoOrdem(id){
   const o = stateOrdens.find(x => x.id === id);
@@ -1555,6 +1628,8 @@ async function abrirEdicaoOrdem(id){
   f.servico.value = o.servico;
   f.valor.value = o.valor;
   f.status.value = o.status;
+  f.garantia_meses.value = o.garantia_meses || '';
+  f.numero_nf.value = o.numero_nf || '';
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
 
   const itensSalvos = await DB.ordemItens.listar(id);
@@ -1564,6 +1639,21 @@ async function abrirEdicaoOrdem(id){
   });
   renderItensOrdem();
   abrirModal('modalOrdem');
+}
+
+// Aprova um orçamento: muda o status pra "Aberta" e registra a autorização no CRM do cliente
+async function aprovarOrcamento(id){
+  const o = stateOrdens.find(x => x.id === id);
+  if(!o) return;
+  if(!confirm(`Aprovar o orçamento de ${o.cliente_nome} (${moeda(o.valor)}) e abrir a OS?`)) return;
+  await DB.atualizarOrdem(id, { status:'aberta' });
+  await DB.interacoes.criar({
+    cliente_id: o.cliente_id, ordem_id: o.id, tipo:'autorizacao',
+    titulo:'Orçamento aprovado', descricao: `Cliente aprovou o orçamento: ${o.servico} — ${moeda(o.valor)}`,
+    valor: o.valor,
+  });
+  mostrarAviso('Orçamento aprovado! OS liberada.');
+  render();
 }
 
 async function excluirOrdem(id){
@@ -1655,7 +1745,7 @@ document.getElementById('formRecebimento').addEventListener('submit', async e =>
   render();
 });
 
-const statusLabel = { aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
+const statusLabel = { orcamento:'Orçamento', aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
 const moeda = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 const dataBR = iso => { if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
 
@@ -1829,6 +1919,56 @@ async function excluirEstoque(id){
 }
 
 /* ==========================================================
+   MOVIMENTAÇÕES DE ESTOQUE — entrada/saída e histórico de consumo
+   ========================================================== */
+let movimentandoEstoqueId = null;
+
+async function abrirMovimentos(estoqueId){
+  const item = stateEstoque.find(x => x.id === estoqueId);
+  if(!item) return;
+  movimentandoEstoqueId = estoqueId;
+  document.getElementById('tituloMovimentos').textContent = `Movimentações — ${item.nome} (${item.quantidade} em estoque)`;
+  await carregarMovimentos(estoqueId);
+  abrirModal('modalMovimentos');
+}
+
+async function carregarMovimentos(estoqueId){
+  const { data, error } = await supabaseClient.from('estoque_movimentos').select('*').eq('estoque_id', estoqueId).order('created_at', { ascending:false });
+  const cont = document.getElementById('movimentosLista');
+  const itens = error ? [] : (data || []);
+  cont.innerHTML = itens.length
+    ? itens.map(m => `
+      <div class="timeline-item">
+        <span class="timeline-icon">${m.tipo === 'entrada' ? '📥' : '📤'}</span>
+        <div class="timeline-body">
+          <div class="t-head"><span>${m.tipo === 'entrada' ? 'Entrada' : 'Saída'}: ${m.quantidade}</span></div>
+          <div class="t-meta">${new Date(m.created_at).toLocaleString('pt-BR')}${m.motivo ? ' · ' + m.motivo : ''}</div>
+        </div>
+      </div>`).join('')
+    : '<p class="empty">Nenhuma movimentação registrada ainda.</p>';
+}
+
+document.getElementById('formMovimento').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const tipo = f.get('tipo');
+  const quantidade = Number(f.get('quantidade'));
+  const item = stateEstoque.find(x => x.id === movimentandoEstoqueId);
+  if(!item) return;
+  const novaQtd = tipo === 'entrada'
+    ? Number(item.quantidade) + quantidade
+    : Math.max(0, Number(item.quantidade) - quantidade);
+  await DB.estoque.atualizar(item.id, { quantidade: novaQtd });
+  await supabaseClient.from('estoque_movimentos').insert([{
+    estoque_id: item.id, tipo, quantidade, motivo: f.get('motivo') || null,
+  }]);
+  e.target.reset();
+  await render();
+  document.getElementById('tituloMovimentos').textContent = `Movimentações — ${item.nome} (${novaQtd} em estoque)`;
+  await carregarMovimentos(item.id);
+});
+
+/* ==========================================================
    SERVIÇOS — catálogo (preço padrão e tempo estimado)
    ========================================================== */
 document.getElementById('formServico').addEventListener('submit', async e => {
@@ -1963,13 +2103,23 @@ async function abrirHistorico(clienteId){
 
   const ordensDoCliente = stateOrdens.filter(o => o.cliente_id === clienteId)
     .sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
-  document.querySelector('#tabelaHistorico tbody').innerHTML = ordensDoCliente.map(o => `
+  document.querySelector('#tabelaHistorico tbody').innerHTML = ordensDoCliente.map(o => {
+    let garantiaTxt = '—';
+    if(o.garantia_meses && o.created_at){
+      const ate = new Date(o.created_at);
+      ate.setMonth(ate.getMonth() + Number(o.garantia_meses));
+      const venceu = ate < new Date();
+      garantiaTxt = `<span style="color:${venceu ? 'var(--text-dim)' : 'var(--ok)'}">${venceu ? 'Venceu em' : 'Até'} ${dataBR(ate.toISOString().slice(0,10))}</span>`;
+    }
+    return `
     <tr>
       <td>${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}</td>
       <td>${o.servico}</td>
       <td><span class="status ${o.status}">${statusLabel[o.status]}</span></td>
       <td>${moeda(o.valor)}</td>
-    </tr>`).join('');
+      <td>${garantiaTxt}</td>
+    </tr>`;
+  }).join('');
   document.getElementById('historicoEmpty').style.display = ordensDoCliente.length ? 'none' : 'block';
 
   await carregarTimeline(clienteId);
@@ -2076,6 +2226,7 @@ async function render(){
 
   // stats
   document.getElementById('statClientes').textContent = clientes.length;
+  document.getElementById('statOrcamentos').textContent = ordens.filter(o => o.status === 'orcamento').length;
   document.getElementById('statAbertas').textContent = ordens.filter(o => o.status === 'aberta').length;
   document.getElementById('statAndamento').textContent = ordens.filter(o => o.status === 'andamento').length;
   document.getElementById('statConcluidas').textContent = ordens.filter(o => o.status === 'concluida').length;
@@ -2106,6 +2257,7 @@ async function render(){
       <td>${o.cliente_nome}</td><td>${o.veiculo}</td><td>${o.servico}</td>
       <td>
         <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
+          <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
           <option value="aberta" ${o.status==='aberta'?'selected':''}>Aberta</option>
           <option value="andamento" ${o.status==='andamento'?'selected':''}>Em andamento</option>
           <option value="concluida" ${o.status==='concluida'?'selected':''}>Concluída</option>
@@ -2116,6 +2268,7 @@ async function render(){
         ? `<span class="pago-chip">Pago${o.forma_pagamento ? ' · ' + o.forma_pagamento : ''}</span>`
         : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
       <td class="icon-row">
+        ${o.status === 'orcamento' ? `<button class="btn-icon" title="Aprovar orçamento" onclick="aprovarOrcamento(${o.id})">✅</button>` : ''}
         <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
         <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
@@ -2190,6 +2343,7 @@ async function render(){
       <td>${moeda(x.preco_custo || 0)}</td>
       <td>${moeda(x.preco_venda || 0)}</td>
       <td class="icon-row">
+        <button class="btn-icon" title="Movimentações (entrada/saída)" onclick="abrirMovimentos(${x.id})">${ICON_HISTORY}</button>
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoEstoque(${x.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirEstoque(${x.id})">${ICON_DELETE}</button>
       </td>
@@ -2267,6 +2421,30 @@ async function render(){
       <td>${v.descricao}</td><td>${v.quem}</td><td>${dataBR(v.vencimento)}</td><td>${moeda(v.valor)}</td>
     </tr>`).join('');
   document.getElementById('vencidasEmpty').style.display = vencidas.length ? 'none' : 'block';
+
+  // ---- fluxo de caixa projetado (30 dias) ----
+  const dias = [];
+  for(let i = 0; i < 30; i++){
+    const d = new Date(); d.setDate(d.getDate() + i);
+    dias.push(d.toISOString().slice(0,10));
+  }
+  let acumulado = 0;
+  const linhasFluxo = dias.map(dia => {
+    const receber = soma(contasReceber.filter(c => c.status === 'pendente' && c.vencimento === dia), 'valor');
+    const pagar = soma(contasPagar.filter(c => c.status === 'pendente' && c.vencimento === dia), 'valor');
+    const saldoDia = receber - pagar;
+    if(receber === 0 && pagar === 0) return null;
+    acumulado += saldoDia;
+    return `<tr>
+      <td>${dataBR(dia)}</td>
+      <td style="color:var(--ok);">${receber ? '+' + moeda(receber) : '—'}</td>
+      <td style="color:var(--accent);">${pagar ? '-' + moeda(pagar) : '—'}</td>
+      <td>${moeda(saldoDia)}</td>
+      <td><strong>${moeda(acumulado)}</strong></td>
+    </tr>`;
+  }).filter(Boolean);
+  document.querySelector('#tabelaFluxoCaixa tbody').innerHTML = linhasFluxo.join('');
+  document.getElementById('fluxoCaixaEmpty').style.display = linhasFluxo.length ? 'none' : 'block';
 }
 
 /* ==========================================================
@@ -2462,6 +2640,12 @@ async function imprimirOrdem(id){
   const linhasHtml = itens.length
     ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
     : `<tr><td colspan="4">${o.servico}</td></tr>`;
+  let garantiaTxt = '';
+  if(o.garantia_meses && o.created_at){
+    const ate = new Date(o.created_at);
+    ate.setMonth(ate.getMonth() + Number(o.garantia_meses));
+    garantiaTxt = `<br><strong>Garantia:</strong> ${o.garantia_meses} meses (até ${dataBR(ate.toISOString().slice(0,10))})`;
+  }
   document.getElementById('areaImpressao').innerHTML = `
     <div style="padding:24px; font-family:Arial,sans-serif; color:#000;">
       <h2 style="margin:0;">${statePerfil.nome_oficina || 'Oficina'}</h2>
@@ -2472,6 +2656,8 @@ async function imprimirOrdem(id){
         <strong>Veículo:</strong> ${o.veiculo}<br>
         <strong>Data:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}<br>
         <strong>Status:</strong> ${statusLabel[o.status]}
+        ${o.numero_nf ? `<br><strong>Nota fiscal:</strong> ${o.numero_nf}` : ''}
+        ${garantiaTxt}
       </p>
       <p><strong>Serviço:</strong> ${o.servico}</p>
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
