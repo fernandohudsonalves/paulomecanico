@@ -84,6 +84,11 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 }
 .brand{background:#0a0a0a; border-radius:8px; padding:14px 10px;}
 .brand img{width:100%; display:block;}
+.version-tag{
+  text-align:center; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-dim); background:var(--surface-2); border:1px solid var(--border);
+  border-radius:20px; padding:3px 10px; margin:8px auto 0; width:fit-content;
+}
 .nav{display:flex; flex-direction:column; gap:2px; margin-top:28px;}
 .nav-group{display:flex; flex-direction:column;}
 .nav-group-toggle{
@@ -126,10 +131,12 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .view{display:none;}
 .view.active{display:block;}
 
-.view-head{margin-bottom:28px; position:relative;}
+.view-head{margin-bottom:36px; position:relative;}
 .view-head h1{font-size:32px;}
 .view-head p{color:var(--text-dim); margin-top:4px; font-size:14px;}
-.view-head .btn-primary{position:absolute; right:0; top:0;}
+.view-head .btn-primary{position:absolute; right:0; top:46px;}
+.view-head .view-head-actions{position:absolute; right:0; top:46px; display:flex; gap:8px;}
+.view-head .view-head-actions .btn-primary{position:static;}
 
 /* CARDS */
 .cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(170px,1fr)); gap:16px; margin-bottom:32px;}
@@ -268,13 +275,14 @@ tr:last-child td{border-bottom:none;}
 .modal.active{display:flex;}
 .modal-box{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:26px; width:420px; max-width:92vw;}
 .modal-box h3{font-size:20px; margin-bottom:18px;}
-form label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-dim); margin-bottom:14px; font-weight:600;}
+form label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-dim); margin-bottom:14px; font-weight:600; min-width:0;}
 input, select, textarea{
   background:var(--surface-2); border:1px solid var(--border); color:var(--text);
   padding:10px 12px; border-radius:8px; font-family:'Inter',sans-serif; font-size:14px;
+  width:100%; min-width:0;
 }
 input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; min-width:0;}
 .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:6px;}
 
 @media(max-width:860px){
@@ -286,6 +294,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   .main{padding:20px;}
   .cards{grid-template-columns:1fr 1fr;}
   .view-head .btn-primary{position:static; margin-top:12px;}
+  .view-head .view-head-actions{position:static; margin-top:12px;}
 }
 
 </style>
@@ -301,6 +310,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="brand">
       <img src="data:image/png;base64,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" alt="Paulo Mecânico">
     </div>
+    <div class="version-tag">v2.0</div>
 
     <nav class="nav">
       <button class="nav-item active" data-view="dashboard">Painel</button>
@@ -462,13 +472,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <header class="view-head">
         <h1>Fornecedores</h1>
         <p>Cadastro de fornecedores</p>
-        <button class="btn-primary" id="btnNovoFornecedor">+ Novo fornecedor</button>
+        <div class="view-head-actions">
+          <button class="btn-ghost" id="btnImportarFornecedores">⬆ Importar CSV</button>
+          <button class="btn-primary" id="btnNovoFornecedor">+ Novo fornecedor</button>
+        </div>
       </header>
 
       <div class="panel">
         <div class="table-wrap">
           <table id="tabelaFornecedores">
-            <thead><tr><th>Nome</th><th>Telefone</th><th>CNPJ/CPF</th><th>Categoria</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Nome</th><th>Categoria</th><th>Telefone/WhatsApp</th><th>Cidade</th><th>Ações</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -720,6 +733,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <label>Descrição do serviço
         <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e filtro" required></textarea>
       </label>
+      <label>Quilometragem do veículo
+        <input type="number" name="km" min="0" step="1" placeholder="Ex: 45000">
+      </label>
 
       <label>Itens (mão de obra e peças)</label>
       <div id="itensOrdemLista" class="itens-lista"></div>
@@ -763,6 +779,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <input type="text" name="numero_nf" placeholder="Ex: 1234">
         </label>
       </div>
+      <label>Comentários (opcional)
+        <textarea name="comentarios" rows="2" placeholder="Observações internas, recados, detalhes do atendimento..."></textarea>
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar OS</button>
@@ -899,28 +918,73 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL FORNECEDOR -->
 <div class="modal" id="modalFornecedor">
-  <div class="modal-box">
+  <div class="modal-box" style="width:520px;">
     <h3 id="tituloModalFornecedor">Novo fornecedor</h3>
     <form id="formFornecedor">
       <label>Nome / Razão social
         <input type="text" name="nome" required>
       </label>
-      <label>Telefone
-        <input type="text" name="telefone" placeholder="(00) 00000-0000">
+      <div class="grid2">
+        <label>Categoria
+          <input type="text" name="categoria" placeholder="Ex: Autopeças, Elétrica...">
+        </label>
+        <label>Especialidade
+          <input type="text" name="especialidade" placeholder="O que fazem">
+        </label>
+      </div>
+      <div class="grid2">
+        <label>Telefone
+          <input type="text" name="telefone" placeholder="(00) 00000-0000">
+        </label>
+        <label>WhatsApp
+          <input type="text" name="whatsapp" placeholder="(00) 00000-0000">
+        </label>
+      </div>
+      <label>Endereço
+        <input type="text" name="endereco">
       </label>
+      <div class="grid2">
+        <label>Bairro
+          <input type="text" name="bairro">
+        </label>
+        <label>Cidade/UF
+          <input type="text" name="cidade_uf" placeholder="Ex: Apucarana/PR">
+        </label>
+      </div>
       <div class="grid2">
         <label>CNPJ/CPF
           <input type="text" name="cnpj">
         </label>
-        <label>Categoria
-          <input type="text" name="categoria" placeholder="Ex: Peças, Pneus...">
+        <label>Rede social / Site
+          <input type="text" name="rede_social" placeholder="Instagram, site...">
         </label>
       </div>
+      <label>Observações
+        <textarea name="observacoes" rows="2"></textarea>
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar fornecedor</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR FORNECEDORES (CSV/TSV) -->
+<div class="modal" id="modalImportarFornecedores">
+  <div class="modal-box" style="width:560px;">
+    <h3>Importar fornecedores</h3>
+    <p style="color:var(--text-dim); font-size:13px; margin-bottom:12px;">
+      Aceita arquivo .csv ou .tsv (exportado do Excel/Google Sheets/Planilhas). O sistema detecta
+      automaticamente as colunas: Categoria, Nome, Endereço, Bairro, Cidade/UF, Especialidade,
+      Telefone, WhatsApp, Rede Social/Site e Observações.
+    </p>
+    <input type="file" id="importarArquivoInput" accept=".csv,.tsv,.txt">
+    <div id="importarPreview" style="margin-top:14px;"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Cancelar</button>
+      <button type="button" class="btn-primary" id="btnConfirmarImportacao" style="display:none;">Confirmar importação</button>
+    </div>
   </div>
 </div>
 
@@ -1590,6 +1654,8 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     status: f.get('status'),
     garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
     numero_nf: f.get('numero_nf') || null,
+    km: f.get('km') ? Number(f.get('km')) : null,
+    comentarios: f.get('comentarios') || null,
   };
   const ok = editingOrdemId
     ? await DB.atualizarOrdem(editingOrdemId, dados)
@@ -1630,6 +1696,8 @@ async function abrirEdicaoOrdem(id){
   f.status.value = o.status;
   f.garantia_meses.value = o.garantia_meses || '';
   f.numero_nf.value = o.numero_nf || '';
+  f.km.value = o.km || '';
+  f.comentarios.value = o.comentarios || '';
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
 
   const itensSalvos = await DB.ordemItens.listar(id);
@@ -1755,7 +1823,11 @@ const dataBR = iso => { if(!iso) return '—'; const [y,m,d] = iso.split('-'); r
 document.getElementById('formFornecedor').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
-  const dados = { nome: f.get('nome'), telefone: f.get('telefone'), cnpj: f.get('cnpj'), categoria: f.get('categoria') };
+  const dados = {
+    nome: f.get('nome'), telefone: f.get('telefone'), cnpj: f.get('cnpj'), categoria: f.get('categoria'),
+    especialidade: f.get('especialidade'), whatsapp: f.get('whatsapp'), endereco: f.get('endereco'),
+    bairro: f.get('bairro'), cidade_uf: f.get('cidade_uf'), rede_social: f.get('rede_social'), observacoes: f.get('observacoes'),
+  };
   const ok = editingFornecedorId
     ? await DB.fornecedores.atualizar(editingFornecedorId, dados)
     : await DB.fornecedores.criar(dados);
@@ -1771,6 +1843,8 @@ function abrirEdicaoFornecedor(id){
   editingFornecedorId = id;
   const f = document.getElementById('formFornecedor');
   f.nome.value = x.nome; f.telefone.value = x.telefone || ''; f.cnpj.value = x.cnpj || ''; f.categoria.value = x.categoria || '';
+  f.especialidade.value = x.especialidade || ''; f.whatsapp.value = x.whatsapp || ''; f.endereco.value = x.endereco || '';
+  f.bairro.value = x.bairro || ''; f.cidade_uf.value = x.cidade_uf || ''; f.rede_social.value = x.rede_social || ''; f.observacoes.value = x.observacoes || '';
   document.getElementById('tituloModalFornecedor').textContent = 'Editar fornecedor';
   abrirModal('modalFornecedor');
 }
@@ -1779,6 +1853,136 @@ async function excluirFornecedor(id){
   await DB.fornecedores.excluir(id);
   render();
 }
+
+/* ==========================================================
+   IMPORTAR FORNECEDORES (CSV/TSV) — detecta encoding, delimitador
+   e mapeia colunas pelo nome do cabeçalho automaticamente
+   ========================================================== */
+let fornecedoresParaImportar = [];
+
+async function lerArquivoTexto(file){
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let encoding = 'utf-8';
+  if(bytes[0] === 0xFF && bytes[1] === 0xFE) encoding = 'utf-16le';
+  else if(bytes[0] === 0xFE && bytes[1] === 0xFF) encoding = 'utf-16be';
+  return new TextDecoder(encoding).decode(buffer);
+}
+
+function detectarDelimitador(texto){
+  const primeiraLinha = texto.split(/\r?\n/)[0] || '';
+  const tabs = (primeiraLinha.match(/\t/g) || []).length;
+  const virgulas = (primeiraLinha.match(/,/g) || []).length;
+  return tabs > virgulas ? '\t' : ',';
+}
+
+// Parser simples com suporte a campos entre aspas (que podem conter o delimitador)
+function parseDelimitado(texto, delim){
+  const linhas = [];
+  let linha = [], campo = '', dentroAspas = false;
+  for(let i = 0; i < texto.length; i++){
+    const c = texto[i];
+    if(dentroAspas){
+      if(c === '"'){
+        if(texto[i+1] === '"'){ campo += '"'; i++; }
+        else dentroAspas = false;
+      } else campo += c;
+    } else {
+      if(c === '"') dentroAspas = true;
+      else if(c === delim){ linha.push(campo); campo = ''; }
+      else if(c === '\n'){ linha.push(campo); linhas.push(linha); linha = []; campo = ''; }
+      else if(c === '\r'){ /* ignora */ }
+      else campo += c;
+    }
+  }
+  if(campo !== '' || linha.length){ linha.push(campo); linhas.push(linha); }
+  return linhas.filter(l => l.some(c => c.trim() !== ''));
+}
+
+function normalizarTexto(t){
+  return (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+// Mapeia cada cabeçalho da planilha pro campo correspondente no nosso cadastro
+function mapearColuna(cabecalho){
+  const h = normalizarTexto(cabecalho);
+  if(h.includes('categoria')) return 'categoria';
+  if(h.includes('nome')) return 'nome';
+  if(h.includes('endereco')) return 'endereco';
+  if(h.includes('bairro')) return 'bairro';
+  if(h.includes('cidade')) return 'cidade_uf';
+  if(h.includes('especialidade')) return 'especialidade';
+  if(h.includes('whatsapp')) return 'whatsapp';
+  if(h.includes('telefone')) return 'telefone';
+  if(h.includes('rede social') || h.includes('site')) return 'rede_social';
+  if(h.includes('observ') || h.includes('cnpj')) return 'observacoes';
+  return null;
+}
+
+document.getElementById('btnImportarFornecedores').addEventListener('click', () => {
+  document.getElementById('importarArquivoInput').value = '';
+  document.getElementById('importarPreview').innerHTML = '';
+  document.getElementById('btnConfirmarImportacao').style.display = 'none';
+  fornecedoresParaImportar = [];
+  abrirModal('modalImportarFornecedores');
+});
+
+document.getElementById('importarArquivoInput').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const texto = await lerArquivoTexto(file);
+  const delim = detectarDelimitador(texto);
+  const linhas = parseDelimitado(texto, delim);
+  if(linhas.length < 2){
+    document.getElementById('importarPreview').innerHTML = '<p class="empty">Não encontrei linhas de dados nesse arquivo.</p>';
+    return;
+  }
+  const cabecalhos = linhas[0].map(c => c.replace(/^\uFEFF/, ''));
+  const mapa = cabecalhos.map(mapearColuna);
+
+  fornecedoresParaImportar = linhas.slice(1).map(linha => {
+    const registro = {};
+    linha.forEach((valor, i) => {
+      const campo = mapa[i];
+      if(campo && valor.trim()) registro[campo] = valor.trim();
+    });
+    // tenta puxar o CNPJ de dentro das observações, quando existir
+    if(registro.observacoes){
+      const m = registro.observacoes.match(/CNPJ\s*([\d.\/-]{14,18})/i);
+      if(m) registro.cnpj = m[1];
+    }
+    return registro;
+  }).filter(r => r.nome);
+
+  const cont = document.getElementById('importarPreview');
+  cont.innerHTML = `
+    <p style="margin-bottom:8px;"><strong>${fornecedoresParaImportar.length}</strong> fornecedores encontrados. Prévia dos 5 primeiros:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nome</th><th>Categoria</th><th>Telefone/WhatsApp</th><th>Cidade</th></tr></thead>
+      <tbody>${fornecedoresParaImportar.slice(0,5).map(r => `
+        <tr><td>${r.nome}</td><td>${r.categoria||'—'}</td><td>${r.whatsapp||r.telefone||'—'}</td><td>${r.cidade_uf||'—'}</td></tr>
+      `).join('')}</tbody>
+    </table></div>`;
+  document.getElementById('btnConfirmarImportacao').style.display = fornecedoresParaImportar.length ? 'inline-block' : 'none';
+});
+
+document.getElementById('btnConfirmarImportacao').addEventListener('click', async () => {
+  if(!fornecedoresParaImportar.length) return;
+  const btn = document.getElementById('btnConfirmarImportacao');
+  btn.disabled = true; btn.textContent = 'Importando...';
+  try {
+    const { error } = await supabaseClient.from('fornecedores').insert(fornecedoresParaImportar);
+    if(error){ alert('Erro ao importar: ' + mensagemErro(error)); return; }
+    mostrarAviso(`${fornecedoresParaImportar.length} fornecedores importados com sucesso!`);
+    fecharModal('modalImportarFornecedores');
+    render();
+  } catch(err){
+    alert('Erro ao importar: ' + mensagemErro(err));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar importação';
+  }
+});
+
 function preencherSelectFornecedores(){
   const sel = document.querySelector('#formContaPagar select[name="fornecedorId"]');
   const atual = sel.value;
@@ -2290,9 +2494,9 @@ async function render(){
   // tabela fornecedores
   document.querySelector('#tabelaFornecedores tbody').innerHTML = fornecedores.map(x => `
     <tr>
-      <td>${x.nome}</td><td>${x.telefone || '—'}</td><td>${x.cnpj || '—'}</td><td>${x.categoria || '—'}</td>
+      <td>${x.nome}</td><td>${x.categoria || '—'}</td><td>${x.whatsapp || x.telefone || '—'}</td><td>${x.cidade_uf || '—'}</td>
       <td class="icon-row">
-        ${x.telefone ? `<button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(x.telefone)}','_blank')">${ICON_WHATS}</button>` : ''}
+        ${(x.whatsapp || x.telefone) ? `<button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(x.whatsapp || x.telefone)}','_blank')">${ICON_WHATS}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoFornecedor(${x.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirFornecedor(${x.id})">${ICON_DELETE}</button>
       </td>
@@ -2654,12 +2858,14 @@ async function imprimirOrdem(id){
       <p>
         <strong>Cliente:</strong> ${o.cliente_nome}<br>
         <strong>Veículo:</strong> ${o.veiculo}<br>
+        ${o.km ? `<strong>Quilometragem:</strong> ${o.km.toLocaleString('pt-BR')} km<br>` : ''}
         <strong>Data:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}<br>
         <strong>Status:</strong> ${statusLabel[o.status]}
         ${o.numero_nf ? `<br><strong>Nota fiscal:</strong> ${o.numero_nf}` : ''}
         ${garantiaTxt}
       </p>
       <p><strong>Serviço:</strong> ${o.servico}</p>
+      ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
         <tbody>${linhasHtml}</tbody>
