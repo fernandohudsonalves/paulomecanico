@@ -223,13 +223,14 @@ tr:last-child td{border-bottom:none;}
 .admin-float svg{width:20px; height:20px;}
 .admin-float:hover{background:var(--surface-2); color:var(--accent);}
 
-/* BOTÃO FLUTUANTE NOVA OS (atalho rápido) */
+/* BOTÃO NOVA OS (atalho rápido, empilhado abaixo do botão Administração) */
 .os-float{
-  position:fixed; left:26px; bottom:26px; display:flex; align-items:center; gap:8px;
-  background:var(--accent); color:#fff; border:none; padding:14px 20px; border-radius:50px;
-  font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.35); z-index:60;
+  position:fixed; top:74px; right:26px; width:42px; height:42px; border-radius:50%;
+  background:var(--accent); color:#fff; border:none;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.25); z-index:55;
 }
-.os-float svg{width:18px; height:18px;}
+.os-float svg{width:20px; height:20px;}
 .os-float:hover{filter:brightness(1.08);}
 
 .whats-float{
@@ -272,6 +273,7 @@ tr:last-child td{border-bottom:none;}
   padding:9px 16px; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer;
 }
 .btn-ghost:hover{background:var(--surface-2);}
+.btn-ghost.active-toggle{border-color:var(--accent); color:var(--accent);}
 .btn-icon{background:none; border:none; color:var(--text-dim); cursor:pointer; padding:6px; border-radius:6px; display:inline-flex;}
 .btn-icon svg{width:17px; height:17px; display:block;}
 .btn-icon:hover{background:var(--surface-2); color:var(--text);}
@@ -305,6 +307,28 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   .view-head .btn-primary{position:static; margin-top:12px;}
   .view-head .view-head-actions{position:static; margin-top:12px;}
 }
+
+/* CALENDÁRIO DA AGENDA */
+.calendario-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.cal-weekday{font-size:11px; color:var(--text-dim); text-align:center; padding:4px 0; font-weight:700;}
+.cal-dia{background:var(--surface-2); border-radius:8px; padding:6px; min-height:96px; font-size:12px; display:flex; flex-direction:column; gap:3px; overflow:hidden;}
+.cal-dia.outro-mes{opacity:.35;}
+.cal-dia.hoje{outline:1px solid var(--accent);}
+.cal-dia .cal-num{font-weight:700; font-size:12px; margin-bottom:2px;}
+.cal-evento{background:var(--surface); border-radius:5px; padding:2px 5px; cursor:pointer; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-left:3px solid var(--text-dim);}
+.cal-evento.revisao{border-left-color:var(--accent);}
+.cal-evento:hover{background:var(--border);}
+.cal-mais{font-size:10px; color:var(--text-dim); cursor:default;}
+@media(max-width:860px){
+  .cal-dia{min-height:64px; font-size:10px;}
+  .cal-evento{font-size:10px;}
+}
+
+/* PAGINAÇÃO */
+.paginacao{display:flex; justify-content:center; align-items:center; gap:14px; margin-top:16px; font-size:13px; color:var(--text-dim);}
+.paginacao button{background:none; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px;}
+.paginacao button:hover:not(:disabled){background:var(--surface-2);}
+.paginacao button:disabled{opacity:.4; cursor:not-allowed;}
 
 </style>
 </head>
@@ -424,7 +448,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <header class="view-head">
         <h1>Clientes</h1>
         <p>Cadastro de clientes e veículos</p>
-        <button class="btn-primary" id="btnNovoCliente">+ Novo cliente</button>
+        <div class="view-head-actions">
+          <input type="text" id="buscaClientes" placeholder="Buscar por nome, telefone, veículo ou placa..." style="width:260px;">
+          <button class="btn-primary" id="btnNovoCliente">+ Novo cliente</button>
+        </div>
       </header>
 
       <div class="panel">
@@ -435,6 +462,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="clientesEmpty">Nenhum cliente cadastrado ainda.</p>
+        <div class="paginacao" id="clientesPaginacao"></div>
       </div>
     </section>
 
@@ -443,7 +471,17 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <header class="view-head">
         <h1>Ordens de Serviço</h1>
         <p>Acompanhamento dos serviços</p>
-        <button class="btn-primary" id="btnNovaOrdem">+ Nova OS</button>
+        <div class="view-head-actions">
+          <input type="text" id="buscaOrdens" placeholder="Buscar por cliente, placa/veículo ou serviço..." style="width:240px;">
+          <select id="filtroStatusOrdens" style="width:170px;">
+            <option value="">Todos os status</option>
+            <option value="orcamento">Orçamento</option>
+            <option value="aberta">Aberta</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+          </select>
+          <button class="btn-primary" id="btnNovaOrdem">+ Nova OS</button>
+        </div>
       </header>
 
       <div class="panel">
@@ -454,6 +492,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="ordensEmpty">Nenhuma ordem de serviço criada ainda.</p>
+        <div class="paginacao" id="ordensPaginacao"></div>
       </div>
     </section>
 
@@ -462,10 +501,23 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <header class="view-head">
         <h1>Agenda</h1>
         <p>Horários marcados e revisões periódicas</p>
-        <button class="btn-primary" id="btnNovoAgendamento">+ Novo agendamento</button>
+        <div class="view-head-actions">
+          <button type="button" class="btn-ghost" id="btnAgendaViewCalendario">📅 Calendário</button>
+          <button type="button" class="btn-ghost" id="btnAgendaViewLista">☰ Lista</button>
+          <button class="btn-primary" id="btnNovoAgendamento">+ Novo agendamento</button>
+        </div>
       </header>
 
-      <div class="panel">
+      <div class="panel" id="agendaCalendarioPanel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <button type="button" class="btn-icon" id="btnAgendaMesAnterior">‹</button>
+          <h3 id="agendaMesLabel" style="margin:0;"></h3>
+          <button type="button" class="btn-icon" id="btnAgendaMesProximo">›</button>
+        </div>
+        <div class="calendario-grid" id="agendaCalendarioGrid"></div>
+      </div>
+
+      <div class="panel" id="agendaListaPanel" style="display:none;">
         <div class="table-wrap">
           <table id="tabelaAgenda">
             <thead><tr><th>Data/Hora</th><th>Cliente</th><th>Veículo</th><th>Tipo</th><th>Serviço</th><th>Status</th><th>Ações</th></tr></thead>
@@ -673,11 +725,26 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
       <div class="panel" style="max-width:560px; margin-top:20px;">
         <div class="panel-head"><h2>Backup e exportação</h2></div>
-        <p style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Baixe uma cópia dos seus dados de vez em quando — é sua garantia caso algo dê errado.</p>
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-          <button type="button" class="btn-primary" id="btnBackupCompleto">⬇ Backup completo (JSON)</button>
+        <p style="color:var(--text-dim); font-size:13px; margin-bottom:4px;">Um backup automático completo é gerado todo dia às 22:00 (horário de São Paulo) e fica registrado no histórico abaixo.</p>
+        <p style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Você também pode baixar uma cópia manual a qualquer momento — é sua garantia caso algo dê errado.</p>
+        <label>Observação (motivo do backup manual, opcional)
+          <textarea id="backupObservacao" rows="2" placeholder="Ex: antes de mexer no estoque, fim do mês, etc."></textarea>
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;">
+          <button type="button" class="btn-primary" id="btnBackupCompleto">⬇ Backup manual (JSON)</button>
           <button type="button" class="btn-ghost" id="btnExportarClientes">Exportar clientes (CSV)</button>
           <button type="button" class="btn-ghost" id="btnExportarOrdens">Exportar ordens (CSV)</button>
+        </div>
+
+        <div style="margin-top:24px;">
+          <h3 style="margin:0 0 8px; font-size:14px;">Histórico de backups</h3>
+          <div class="table-wrap">
+            <table id="tabelaBackups">
+              <thead><tr><th>Data/hora</th><th>Tipo</th><th>Observação</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="backupsEmpty" style="display:none;">Nenhum backup registrado ainda.</p>
         </div>
       </div>
     </section>
@@ -698,10 +765,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
 </button>
 
-<!-- BOTÃO FLUTUANTE NOVA OS (atalho rápido) -->
+<!-- BOTÃO NOVA OS (atalho rápido, logo abaixo do botão Administração) -->
 <button id="btnNovaOSFloat" class="os-float" title="Abrir uma nova OS rapidinho">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-  Nova OS
 </button>
 
 <!-- BOTÃO FLUTUANTE WHATSAPP -->
@@ -738,6 +804,15 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
         <label>Placa
           <input type="text" name="placa" placeholder="ABC-1234" required>
+        </label>
+      </div>
+      <p style="font-size:12px; color:var(--text-dim); margin:2px 0 6px;">Revisão periódica automática (opcional) — ao concluir uma OS deste cliente, um lembrete é agendado sozinho.</p>
+      <div class="grid2">
+        <label>Revisar a cada (meses)
+          <input type="number" name="revisao_intervalo_meses" min="1" step="1" placeholder="Ex: 6">
+        </label>
+        <label>Revisar a cada (km)
+          <input type="number" name="revisao_intervalo_km" min="1" step="1" placeholder="Ex: 10000">
         </label>
       </div>
       <div class="modal-actions">
@@ -826,11 +901,11 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </p>
       <label>Forma de pagamento
         <select name="forma">
-          <option value="Dinheiro">Dinheiro</option>
           <option value="Pix">Pix</option>
+          <option value="Dinheiro">Dinheiro</option>
           <option value="Cartão de débito">Cartão de débito</option>
           <option value="Cartão de crédito">Cartão de crédito</option>
-          <option value="Boleto">Boleto</option>
+          <option value="Outros">Outros</option>
         </select>
       </label>
       <div class="modal-actions">
@@ -1128,6 +1203,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <option value="pago">Pago</option>
         </select>
       </label>
+      <label style="flex-direction:row; align-items:center; gap:8px;">
+        <input type="checkbox" name="recorrente" style="width:auto;">
+        Conta recorrente (repete todo mês — ex: aluguel, energia, internet)
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar conta</button>
@@ -1180,10 +1259,26 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   </div>
 </div>
 
-<!-- ÁREA DE IMPRESSÃO (só aparece quando manda imprimir uma OS) -->
+<!-- MODAL NOTA FISCAL / RECIBO -->
+<div class="modal" id="modalNotaFiscal">
+  <div class="modal-box" style="width:620px; max-height:90vh; display:flex; flex-direction:column;">
+    <h3>Nota fiscal / Recibo</h3>
+    <div style="overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:#fff;">
+      <div id="notaFiscalPreview"></div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Fechar</button>
+      <button type="button" class="btn-ghost" id="btnGerarPdfNotaFiscal">⬇ Gerar PDF</button>
+      <button type="button" class="btn-primary" id="btnImprimirNotaFiscal">🖶 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÁREA DE IMPRESSÃO (só aparece quando manda imprimir uma OS ou nota fiscal) -->
 <div id="areaImpressao"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 <script>
 /* ==========================================================
    CONEXÃO COM O SUPABASE
@@ -1216,6 +1311,7 @@ try {
       delete(){ escrita = true; return cadeia; },
       eq(){ return cadeia; },
       order(){ return cadeia; },
+      limit(){ return cadeia; },
       single(){ return Promise.resolve(escrita
         ? { data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado para salvar de verdade.' } }
         : { data:null, error:null }); },
@@ -1435,6 +1531,29 @@ DB.perfil = {
   },
 };
 
+DB.backups = {
+  async listarRecentes(limite = 30){
+    try {
+      const { data, error } = await supabaseClient.from('backups').select('id, created_at, tipo, observacao').order('created_at', { ascending:false }).limit(limite);
+      if(error){ console.error(error); return []; }
+      return data || [];
+    } catch(err){ console.error(err); return []; }
+  },
+  async registrar(tipo, observacao, dados){
+    try {
+      const { error } = await supabaseClient.from('backups').insert([{ tipo, observacao: observacao || null, dados }]);
+      if(error){ console.error('Erro ao registrar backup no histórico:', error); }
+    } catch(err){ console.error('Erro ao registrar backup no histórico:', err); }
+  },
+  async baixar(id){
+    try {
+      const { data, error } = await supabaseClient.from('backups').select('*').eq('id', id).single();
+      if(error || !data){ alert('Erro ao buscar backup: ' + mensagemErro(error)); return; }
+      baixarArquivo(`backup-paulo-mecanico-${data.created_at.slice(0,10)}.json`, JSON.stringify(data.dados, null, 2), 'application/json');
+    } catch(err){ alert('Erro ao buscar backup: ' + mensagemErro(err)); }
+  },
+};
+
 /* ==========================================================
    ÍCONES E HELPERS
    ========================================================== */
@@ -1445,6 +1564,7 @@ const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 const ICON_CALENDAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
 const ICON_PRINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>';
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+const ICON_INVOICE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/><path d="M9 9h1"/></svg>';
 
 function linkWhats(telefone){
   let d = (telefone || '').replace(/\D/g, '');
@@ -1623,6 +1743,8 @@ document.getElementById('formCliente').addEventListener('submit', async e => {
     telefone: f.get('telefone'),
     veiculo: f.get('veiculo'),
     placa: f.get('placa').toUpperCase(),
+    revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
+    revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
   };
   const ok = editingClienteId
     ? await DB.atualizarCliente(editingClienteId, dados)
@@ -1643,6 +1765,8 @@ function abrirEdicaoCliente(id){
   f.telefone.value = c.telefone;
   f.veiculo.value = c.veiculo;
   f.placa.value = c.placa;
+  f.revisao_intervalo_meses.value = c.revisao_intervalo_meses || '';
+  f.revisao_intervalo_km.value = c.revisao_intervalo_km || '';
   document.getElementById('tituloModalCliente').textContent = 'Editar cliente';
   abrirModal('modalCliente');
 }
@@ -1671,6 +1795,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   const cliente = stateClientes.find(c => c.id === clienteId);
   if(!cliente) return;
   const criandoNova = !editingOrdemId;
+  const statusAnterior = editingOrdemId ? (stateOrdens.find(x => x.id === editingOrdemId) || {}).status : null;
 
   const dados = {
     cliente_id: clienteId,
@@ -1690,6 +1815,9 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   if(!ok) return;
   await DB.ordemItens.substituir(ok.id, itensOrdemAtual);
   if(criandoNova) await baixarEstoquePorItens(itensOrdemAtual, ok.id);
+  if(dados.status === 'concluida' && statusAnterior !== 'concluida'){
+    await agendarRevisaoAutomatica(ok);
+  }
   e.target.reset();
   editingOrdemId = null;
   itensOrdemAtual = [];
@@ -1816,8 +1944,41 @@ function renderItensOrdem(){
 
 // Muda o status direto na tabela (Aberta → Em andamento → Concluída)
 async function mudarStatusOrdem(id, status){
+  const antes = stateOrdens.find(x => x.id === id);
+  const statusAnterior = antes ? antes.status : null;
   await DB.atualizarOrdem(id, { status });
+  if(status === 'concluida' && statusAnterior !== 'concluida' && antes){
+    await agendarRevisaoAutomatica(antes);
+  }
   render();
+}
+
+// Se o cliente da OS tiver um intervalo de revisão configurado (meses e/ou km),
+// cria sozinho o próximo lembrete de revisão periódica assim que a OS é concluída.
+async function agendarRevisaoAutomatica(ordem){
+  const cliente = stateClientes.find(c => c.id === ordem.cliente_id);
+  if(!cliente) return;
+  const meses = Number(cliente.revisao_intervalo_meses) || 0;
+  const km = Number(cliente.revisao_intervalo_km) || 0;
+  if(!meses && !km) return; // cliente sem intervalo configurado — nada a fazer automaticamente
+
+  const data = new Date();
+  data.setMonth(data.getMonth() + (meses || 6)); // sem meses configurado, usa 6 meses só como data provisória do lembrete
+
+  const partes = [];
+  if(meses) partes.push(`a cada ${meses} meses`);
+  if(km) partes.push(`a cada ${km} km${ordem.km ? ' (aprox. ' + (Number(ordem.km) + km).toLocaleString('pt-BR') + ' km)' : ''}`);
+
+  await DB.agendamentos.criar({
+    cliente_id: ordem.cliente_id,
+    cliente_nome: ordem.cliente_nome,
+    veiculo: ordem.veiculo,
+    data_hora: data.toISOString(),
+    tipo: 'revisao',
+    servico: `Revisão periódica automática — ${partes.join(' ou ')}`,
+    observacoes: `Gerado automaticamente após a conclusão da OS #${ordem.id} (${ordem.servico}).`,
+    status: 'agendado',
+  });
 }
 
 // Recebimento: marca a OS como paga, com forma de pagamento e data
@@ -2034,6 +2195,7 @@ document.getElementById('formContaPagar').addEventListener('submit', async e => 
   const dados = {
     descricao: f.get('descricao'), fornecedor_id: fornecedorId, fornecedor_nome: fornecedor ? fornecedor.nome : null,
     valor: Number(f.get('valor')), vencimento: f.get('vencimento') || null, status: f.get('status'),
+    recorrente: f.get('recorrente') === 'on',
   };
   const ok = editingContaPagarId
     ? await DB.contasPagar.atualizar(editingContaPagarId, dados)
@@ -2052,6 +2214,7 @@ function abrirEdicaoContaPagar(id){
   const f = document.getElementById('formContaPagar');
   f.descricao.value = x.descricao; f.fornecedorId.value = x.fornecedor_id || ''; f.valor.value = x.valor;
   f.vencimento.value = x.vencimento || ''; f.status.value = x.status;
+  f.recorrente.checked = !!x.recorrente;
   document.getElementById('tituloModalContaPagar').textContent = 'Editar conta a pagar';
   abrirModal('modalContaPagar');
 }
@@ -2061,10 +2224,34 @@ async function excluirContaPagar(id){
   render();
 }
 async function mudarStatusContaPagar(id, status){
+  const antes = stateContasPagar.find(c => c.id === id);
   const dados = { status };
   if(status === 'pago') dados.data_pagamento = new Date().toISOString();
   await DB.contasPagar.atualizar(id, dados);
+  if(status === 'pago' && antes && antes.status !== 'pago' && antes.recorrente){
+    await gerarProximaContaRecorrente(antes);
+  }
   render();
+}
+
+// Ao quitar uma conta marcada como recorrente, cria automaticamente a próxima ocorrência
+// (mesmo mês seguinte), pendente, pra não depender de lembrar de recadastrar todo mês.
+async function gerarProximaContaRecorrente(conta){
+  let proximoVencimento = null;
+  if(conta.vencimento){
+    const [ano, mes, dia] = conta.vencimento.split('-').map(Number);
+    const data = new Date(ano, mes - 1 + 1, dia); // mês seguinte, mesmo dia (ajusta sozinho se o mês não tiver esse dia)
+    proximoVencimento = data.toISOString().slice(0, 10);
+  }
+  await DB.contasPagar.criar({
+    descricao: conta.descricao,
+    fornecedor_id: conta.fornecedor_id || null,
+    fornecedor_nome: conta.fornecedor_nome || null,
+    valor: conta.valor,
+    vencimento: proximoVencimento,
+    status: 'pendente',
+    recorrente: true,
+  });
 }
 
 /* ==========================================================
@@ -2239,6 +2426,66 @@ async function excluirServico(id){
 /* ==========================================================
    AGENDA — agendamentos e revisões periódicas
    ========================================================== */
+let agendaModoView = 'calendario'; // 'calendario' | 'lista'
+let agendaMesAtual = new Date(); agendaMesAtual.setDate(1);
+const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function alternarAgendaView(modo){
+  agendaModoView = modo;
+  document.getElementById('agendaCalendarioPanel').style.display = modo === 'calendario' ? 'block' : 'none';
+  document.getElementById('agendaListaPanel').style.display = modo === 'lista' ? 'block' : 'none';
+  document.getElementById('btnAgendaViewCalendario').classList.toggle('active-toggle', modo === 'calendario');
+  document.getElementById('btnAgendaViewLista').classList.toggle('active-toggle', modo === 'lista');
+}
+document.getElementById('btnAgendaViewCalendario').addEventListener('click', () => alternarAgendaView('calendario'));
+document.getElementById('btnAgendaViewLista').addEventListener('click', () => alternarAgendaView('lista'));
+document.getElementById('btnAgendaMesAnterior').addEventListener('click', () => { agendaMesAtual.setMonth(agendaMesAtual.getMonth() - 1); renderAgendaCalendario(); });
+document.getElementById('btnAgendaMesProximo').addEventListener('click', () => { agendaMesAtual.setMonth(agendaMesAtual.getMonth() + 1); renderAgendaCalendario(); });
+alternarAgendaView('calendario');
+
+function renderAgendaCalendario(){
+  const grid = document.getElementById('agendaCalendarioGrid');
+  if(!grid) return;
+  const ano = agendaMesAtual.getFullYear(), mes = agendaMesAtual.getMonth();
+  document.getElementById('agendaMesLabel').textContent = `${MESES_PT[mes]} ${ano}`;
+
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay(); // 0 = domingo
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const diasMesAnterior = new Date(ano, mes, 0).getDate();
+  const hojeStr = new Date().toISOString().slice(0, 10);
+
+  const porDia = {};
+  stateAgendamentos.forEach(a => {
+    if(!a.data_hora) return;
+    const dia = a.data_hora.slice(0, 10);
+    (porDia[dia] = porDia[dia] || []).push(a);
+  });
+
+  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<div class="cal-weekday">${d}</div>`).join('');
+  const totalCelulas = Math.ceil((primeiroDiaSemana + diasNoMes) / 7) * 7;
+  for(let i = 0; i < totalCelulas; i++){
+    const numDia = i - primeiroDiaSemana + 1;
+    let dataCel, outroMes = false;
+    if(numDia < 1){ dataCel = new Date(ano, mes - 1, diasMesAnterior + numDia); outroMes = true; }
+    else if(numDia > diasNoMes){ dataCel = new Date(ano, mes + 1, numDia - diasNoMes); outroMes = true; }
+    else { dataCel = new Date(ano, mes, numDia); }
+    const diaStr = dataCel.toISOString().slice(0, 10);
+    const eventosDia = (porDia[diaStr] || []).sort((a, b) => (a.data_hora || '').localeCompare(b.data_hora || ''));
+    const maxVisiveis = 3;
+    const eventosHtml = eventosDia.slice(0, maxVisiveis).map(a => {
+      const hora = a.data_hora ? a.data_hora.slice(11, 16) : '';
+      const titulo = `${a.cliente_nome || ''}${a.servico ? ' — ' + a.servico : ''}`.replace(/"/g, '&quot;');
+      return `<div class="cal-evento ${a.tipo === 'revisao' ? 'revisao' : ''}" title="${titulo}" onclick="abrirEdicaoAgendamento(${a.id})">${hora ? hora + ' ' : ''}${a.cliente_nome || ''}</div>`;
+    }).join('');
+    const maisHtml = eventosDia.length > maxVisiveis ? `<div class="cal-mais">+${eventosDia.length - maxVisiveis} mais</div>` : '';
+    html += `<div class="cal-dia ${outroMes ? 'outro-mes' : ''} ${diaStr === hojeStr ? 'hoje' : ''}">
+      <div class="cal-num">${dataCel.getDate()}</div>
+      ${eventosHtml}${maisHtml}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
 function preencherSelectClientesAgenda(){
   const sel = document.getElementById('selectClienteAgenda');
   const atual = sel.value;
@@ -2435,6 +2682,103 @@ async function notificarStatusOrdem(ordemId){
 /* ==========================================================
    RENDERIZAÇÃO
    ========================================================== */
+function renderPaginacao(containerId, totalItens, paginaAtual, porPagina, aoMudarPagina){
+  const cont = document.getElementById(containerId);
+  if(!cont) return;
+  const totalPaginas = Math.max(1, Math.ceil(totalItens / porPagina));
+  if(totalItens <= porPagina){ cont.innerHTML = ''; return; }
+  cont.innerHTML = `
+    <button type="button" ${paginaAtual <= 1 ? 'disabled' : ''} data-pag="anterior">‹ Anterior</button>
+    <span>Página ${paginaAtual} de ${totalPaginas} (${totalItens} ${totalItens === 1 ? 'registro' : 'registros'})</span>
+    <button type="button" ${paginaAtual >= totalPaginas ? 'disabled' : ''} data-pag="proxima">Próxima ›</button>`;
+  const btnAnt = cont.querySelector('[data-pag="anterior"]');
+  const btnProx = cont.querySelector('[data-pag="proxima"]');
+  if(btnAnt) btnAnt.addEventListener('click', () => aoMudarPagina(paginaAtual - 1));
+  if(btnProx) btnProx.addEventListener('click', () => aoMudarPagina(paginaAtual + 1));
+}
+
+const CLIENTES_POR_PAGINA = 20;
+let clientesPaginaAtual = 1;
+function renderTabelaClientes(){
+  const inputBusca = document.getElementById('buscaClientes');
+  const busca = (inputBusca.value || '').trim().toLowerCase();
+  const filtrados = busca
+    ? stateClientes.filter(c => `${c.nome} ${c.telefone} ${c.veiculo} ${c.placa}`.toLowerCase().includes(busca))
+    : stateClientes;
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / CLIENTES_POR_PAGINA));
+  if(clientesPaginaAtual > totalPaginas) clientesPaginaAtual = totalPaginas;
+  const inicio = (clientesPaginaAtual - 1) * CLIENTES_POR_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + CLIENTES_POR_PAGINA);
+
+  document.querySelector('#tabelaClientes tbody').innerHTML = pagina.map(c => `
+    <tr>
+      <td>${c.nome}</td><td>${c.telefone}</td><td>${c.veiculo}</td>
+      <td><span class="placa-chip">${c.placa}</span></td>
+      <td class="icon-row">
+        <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
+        <button class="btn-icon" title="Histórico e CRM do cliente" onclick="abrirHistorico(${c.id})">${ICON_HISTORY}</button>
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoCliente(${c.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirCliente(${c.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('clientesEmpty').textContent = busca && !filtrados.length
+    ? 'Nenhum cliente encontrado para essa busca.' : 'Nenhum cliente cadastrado ainda.';
+  document.getElementById('clientesEmpty').style.display = filtrados.length ? 'none' : 'block';
+  renderPaginacao('clientesPaginacao', filtrados.length, clientesPaginaAtual, CLIENTES_POR_PAGINA, p => { clientesPaginaAtual = p; renderTabelaClientes(); });
+}
+document.getElementById('buscaClientes').addEventListener('input', () => { clientesPaginaAtual = 1; renderTabelaClientes(); });
+
+// Linha de uma OS — reaproveitada pela tabela paginada e por qualquer outro lugar que precise renderizar uma OS
+const linhaOrdem = o => `
+    <tr>
+      <td>${o.cliente_nome}</td><td>${o.veiculo}</td><td>${o.servico}</td>
+      <td>
+        <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
+          <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
+          <option value="aberta" ${o.status==='aberta'?'selected':''}>Aberta</option>
+          <option value="andamento" ${o.status==='andamento'?'selected':''}>Em andamento</option>
+          <option value="concluida" ${o.status==='concluida'?'selected':''}>Concluída</option>
+        </select>
+      </td>
+      <td>${moeda(o.valor)}</td>
+      <td>${o.pago
+        ? `<span class="pago-chip">Pago${o.forma_pagamento ? ' · ' + o.forma_pagamento : ''}</span>`
+        : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
+      <td class="icon-row">
+        ${o.status === 'orcamento' ? `<button class="btn-icon" title="Aprovar orçamento" onclick="aprovarOrcamento(${o.id})">✅</button>` : ''}
+        <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
+        <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
+        <button class="btn-icon" title="Gerar nota fiscal" onclick="abrirNotaFiscal(${o.id})">${ICON_INVOICE}</button>
+        ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`;
+
+const ORDENS_POR_PAGINA = 20;
+let ordensPaginaAtual = 1;
+function renderTabelaOrdens(){
+  const busca = (document.getElementById('buscaOrdens').value || '').trim().toLowerCase();
+  const filtroStatus = document.getElementById('filtroStatusOrdens').value;
+  let filtrados = stateOrdens;
+  if(filtroStatus) filtrados = filtrados.filter(o => o.status === filtroStatus);
+  if(busca) filtrados = filtrados.filter(o => `${o.cliente_nome} ${o.veiculo} ${o.servico}`.toLowerCase().includes(busca));
+
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / ORDENS_POR_PAGINA));
+  if(ordensPaginaAtual > totalPaginas) ordensPaginaAtual = totalPaginas;
+  const inicio = (ordensPaginaAtual - 1) * ORDENS_POR_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + ORDENS_POR_PAGINA);
+
+  document.querySelector('#tabelaOrdens tbody').innerHTML = pagina.map(linhaOrdem).join('');
+  document.getElementById('ordensEmpty').textContent = (busca || filtroStatus) && !filtrados.length
+    ? 'Nenhuma ordem de serviço encontrada para esse filtro.' : 'Nenhuma ordem de serviço criada ainda.';
+  document.getElementById('ordensEmpty').style.display = filtrados.length ? 'none' : 'block';
+  renderPaginacao('ordensPaginacao', filtrados.length, ordensPaginaAtual, ORDENS_POR_PAGINA, p => { ordensPaginaAtual = p; renderTabelaOrdens(); });
+}
+document.getElementById('buscaOrdens').addEventListener('input', () => { ordensPaginaAtual = 1; renderTabelaOrdens(); });
+document.getElementById('filtroStatusOrdens').addEventListener('change', () => { ordensPaginaAtual = 1; renderTabelaOrdens(); });
+
 async function render(){
   const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos] = await Promise.all([
     DB.getClientes(),
@@ -2467,48 +2811,11 @@ async function render(){
     new Date(a.data_hora) >= new Date() && new Date(a.data_hora) <= em7dias
   ).length;
 
-  // tabela clientes
-  const corpoClientes = document.querySelector('#tabelaClientes tbody');
-  corpoClientes.innerHTML = clientes.map(c => `
-    <tr>
-      <td>${c.nome}</td><td>${c.telefone}</td><td>${c.veiculo}</td>
-      <td><span class="placa-chip">${c.placa}</span></td>
-      <td class="icon-row">
-        <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
-        <button class="btn-icon" title="Histórico e CRM do cliente" onclick="abrirHistorico(${c.id})">${ICON_HISTORY}</button>
-        <button class="btn-icon" title="Editar" onclick="abrirEdicaoCliente(${c.id})">${ICON_EDIT}</button>
-        <button class="btn-icon danger" title="Excluir" onclick="excluirCliente(${c.id})">${ICON_DELETE}</button>
-      </td>
-    </tr>`).join('');
-  document.getElementById('clientesEmpty').style.display = clientes.length ? 'none' : 'block';
+  // tabela clientes (busca + paginação)
+  renderTabelaClientes();
 
-  // tabela ordens (completa)
-  const linhaOrdem = o => `
-    <tr>
-      <td>${o.cliente_nome}</td><td>${o.veiculo}</td><td>${o.servico}</td>
-      <td>
-        <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
-          <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
-          <option value="aberta" ${o.status==='aberta'?'selected':''}>Aberta</option>
-          <option value="andamento" ${o.status==='andamento'?'selected':''}>Em andamento</option>
-          <option value="concluida" ${o.status==='concluida'?'selected':''}>Concluída</option>
-        </select>
-      </td>
-      <td>${moeda(o.valor)}</td>
-      <td>${o.pago
-        ? `<span class="pago-chip">Pago${o.forma_pagamento ? ' · ' + o.forma_pagamento : ''}</span>`
-        : `<button class="btn-ghost" onclick="abrirRecebimento(${o.id})">Registrar</button>`}</td>
-      <td class="icon-row">
-        ${o.status === 'orcamento' ? `<button class="btn-icon" title="Aprovar orçamento" onclick="aprovarOrcamento(${o.id})">✅</button>` : ''}
-        <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
-        <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
-        ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
-        <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
-        <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
-      </td>
-    </tr>`;
-  document.querySelector('#tabelaOrdens tbody').innerHTML = ordens.map(linhaOrdem).join('');
-  document.getElementById('ordensEmpty').style.display = ordens.length ? 'none' : 'block';
+  // tabela ordens (busca + filtro de status + paginação)
+  renderTabelaOrdens();
 
   // tabela recentes (dashboard, sem coluna de ação, últimas 5)
   document.querySelector('#tabelaRecentes tbody').innerHTML = ordens.slice(0,5).map(o => `
@@ -2533,7 +2840,7 @@ async function render(){
   // tabela contas a pagar
   document.querySelector('#tabelaContasPagar tbody').innerHTML = contasPagar.map(x => `
     <tr>
-      <td>${x.descricao}</td><td>${x.fornecedor_nome || '—'}</td><td>${dataBR(x.vencimento)}</td><td>${moeda(x.valor)}</td>
+      <td>${x.descricao}${x.recorrente ? ' <span title="Conta recorrente — repete todo mês">🔁</span>' : ''}</td><td>${x.fornecedor_nome || '—'}</td><td>${dataBR(x.vencimento)}</td><td>${moeda(x.valor)}</td>
       <td>
         <select class="status-select ${x.status}" onchange="mudarStatusContaPagar(${x.id}, this.value)">
           <option value="pendente" ${x.status==='pendente'?'selected':''}>Pendente</option>
@@ -2618,8 +2925,7 @@ async function render(){
       </td>
     </tr>`).join('');
   document.getElementById('agendaEmpty').style.display = agendamentos.length ? 'none' : 'block';
-
-  // ---- relatórios ----
+  renderAgendaCalendario();
   const hoje = new Date().toISOString().slice(0,10);
   const soma = (arr, campo) => arr.reduce((acc, x) => acc + Number(x[campo] || 0), 0);
 
@@ -2917,6 +3223,92 @@ async function imprimirOrdem(id){
 }
 
 /* ==========================================================
+   NOTA FISCAL / RECIBO (com linha de assinatura do cliente)
+   ========================================================== */
+let ordemNotaFiscalAtual = null;
+
+function montarNotaFiscalHTML(o, itens){
+  const linhasHtml = itens.length
+    ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
+    : `<tr><td colspan="4">${o.servico}</td></tr>`;
+  const agora = new Date();
+  const dataEmissao = agora.toLocaleDateString('pt-BR');
+  return `
+    <div style="padding:28px; font-family:Arial,sans-serif; color:#000; background:#fff;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <h2 style="margin:0;">${statePerfil.nome_oficina || 'Oficina'}</h2>
+          <p style="margin:4px 0 0; font-size:13px;">
+            ${statePerfil.endereco || ''}${statePerfil.telefone ? ' · ' + statePerfil.telefone : ''}
+            ${statePerfil.cnpj ? '<br>CNPJ: ' + statePerfil.cnpj : ''}
+          </p>
+        </div>
+        <div style="text-align:right;">
+          <h3 style="margin:0;">NOTA FISCAL / RECIBO</h3>
+          <p style="margin:4px 0 0; font-size:13px;">
+            ${o.numero_nf ? 'Nº ' + o.numero_nf : 'Sem número de NF cadastrado'}<br>
+            Emitido em: ${dataEmissao}
+          </p>
+        </div>
+      </div>
+      <hr>
+      <p>
+        <strong>Cliente:</strong> ${o.cliente_nome}<br>
+        <strong>Veículo:</strong> ${o.veiculo}<br>
+        ${o.km ? `<strong>Quilometragem:</strong> ${o.km.toLocaleString('pt-BR')} km<br>` : ''}
+        <strong>Data da OS:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}
+        ${o.forma_pagamento ? `<br><strong>Forma de pagamento:</strong> ${o.forma_pagamento}` : ''}
+      </p>
+      <p><strong>Serviço:</strong> ${o.servico}</p>
+      ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
+      <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
+        <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
+        <tbody>${linhasHtml}</tbody>
+      </table>
+      <p style="text-align:right; font-size:18px; margin-top:16px;"><strong>Total: ${moeda(o.valor)}</strong></p>
+
+      <div style="margin-top:70px; display:flex; gap:40px;">
+        <div style="flex:1; text-align:center;">
+          <div style="border-top:1px solid #000; padding-top:6px;">Assinatura do Cliente</div>
+        </div>
+        <div style="flex:1; text-align:center;">
+          <div style="border-top:1px solid #000; padding-top:6px;">${statePerfil.nome_oficina || 'Oficina'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function abrirNotaFiscal(id){
+  const o = stateOrdens.find(x => x.id === id);
+  if(!o) return;
+  ordemNotaFiscalAtual = o;
+  const itens = await DB.ordemItens.listar(id);
+  document.getElementById('notaFiscalPreview').innerHTML = montarNotaFiscalHTML(o, itens);
+  abrirModal('modalNotaFiscal');
+}
+
+function imprimirNotaFiscal(){
+  document.getElementById('areaImpressao').innerHTML = document.getElementById('notaFiscalPreview').innerHTML;
+  window.print();
+}
+
+function gerarPdfNotaFiscal(){
+  const el = document.getElementById('notaFiscalPreview');
+  if(!window.html2pdf){ alert('Não foi possível carregar o gerador de PDF (verifique sua internet) — use o botão Imprimir e escolha "Salvar como PDF".'); return; }
+  const numero = ordemNotaFiscalAtual && ordemNotaFiscalAtual.numero_nf ? ordemNotaFiscalAtual.numero_nf : (ordemNotaFiscalAtual ? ordemNotaFiscalAtual.id : 'ordem');
+  html2pdf().set({
+    margin: 10,
+    filename: `nota-fiscal-${numero}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  }).from(el).save();
+}
+
+document.getElementById('btnImprimirNotaFiscal').addEventListener('click', imprimirNotaFiscal);
+document.getElementById('btnGerarPdfNotaFiscal').addEventListener('click', gerarPdfNotaFiscal);
+
+/* ==========================================================
    BACKUP E EXPORTAÇÃO DE DADOS
    ========================================================== */
 function baixarArquivo(nome, conteudo, tipo){
@@ -2941,8 +3333,13 @@ async function exportarBackupCompleto(){
       const { data, error } = await supabaseClient.from(t).select('*');
       backup[t] = error ? [] : (data || []);
     }
+    const observacaoEl = document.getElementById('backupObservacao');
+    const observacao = observacaoEl ? observacaoEl.value.trim() : '';
     baixarArquivo(`backup-paulo-mecanico-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(backup, null, 2), 'application/json');
+    await DB.backups.registrar('manual', observacao, backup);
+    if(observacaoEl) observacaoEl.value = '';
     mostrarAviso('Backup baixado com sucesso!');
+    carregarHistoricoBackups();
   } catch(err){
     alert('Erro ao gerar backup: ' + mensagemErro(err));
   }
@@ -2953,9 +3350,25 @@ function exportarClientesCSV(){
 function exportarOrdensCSV(){
   baixarArquivo('ordens.csv', paraCSV(stateOrdens), 'text/csv;charset=utf-8');
 }
+const tipoBackupLabel = { automatico: 'Automático (22h)', manual: 'Manual' };
+async function carregarHistoricoBackups(){
+  const lista = await DB.backups.listarRecentes(30);
+  const tbody = document.querySelector('#tabelaBackups tbody');
+  if(!tbody) return;
+  tbody.innerHTML = lista.map(b => `
+    <tr>
+      <td>${new Date(b.created_at).toLocaleString('pt-BR')}</td>
+      <td>${tipoBackupLabel[b.tipo] || b.tipo}</td>
+      <td>${b.observacao || '—'}</td>
+      <td><button type="button" class="btn-ghost" onclick="DB.backups.baixar(${b.id})">⬇ Baixar</button></td>
+    </tr>`).join('');
+  const empty = document.getElementById('backupsEmpty');
+  if(empty) empty.style.display = lista.length ? 'none' : 'block';
+}
 document.getElementById('btnBackupCompleto').addEventListener('click', exportarBackupCompleto);
 document.getElementById('btnExportarClientes').addEventListener('click', exportarClientesCSV);
 document.getElementById('btnExportarOrdens').addEventListener('click', exportarOrdensCSV);
+carregarHistoricoBackups();
 
 /* ==========================================================
    TELA DE LOGIN — a fazer depois
