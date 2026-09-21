@@ -317,7 +317,12 @@ tr:last-child td{border-bottom:none;}
 
 /* Nova OS compacta: 2 colunas pra caber tudo na tela sem rolar */
 #modalOrdem .modal-box{width:880px; max-width:96vw; max-height:96vh; overflow-y:auto; padding:14px 20px;}
-#modalOrdem h3{font-size:17px; margin-bottom:8px;}
+#modalOrdem h3{font-size:17px; margin:0;}
+#modalOrdem .os-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
+#btnAjudaOS{padding:5px 12px; font-size:12px;}
+.ajuda-os{font-size:13px; line-height:1.5; color:var(--text-dim);}
+.ajuda-os ol{margin:10px 0 0 20px; padding:0;} .ajuda-os li{margin-bottom:9px;} .ajuda-os strong{color:var(--text);}
+.ajuda-os .ajuda-caixa{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-top:12px;}
 #modalOrdem form label{margin-bottom:7px; gap:3px; font-size:12px;}
 #modalOrdem input, #modalOrdem select, #modalOrdem textarea{padding:6px 9px; font-size:13px;}
 #modalOrdem textarea{resize:none;}
@@ -928,7 +933,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL ORDEM -->
 <div class="modal" id="modalOrdem">
   <div class="modal-box">
-    <h3 id="tituloModalOrdem">Nova ordem de serviço</h3>
+    <div class="os-head"><h3 id="tituloModalOrdem">Nova ordem de serviço</h3><button type="button" class="btn-ghost" id="btnAjudaOS">❓ Como preencher</button></div>
     <form id="formOrdem">
       <div class="os-cols">
         <div>
@@ -943,7 +948,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
               <input type="number" name="km" min="0" step="1" placeholder="Ex: 45000">
             </label>
             <label>Status
-              <select name="status">
+              <select name="status" required>
+                <option value="" disabled selected hidden>Escolha o status</option>
                 <option value="orcamento">Orçamento</option>
                 <option value="aberta">Aberta</option>
                 <option value="andamento">Em andamento</option>
@@ -969,6 +975,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <div class="grid2">
             <label>Tipo
               <select id="itemTipoSelect">
+                <option value="" disabled selected hidden>Escolha o tipo</option>
                 <option value="servico">Serviço (mão de obra)</option>
                 <option value="peca">Peça (estoque)</option>
               </select>
@@ -997,6 +1004,33 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   </div>
 </div>
 
+<!-- MODAL AJUDA DA OS -->
+<div class="modal" id="modalAjudaOS" style="z-index:60;">
+  <div class="modal-box" style="width:640px; max-height:90vh; overflow-y:auto;">
+    <h3>Como preencher a ordem de serviço</h3>
+    <div class="ajuda-os">
+      Preencha na ordem abaixo (primeiro a coluna da esquerda, depois a da direita). Obrigatórios: <strong>Cliente, Descrição, Status e Valor total</strong> — o sistema avisa se faltar algum.
+      <ol>
+        <li><strong>Cliente</strong> — escolha na lista (aparece nome — veículo). O veículo e a placa da OS vêm do cadastro dele. Se o cliente ainda não existe, cadastre antes em <em>Cadastros › Clientes</em>.</li>
+        <li><strong>Descrição do serviço</strong> — escreva o que será feito. Ex.: "Troca de óleo e filtro".</li>
+        <li><strong>Quilometragem</strong> (opcional) — km que o veículo marca na entrada. Sai na nota/recibo e serve de base para a próxima revisão por km.</li>
+        <li><strong>Status</strong> — <em>Orçamento</em>: o cliente ainda vai aprovar · <em>Aberta</em>: aprovada, ainda não começou · <em>Em andamento</em>: está sendo feita · <em>Concluída</em>: serviço pronto (veja o quadro abaixo).</li>
+        <li><strong>Itens (serviços e peças)</strong> — escolha o <em>Tipo</em>: <em>Serviço</em> (mão de obra, vem de Cadastros › Serviços) ou <em>Peça</em> (vem do Estoque). Depois escolha o <em>Item</em>, informe a <em>Quantidade</em> e clique em <strong>+ Adicionar item</strong>. Repita para cada item; a lixeira remove. Para aparecer na lista, o serviço ou a peça precisa estar cadastrado antes.</li>
+        <li><strong>Valor total</strong> — é somado sozinho a cada item adicionado. Para dar desconto ou fechar um valor, ajuste o campo <em>depois</em> de adicionar todos os itens (adicionar ou remover um item recalcula o total).</li>
+        <li><strong>Garantia (meses)</strong> (opcional) — a garantia conta a partir da data da OS e aparece no histórico do cliente.</li>
+        <li><strong>Nº da nota fiscal</strong> e <strong>Comentários</strong> (opcionais) — a nota fica registrada na OS; os comentários são observações internas.</li>
+        <li>Clique em <strong>Salvar OS</strong>.</li>
+      </ol>
+      <div class="ajuda-caixa">
+        <strong>Ao salvar como "Concluída"</strong> abre a tela <em>Concluir OS e receber</em>: escolha se o cliente pagou agora (e a forma de pagamento) ou se fica a receber (com vencimento). Ao confirmar, o sistema dá baixa no estoque das peças usadas, registra o financeiro e, se o cliente tem revisão periódica cadastrada, agenda a próxima revisão. As peças só saem do estoque nesse momento.
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button type="button" class="btn-primary" data-close>Entendi</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RECEBIMENTO -->
 <div class="modal" id="modalFotosOS">
   <div class="modal-box" style="max-width:640px;">
@@ -1014,7 +1048,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         Valor da OS: <strong id="recebimentoValor" style="color:var(--text);"></strong>
       </p>
       <label>Situação do pagamento
-        <select name="quando" id="recebimentoQuando">
+        <select name="quando" id="recebimentoQuando" required>
+          <option value="" disabled selected hidden>Escolha a situação do pagamento</option>
           <option value="agora">Cliente pagou agora</option>
           <option value="depois">Ficar a receber (fiado/parcelado)</option>
         </select>
@@ -1024,6 +1059,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <label id="recebimentoFormaWrap">Forma de pagamento
         <select name="forma">
+          <option value="" disabled selected hidden>Escolha a forma de pagamento</option>
           <option value="Pix">Pix</option>
           <option value="Dinheiro">Dinheiro</option>
           <option value="Cartão de débito">Cartão de débito</option>
@@ -1063,7 +1099,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <form id="formInteracao">
         <div class="grid2">
           <label>Tipo
-            <select name="tipo">
+            <select name="tipo" required>
+              <option value="" disabled selected hidden>Escolha o tipo de registro</option>
               <option value="mensagem">Conversa</option>
               <option value="autorizacao">Autorização de serviço</option>
               <option value="orcamento">Orçamento</option>
@@ -1112,7 +1149,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <input type="datetime-local" name="dataHora" required>
         </label>
         <label>Tipo
-          <select name="tipo">
+          <select name="tipo" required>
+            <option value="" disabled selected hidden>Escolha o tipo</option>
             <option value="agendamento">Agendamento</option>
             <option value="revisao">Revisão periódica</option>
           </select>
@@ -1125,7 +1163,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <textarea name="observacoes" rows="2"></textarea>
       </label>
       <label>Status
-        <select name="status">
+        <select name="status" required>
+          <option value="" disabled selected hidden>Escolha o status</option>
           <option value="agendado">Agendado</option>
           <option value="confirmado">Confirmado</option>
           <option value="concluido">Concluído</option>
@@ -1271,7 +1310,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <form id="formMovimento">
       <div class="grid2">
         <label>Tipo
-          <select name="tipo">
+          <select name="tipo" required>
+            <option value="" disabled selected hidden>Escolha entrada ou saída</option>
             <option value="entrada">Entrada (compra/reposição)</option>
             <option value="saida">Saída (uso/perda/ajuste)</option>
           </select>
@@ -1330,7 +1370,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <input type="text" name="descricao" placeholder="Ex: Compra de peças" required>
       </label>
       <label>Fornecedor
-        <select name="fornecedorId"><option value="">(sem fornecedor)</option></select>
+        <select name="fornecedorId"><option value="">Escolha o fornecedor (opcional)</option></select>
       </label>
       <div class="grid2">
         <label>Valor (R$)
@@ -1341,7 +1381,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
       </div>
       <label>Status
-        <select name="status">
+        <select name="status" required>
+          <option value="" disabled selected hidden>Escolha o status</option>
           <option value="pendente">Pendente</option>
           <option value="pago">Pago</option>
         </select>
@@ -1367,7 +1408,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <input type="text" name="descricao" placeholder="Ex: Serviço avulso" required>
       </label>
       <label>Cliente
-        <select name="clienteId"><option value="">(sem cliente)</option></select>
+        <select name="clienteId"><option value="">Escolha o cliente (opcional)</option></select>
       </label>
       <div class="grid2">
         <label>Valor (R$)
@@ -1378,7 +1419,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
       </div>
       <label>Status
-        <select name="status">
+        <select name="status" required>
+          <option value="" disabled selected hidden>Escolha o status</option>
           <option value="pendente">Pendente</option>
           <option value="recebido">Recebido</option>
         </select>
@@ -2032,7 +2074,7 @@ async function preencherSelectClientes(){
   const sel = document.getElementById('selectCliente');
   const clientes = stateClientes.length ? stateClientes : await DB.getClientes();
   sel.innerHTML = clientes.length
-    ? clientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
+    ? '<option value="" disabled selected hidden>Escolha o cliente</option>' + clientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
     : '<option value="">Cadastre um cliente primeiro</option>';
 }
 
@@ -2139,22 +2181,26 @@ async function excluirOrdem(id){
 function preencherSelectItemRef(){
   const tipo = document.getElementById('itemTipoSelect').value;
   const sel = document.getElementById('itemRefSelect');
+  const ph = t => `<option value="" disabled selected hidden>${t}</option>`;
   if(tipo === 'servico'){
     sel.innerHTML = stateServicos.length
-      ? stateServicos.map(s => `<option value="${s.id}" data-preco="${s.preco_padrao}" data-tempo="${s.tempo_estimado_horas||0}" data-nome="${s.nome}">${s.nome} — ${moeda(s.preco_padrao)}</option>`).join('')
+      ? ph('Escolha o serviço') + stateServicos.map(s => `<option value="${s.id}" data-preco="${s.preco_padrao}" data-tempo="${s.tempo_estimado_horas||0}" data-nome="${s.nome}">${s.nome} — ${moeda(s.preco_padrao)}</option>`).join('')
       : '<option value="">Cadastre um serviço primeiro</option>';
-  } else {
+  } else if(tipo === 'peca'){
     sel.innerHTML = stateEstoque.length
-      ? stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
+      ? ph('Escolha a peça') + stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
       : '<option value="">Cadastre um item de estoque primeiro</option>';
+  } else {
+    sel.innerHTML = ph('Escolha o tipo primeiro');
   }
 }
 document.getElementById('itemTipoSelect').addEventListener('change', preencherSelectItemRef);
+document.getElementById('btnAjudaOS').addEventListener('click', () => abrirModal('modalAjudaOS'));
 
 document.getElementById('btnAddItem').addEventListener('click', () => {
   const tipo = document.getElementById('itemTipoSelect').value;
   const opt = document.getElementById('itemRefSelect').selectedOptions[0];
-  if(!opt || !opt.value) return;
+  if(!opt || !opt.value){ alert('Escolha o tipo e o item antes de clicar em "+ Adicionar item".'); return; }
   const qtd = Number(document.getElementById('itemQtdInput').value) || 1;
   const preco = Number(opt.dataset.preco) || 0;
   itensOrdemAtual.push({
@@ -2283,14 +2329,17 @@ function abrirRecebimento(id, concluindo){
   recebendoOrdemId = id;
   document.getElementById('tituloRecebimento').textContent = concluindo ? 'Concluir OS e receber' : 'Registrar recebimento';
   document.getElementById('recebimentoValor').textContent = moeda(o.valor);
-  document.getElementById('recebimentoQuando').value = 'agora';
+  document.getElementById('recebimentoQuando').value = '';
   document.getElementById('recebimentoQuando').dispatchEvent(new Event('change'));
   abrirModal('modalRecebimento');
 }
 document.getElementById('recebimentoQuando').addEventListener('change', e => {
-  const agora = e.target.value === 'agora';
-  document.getElementById('recebimentoVencWrap').style.display = agora ? 'none' : '';
+  const agora = e.target.value === 'agora', depois = e.target.value === 'depois';
+  document.getElementById('recebimentoVencWrap').style.display = depois ? '' : 'none';
   document.getElementById('recebimentoFormaWrap').style.display = agora ? '' : 'none';
+  const forma = document.querySelector('#formRecebimento [name="forma"]');
+  forma.required = agora; // só é obrigatória quando aparece
+  if(!agora) forma.value = '';
 });
 
 // Fluxo único (idempotente): conclui a OS, baixa o estoque, registra o recebimento,
@@ -2507,13 +2556,13 @@ document.getElementById('btnConfirmarImportacao').addEventListener('click', asyn
 function preencherSelectFornecedores(){
   const sel = document.querySelector('#formContaPagar select[name="fornecedorId"]');
   const atual = sel.value;
-  sel.innerHTML = '<option value="">(sem fornecedor)</option>' + stateFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+  sel.innerHTML = '<option value="">Escolha o fornecedor (opcional)</option>' + stateFornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
   sel.value = atual;
 }
 function preencherSelectClientesReceber(){
   const sel = document.querySelector('#formContaReceber select[name="clienteId"]');
   const atual = sel.value;
-  sel.innerHTML = '<option value="">(sem cliente)</option>' + stateClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  sel.innerHTML = '<option value="">Escolha o cliente (opcional)</option>' + stateClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
   sel.value = atual;
 }
 
@@ -2954,7 +3003,7 @@ function preencherSelectClientesAgenda(){
   const sel = document.getElementById('selectClienteAgenda');
   const atual = sel.value;
   sel.innerHTML = stateClientes.length
-    ? stateClientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
+    ? '<option value="" disabled selected hidden>Escolha o cliente</option>' + stateClientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
     : '<option value="">Cadastre um cliente primeiro</option>';
   sel.value = atual;
 }
