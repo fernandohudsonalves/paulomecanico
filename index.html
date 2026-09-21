@@ -303,6 +303,33 @@ tr:last-child td{border-bottom:none;}
 .btn-icon.whats:hover{background:rgba(37,211,102,.12); color:#25D366;}
 .btn-icon.danger:hover{background:rgba(255,59,23,.12); color:var(--accent);}
 
+
+/* Tipo de veículo (chips com ícone) */
+.tipo-veic{display:flex; gap:6px; margin:0 0 14px;}
+.tipo-chip{position:relative; flex:1 1 0; min-width:0; margin:0 !important; flex-direction:row !important; gap:0 !important;}
+.tipo-chip input{position:absolute; opacity:0; width:0; height:0; padding:0; border:0;}
+.tipo-chip span{display:flex; flex-direction:column; align-items:center; gap:3px; width:100%; padding:8px 2px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2); color:var(--text-dim); font-size:11px; font-weight:600; cursor:pointer; text-align:center; white-space:nowrap;}
+.tipo-chip span svg{width:26px; height:26px;}
+.tipo-chip input:checked + span{border-color:var(--accent); color:var(--accent); background:rgba(255,59,23,.12);}
+.tipo-chip input:focus-visible + span{outline:2px solid var(--accent);}
+.veic-ico{display:inline-flex; vertical-align:middle; margin-right:6px; color:var(--text-dim);}
+.veic-ico svg{width:18px; height:18px;}
+
+/* Nova OS compacta: 2 colunas pra caber tudo na tela sem rolar */
+#modalOrdem .modal-box{width:880px; max-width:96vw; max-height:96vh; overflow-y:auto; padding:14px 20px;}
+#modalOrdem h3{font-size:17px; margin-bottom:8px;}
+#modalOrdem form label{margin-bottom:7px; gap:3px; font-size:12px;}
+#modalOrdem input, #modalOrdem select, #modalOrdem textarea{padding:6px 9px; font-size:13px;}
+#modalOrdem textarea{resize:none;}
+#modalOrdem .os-cols{display:grid; grid-template-columns:1fr 1fr; gap:0 22px; align-items:start;}
+#modalOrdem .os-cols > div{min-width:0;}
+#modalOrdem .grid2{gap:8px;}
+#modalOrdem .itens-lista{max-height:110px; margin-bottom:8px;}
+#modalOrdem .modal-actions{margin-top:0;}
+@media(max-width:760px){#modalOrdem .os-cols{grid-template-columns:1fr;}}
+.import-mapa{display:grid; grid-template-columns:1fr 1fr; gap:0 12px;}
+#importPrevia{width:100%; font-size:12px;} #importPrevia td,#importPrevia th{padding:4px 8px; white-space:nowrap;}
+
 /* MODAL */
 .modal{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); align-items:center; justify-content:center; z-index:50;}
 .modal.active{display:flex;}
@@ -592,10 +619,17 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button class="btn-primary" id="btnNovoEstoque">+ Novo item</button>
       </header>
 
+      <div class="panel" style="margin-bottom:14px;">
+        <label style="margin:0;">📥 Importar itens de uma planilha Excel (.xlsx, .xls ou .csv)
+          <input type="file" id="arquivoEstoque" accept=".xlsx,.xls,.csv">
+        </label>
+        <p style="font-size:12px; color:var(--text-dim); margin-top:6px;">As colunas são reconhecidas sozinhas (Nome/Produto, Quantidade, Custo, Venda...). Você confere e ajusta antes de importar.</p>
+      </div>
+
       <div class="panel">
         <div class="table-wrap">
           <table id="tabelaEstoque">
-            <thead><tr><th>Item</th><th>Quantidade</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Item</th><th>Categoria</th><th>Quantidade</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -850,15 +884,22 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL CLIENTE -->
 <div class="modal" id="modalCliente">
-  <div class="modal-box">
+  <div class="modal-box" style="width:480px;">
     <h3 id="tituloModalCliente">Novo cliente</h3>
     <form id="formCliente">
       <label>Nome completo
         <input type="text" name="nome" required>
       </label>
-      <label>Telefone
-        <input type="text" name="telefone" placeholder="(00) 00000-0000" required>
-      </label>
+      <div class="grid2">
+        <label>Telefone
+          <input type="text" name="telefone" placeholder="(00) 00000-0000" required>
+        </label>
+        <label>CPF (opcional)
+          <input type="text" name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+        </label>
+      </div>
+      <span style="font-size:13px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:6px;">Tipo de veículo</span>
+      <div class="tipo-veic" id="tipoVeiculoChips" role="radiogroup" aria-label="Tipo de veículo"></div>
       <div class="grid2">
         <label>Veículo (modelo)
           <input type="text" name="veiculo" placeholder="Ex: Gol 1.6" required>
@@ -886,64 +927,68 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL ORDEM -->
 <div class="modal" id="modalOrdem">
-  <div class="modal-box" style="width:540px;">
+  <div class="modal-box">
     <h3 id="tituloModalOrdem">Nova ordem de serviço</h3>
     <form id="formOrdem">
-      <label>Cliente
-        <select name="clienteId" id="selectCliente" required></select>
-      </label>
-      <label>Descrição do serviço
-        <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e filtro" required></textarea>
-      </label>
-      <label>Quilometragem do veículo
-        <input type="number" name="km" min="0" step="1" placeholder="Ex: 45000">
-      </label>
-
-      <label>Itens (mão de obra e peças)</label>
-      <div id="itensOrdemLista" class="itens-lista"></div>
-      <div class="grid2">
-        <label>Tipo
-          <select id="itemTipoSelect">
-            <option value="servico">Serviço (mão de obra)</option>
-            <option value="peca">Peça (estoque)</option>
-          </select>
-        </label>
-        <label>Item
-          <select id="itemRefSelect"></select>
-        </label>
+      <div class="os-cols">
+        <div>
+          <label>Cliente
+            <select name="clienteId" id="selectCliente" required></select>
+          </label>
+          <label>Descrição do serviço
+            <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e filtro" required></textarea>
+          </label>
+          <div class="grid2">
+            <label>Quilometragem
+              <input type="number" name="km" min="0" step="1" placeholder="Ex: 45000">
+            </label>
+            <label>Status
+              <select name="status">
+                <option value="orcamento">Orçamento</option>
+                <option value="aberta">Aberta</option>
+                <option value="andamento">Em andamento</option>
+                <option value="concluida">Concluída</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid2">
+            <label>Garantia (meses)
+              <input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3">
+            </label>
+            <label>Nº da nota fiscal
+              <input type="text" name="numero_nf" placeholder="Ex: 1234">
+            </label>
+          </div>
+          <label>Comentários (opcional)
+            <textarea name="comentarios" rows="2" placeholder="Observações internas, recados, detalhes do atendimento..."></textarea>
+          </label>
+        </div>
+        <div>
+          <label style="margin-bottom:4px;">Itens (mão de obra e peças)</label>
+          <div id="itensOrdemLista" class="itens-lista"></div>
+          <div class="grid2">
+            <label>Tipo
+              <select id="itemTipoSelect">
+                <option value="servico">Serviço (mão de obra)</option>
+                <option value="peca">Peça (estoque)</option>
+              </select>
+            </label>
+            <label>Item
+              <select id="itemRefSelect"></select>
+            </label>
+          </div>
+          <div class="grid2" style="align-items:end;">
+            <label>Quantidade
+              <input type="number" id="itemQtdInput" value="1" min="1" step="1">
+            </label>
+            <button type="button" class="btn-ghost" id="btnAddItem" style="margin-bottom:7px;">+ Adicionar item</button>
+          </div>
+          <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:0 0 6px;"></p>
+          <label>Valor total (R$)
+            <input type="number" name="valor" step="0.01" placeholder="0,00" required min="0">
+          </label>
+        </div>
       </div>
-      <div class="grid2" style="align-items:end;">
-        <label>Quantidade
-          <input type="number" id="itemQtdInput" value="1" min="1" step="1">
-        </label>
-        <button type="button" class="btn-ghost" id="btnAddItem" style="margin-bottom:14px;">+ Adicionar item</button>
-      </div>
-      <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:-8px 0 14px;"></p>
-
-      <div class="grid2">
-        <label>Valor total (R$)
-          <input type="number" name="valor" step="0.01" placeholder="0,00" required min="0">
-        </label>
-        <label>Status
-          <select name="status">
-            <option value="orcamento">Orçamento (aguardando aprovação)</option>
-            <option value="aberta">Aberta</option>
-            <option value="andamento">Em andamento</option>
-            <option value="concluida">Concluída</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid2">
-        <label>Garantia (meses, opcional)
-          <input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3">
-        </label>
-        <label>Nº da nota fiscal (opcional)
-          <input type="text" name="numero_nf" placeholder="Ex: 1234">
-        </label>
-      </div>
-      <label>Comentários (opcional)
-        <textarea name="comentarios" rows="2" placeholder="Observações internas, recados, detalhes do atendimento..."></textarea>
-      </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar OS</button>
@@ -1175,6 +1220,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <label>Nome do item
         <input type="text" name="nome" placeholder="Ex: Filtro de óleo" required>
       </label>
+      <label>Categoria (opcional)
+        <input type="text" name="categoria" list="listaCategoriasEstoque" placeholder="Ex: Filtros e Fluidos" autocomplete="off">
+        <datalist id="listaCategoriasEstoque"></datalist>
+      </label>
       <div class="grid2">
         <label>Quantidade
           <input type="number" name="quantidade" step="1" required min="0">
@@ -1196,6 +1245,22 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button type="submit" class="btn-primary">Salvar item</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR ESTOQUE (EXCEL) -->
+<div class="modal" id="modalImportEstoque">
+  <div class="modal-box" style="width:700px; max-height:94vh; overflow-y:auto;">
+    <h3>Importar estoque do Excel</h3>
+    <p id="importResumo" style="font-size:12px; color:var(--text-dim); margin:-8px 0 12px;"></p>
+    <div class="import-mapa" id="importMapa"></div>
+    <div id="importCats"></div>
+    <label style="flex-direction:row; align-items:center; gap:8px;"><input type="checkbox" id="importAtualizar" style="width:auto;"> Atualizar os itens que já existem (mesmo nome) com os valores da planilha</label>
+    <div class="table-wrap" style="max-height:200px; overflow:auto; margin-bottom:14px;"><table id="importPrevia"></table></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Cancelar</button>
+      <button type="button" class="btn-primary" id="btnConfirmarImport">Importar</button>
+    </div>
   </div>
 </div>
 
@@ -1357,6 +1422,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ==========================================================
    CONEXÃO COM O SUPABASE
@@ -1671,6 +1737,30 @@ const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
 const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l4 2"/></svg>';
+const VEICULOS_TIPOS = {
+  carro:{label:'Carro', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5V13l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 8l2 5v3.5"/><path d="M3 13h18"/><path d="M3 16.5h2M9.5 16.5h5M19 16.5h2"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg>'},
+  moto:{label:'Moto', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l3-6h6"/><path d="M14.5 7H17"/><path d="M15.8 7l3.2 10"/><path d="M8 17h5l2-3.5h-4.5"/></svg>'},
+  caminhonete:{label:'Caminhonete', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.5v-4l3.2-.8 2.3-4h5l2 4.3H22v4.5"/><path d="M14.5 12v4.5"/><path d="M2 16.5h2M9.5 16.5h5M19.5 16.5H22"/><circle cx="7" cy="16.5" r="2"/><circle cx="17" cy="16.5" r="2"/></svg>'},
+  caminhao:{label:'Caminhão', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>'},
+  outros:{label:'Outros', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'},
+};
+function iconeVeiculo(tipo){ const t = VEICULOS_TIPOS[tipo]; return t ? `<span class="veic-ico" title="${t.label}">${t.svg}</span>` : ''; }
+document.getElementById('tipoVeiculoChips').innerHTML = Object.entries(VEICULOS_TIPOS).map(([k,t]) =>
+  `<label class="tipo-chip"><input type="radio" name="tipo_veiculo" value="${k}"${k==='carro'?' checked':''}><span>${t.svg}${t.label}</span></label>`).join('');
+function formatarCpf(v){
+  const d = String(v||'').replace(/\D/g,'').slice(0,11);
+  return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+}
+function cpfValido(v){
+  const d = String(v||'').replace(/\D/g,'');
+  if(d.length!==11 || /^(\d)\1{10}$/.test(d)) return false;
+  for(const t of [9,10]){
+    let soma = 0; for(let i=0;i<t;i++) soma += Number(d[i]) * (t+1-i);
+    if((soma*10)%11%10 !== Number(d[t])) return false;
+  }
+  return true;
+}
+document.querySelector('#formCliente [name="cpf"]').addEventListener('input', e => { e.target.value = formatarCpf(e.target.value); });
 const ICON_CALENDAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>';
 const ICON_PRINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>';
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
@@ -1896,9 +1986,12 @@ document.getElementById('formCliente').addEventListener('submit', async e => {
     telefone: f.get('telefone'),
     veiculo: f.get('veiculo'),
     placa: f.get('placa').toUpperCase(),
+    cpf: (f.get('cpf') || '').trim() || null,
+    tipo_veiculo: f.get('tipo_veiculo') || null,
     revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
     revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
   };
+  if(dados.cpf && !cpfValido(dados.cpf)){ alert('CPF inválido — confira os 11 números.'); return; }
   const ok = editingClienteId
     ? await DB.atualizarCliente(editingClienteId, dados)
     : await DB.criarCliente(dados);
@@ -1918,6 +2011,8 @@ function abrirEdicaoCliente(id){
   f.telefone.value = c.telefone;
   f.veiculo.value = c.veiculo;
   f.placa.value = c.placa;
+  f.cpf.value = c.cpf || '';
+  f.querySelectorAll('[name="tipo_veiculo"]').forEach(r => r.checked = (r.value === c.tipo_veiculo));
   f.revisao_intervalo_meses.value = c.revisao_intervalo_meses || '';
   f.revisao_intervalo_km.value = c.revisao_intervalo_km || '';
   document.getElementById('tituloModalCliente').textContent = 'Editar cliente';
@@ -2544,6 +2639,7 @@ document.getElementById('formEstoque').addEventListener('submit', async e => {
   const f = new FormData(e.target);
   const dados = {
     nome: f.get('nome'),
+    categoria: (f.get('categoria') || '').trim() || null,
     quantidade: Number(f.get('quantidade')),
     quantidade_minima: Number(f.get('quantidade_minima') || 0),
     preco_custo: Number(f.get('preco_custo') || 0),
@@ -2563,7 +2659,7 @@ function abrirEdicaoEstoque(id){
   if(!x) return;
   editingEstoqueId = id;
   const f = document.getElementById('formEstoque');
-  f.nome.value = x.nome; f.quantidade.value = x.quantidade; f.quantidade_minima.value = x.quantidade_minima;
+  f.nome.value = x.nome; f.categoria.value = x.categoria || ''; f.quantidade.value = x.quantidade; f.quantidade_minima.value = x.quantidade_minima;
   f.preco_custo.value = x.preco_custo; f.preco_venda.value = x.preco_venda;
   document.getElementById('tituloModalEstoque').textContent = 'Editar item';
   abrirModal('modalEstoque');
@@ -2573,6 +2669,136 @@ async function excluirEstoque(id){
   await DB.estoque.excluir(id);
   render();
 }
+
+
+/* ==========================================================
+   IMPORTAÇÃO DE ESTOQUE VIA EXCEL (.xlsx / .xls / .csv)
+   ========================================================== */
+const IMPORT_CAMPOS = [
+  {k:'nome', label:'Nome do item *', sin:['nome','item','produto','descricao','peca','material','mercadoria']},
+  {k:'quantidade', label:'Quantidade', sin:['quantidade','qtd','qtde','quant','estoque','saldo']},
+  {k:'quantidade_minima', label:'Qtd. mínima', sin:['quantidademinima','qtdminima','estoqueminimo','minimo','min']},
+  {k:'preco_custo', label:'Preço de custo', sin:['precocusto','custo','pcusto','valorcusto','precodecompra','compra']},
+  {k:'preco_venda', label:'Preço de venda', sin:['precovenda','venda','pvenda','valorvenda','precodevenda','preco','valor']},
+  {k:'categoria', label:'Categoria', sin:['categoria','grupo','familia','secao']},
+  {k:'observacoes', label:'Observações', sin:['observacoes','observacao','obs','detalhes']},
+];
+const IMPORT_SO_EXATO = new Set(['estoque','min','saldo']); // palavras genéricas: só valem se o cabeçalho for exatamente isso
+const normCab = v => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const escImp = v => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+let importEstoque = null;
+
+function mapearColunas(cab){
+  const n = cab.map(normCab), mapa = {}, usadas = new Set();
+  const tentar = cond => IMPORT_CAMPOS.forEach(c => {
+    if(mapa[c.k] !== undefined) return;
+    const i = n.findIndex((h, idx) => h && !usadas.has(idx) && c.sin.some(sn => cond(h, sn)));
+    if(i >= 0){ mapa[c.k] = i; usadas.add(i); }
+  });
+  tentar((h, sn) => h === sn);
+  tentar((h, sn) => !IMPORT_SO_EXATO.has(sn) && h.includes(sn));
+  return mapa;
+}
+function numeroImport(v){
+  if(typeof v === 'number') return isFinite(v) ? v : null;
+  let t = String(v ?? '').replace(/[^\d,.\-]/g,'');
+  if(!t) return null;
+  if(t.includes(',')) t = t.replace(/\./g,'').replace(',','.');
+  const n = parseFloat(t);
+  return isNaN(n) ? null : n;
+}
+function itensDaPlanilha(todos){
+  const { linhas, mapa } = importEstoque;
+  const pega = (r, k) => mapa[k] === undefined ? undefined : r[mapa[k]];
+  return linhas.map(r => {
+    const it = { nome: String(pega(r,'nome') ?? '').trim() };
+    ['quantidade','quantidade_minima','preco_custo','preco_venda'].forEach(k => {
+      const n = numeroImport(pega(r,k)); if(n !== null) it[k] = n;
+    });
+    ['categoria','observacoes'].forEach(k => { const t = String(pega(r,k) ?? '').trim(); if(t) it[k] = t; });
+    return it;
+  }).filter(it => it.nome).filter(it => todos || !(importEstoque.catsOff && importEstoque.catsOff.has(it.categoria || '')));
+}
+function renderImportEstoque(){
+  const im = importEstoque;
+  if(im.mapa.categoria !== im.catCol){ // (re)inicia o filtro de categorias; sucata/descarte começa desmarcado
+    im.catCol = im.mapa.categoria;
+    im.catsOff = new Set(itensDaPlanilha(true).map(it => it.categoria || '').filter(c => /sucata|descarte/i.test(c)));
+  }
+  const itens = itensDaPlanilha();
+  const cats = {}; itensDaPlanilha(true).forEach(it => { if(it.categoria) cats[it.categoria] = (cats[it.categoria] || 0) + 1; });
+  const boxCats = document.getElementById('importCats');
+  boxCats.innerHTML = Object.keys(cats).length
+    ? '<div style="font-size:12px; color:var(--text-dim); font-weight:600; margin-bottom:6px;">Categorias a importar</div><div style="display:flex; flex-wrap:wrap; gap:6px 16px; margin-bottom:12px;">' +
+      Object.entries(cats).map(([c,n]) => `<label style="flex-direction:row; align-items:center; gap:6px; margin:0; font-weight:500;"><input type="checkbox" data-cat="${escImp(c)}" style="width:auto;"${im.catsOff.has(c) ? '' : ' checked'}>${escImp(c)} (${n})</label>`).join('') + '</div>'
+    : '';
+  boxCats.querySelectorAll('input').forEach(cb => cb.onchange = () => { cb.checked ? im.catsOff.delete(cb.dataset.cat) : im.catsOff.add(cb.dataset.cat); renderImportEstoque(); });
+  const existentes = new Set(stateEstoque.map(x => normCab(x.nome)));
+  const vistos = new Set(); let novos = 0, jaTem = 0, repetidos = 0;
+  itens.forEach(it => { const k = normCab(it.nome); if(vistos.has(k)){ repetidos++; return; } vistos.add(k); existentes.has(k) ? jaTem++ : novos++; });
+  document.getElementById('importResumo').textContent =
+    `${im.arquivo} · aba "${im.aba}" · ${itens.length} linha(s) com nome: ${novos} novo(s), ${jaTem} já existe(m)` + (repetidos ? `, ${repetidos} repetido(s) na planilha (ignorados)` : '') + '.' + (im.mapa.quantidade === undefined ? ' Sem coluna de Quantidade: os itens novos entram com quantidade 0.' : '');
+  document.getElementById('importMapa').innerHTML = IMPORT_CAMPOS.map(c =>
+    `<label>${c.label}<select data-campo="${c.k}"><option value="">— não importar —</option>${im.cab.map((h,i) =>
+      `<option value="${i}"${im.mapa[c.k] === i ? ' selected' : ''}>${escImp(h || 'Coluna ' + (i+1))}</option>`).join('')}</select></label>`).join('');
+  document.querySelectorAll('#importMapa select').forEach(sel => sel.onchange = () => {
+    if(sel.value === '') delete im.mapa[sel.dataset.campo]; else im.mapa[sel.dataset.campo] = Number(sel.value);
+    renderImportEstoque();
+  });
+  const cols = IMPORT_CAMPOS.filter(c => im.mapa[c.k] !== undefined);
+  document.getElementById('importPrevia').innerHTML = '<thead><tr>' + cols.map(c => `<th>${c.label.replace(' *','')}</th>`).join('') + '</tr></thead><tbody>' +
+    itens.slice(0,8).map(it => '<tr>' + cols.map(c => `<td>${escImp(String(it[c.k] ?? '').slice(0, 40))}</td>`).join('') + '</tr>').join('') + '</tbody>';
+}
+async function lerPlanilhaEstoque(file){
+  if(typeof XLSX === 'undefined'){ alert('A biblioteca de Excel não carregou (confira a internet), recarregue a página e tente de novo.'); return; }
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type:'array' });
+    const aba = wb.SheetNames[0];
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[aba], { header:1, defval:'', raw:true }).filter(r => r.some(c => String(c).trim() !== ''));
+    if(rows.length < 2){ alert('Não encontrei linhas de dados nessa planilha.'); return; }
+    let h = 0, max = -1;
+    rows.slice(0,15).forEach((r,i) => { const m = Object.keys(mapearColunas(r)).length; if(m > max){ max = m; h = i; } });
+    importEstoque = { arquivo:file.name, aba, cab:rows[h].map(c => String(c).trim()), linhas:rows.slice(h+1), mapa:mapearColunas(rows[h]) };
+    renderImportEstoque();
+    abrirModal('modalImportEstoque');
+  } catch(err){ console.error(err); alert('Não consegui ler esse arquivo: ' + (err.message || err)); }
+}
+document.getElementById('arquivoEstoque').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if(file) await lerPlanilhaEstoque(file);
+});
+document.getElementById('btnConfirmarImport').addEventListener('click', async () => {
+  if(!importEstoque) return;
+  if(importEstoque.mapa.nome === undefined){ alert('Escolha qual coluna é o Nome do item.'); return; }
+  const atualizar = document.getElementById('importAtualizar').checked;
+  const existentes = new Map(stateEstoque.map(x => [normCab(x.nome), x]));
+  const vistos = new Set(), novos = [], atualizacoes = [];
+  itensDaPlanilha().forEach(it => {
+    const k = normCab(it.nome); if(vistos.has(k)) return; vistos.add(k);
+    const ex = existentes.get(k), { nome, ...campos } = it;
+    if(!ex) novos.push({ nome, quantidade:0, quantidade_minima:0, preco_custo:0, preco_venda:0, ...campos });
+    else if(atualizar && Object.keys(campos).length) atualizacoes.push({ id:ex.id, campos });
+  });
+  if(!novos.length && !atualizacoes.length){ alert('Nada para importar (todos os itens já existem).'); return; }
+  const btn = document.getElementById('btnConfirmarImport'); btn.disabled = true; btn.textContent = 'Importando...';
+  let okNovos = 0, okAtual = 0, erro = null;
+  try {
+    for(let i = 0; i < novos.length && !erro; i += 100){
+      const lote = novos.slice(i, i + 100);
+      const { error } = await supabaseClient.from('estoque').insert(lote);
+      if(error) erro = error; else okNovos += lote.length;
+    }
+    for(const a of atualizacoes){
+      if(erro) break;
+      const { error } = await supabaseClient.from('estoque').update(a.campos).eq('id', a.id);
+      if(error) erro = error; else okAtual++;
+    }
+  } catch(err){ erro = err; }
+  btn.disabled = false; btn.textContent = 'Importar';
+  fecharModal('modalImportEstoque'); importEstoque = null;
+  render();
+  alert(`Importação: ${okNovos} item(ns) novo(s), ${okAtual} atualizado(s).` + (erro ? `\n\n⚠️ Parou por erro: ${mensagemErro(erro)}` : ''));
+});
 
 /* ==========================================================
    MOVIMENTAÇÕES DE ESTOQUE — entrada/saída e histórico de consumo
@@ -2941,7 +3167,7 @@ function renderTabelaClientes(){
   const inputBusca = document.getElementById('buscaClientes');
   const busca = (inputBusca.value || '').trim().toLowerCase();
   const filtrados = busca
-    ? stateClientes.filter(c => `${c.nome} ${c.telefone} ${c.veiculo} ${c.placa}`.toLowerCase().includes(busca))
+    ? stateClientes.filter(c => `${c.nome} ${c.telefone} ${c.veiculo} ${c.placa} ${c.cpf||''}`.toLowerCase().includes(busca))
     : stateClientes;
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / CLIENTES_POR_PAGINA));
@@ -2951,7 +3177,7 @@ function renderTabelaClientes(){
 
   document.querySelector('#tabelaClientes tbody').innerHTML = pagina.map(c => `
     <tr>
-      <td>${c.nome}</td><td>${c.telefone}</td><td>${c.veiculo}</td>
+      <td>${c.nome}${c.cpf ? `<br><small style="color:var(--text-dim);">CPF ${c.cpf}</small>` : ''}</td><td>${c.telefone}</td><td>${iconeVeiculo(c.tipo_veiculo)}${c.veiculo}</td>
       <td><span class="placa-chip">${c.placa}</span></td>
       <td class="icon-row">
         <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
@@ -2968,10 +3194,11 @@ function renderTabelaClientes(){
 document.getElementById('buscaClientes').addEventListener('input', () => { clientesPaginaAtual = 1; renderTabelaClientes(); });
 
 // Linha de uma OS — reaproveitada pela tabela paginada e por qualquer outro lugar que precise renderizar uma OS
+const tipoVeiculoDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id) || {}).tipo_veiculo) || '';
 const placaDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id) || {}).placa) || '';
 const linhaOrdem = o => `
     <tr>
-      <td>${o.cliente_nome}</td><td>${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td>${o.servico}</td>
+      <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td>${o.servico}</td>
       <td>
         <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
           <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
@@ -3178,7 +3405,8 @@ async function render(){
     const baixo = Number(x.quantidade) <= Number(x.quantidade_minima);
     return `
     <tr>
-      <td>${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
+      <td${x.observacoes ? ` title="${escImp(x.observacoes)}"` : ''}>${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
+      <td>${x.categoria || '—'}</td>
       <td>${x.quantidade}</td>
       <td>${moeda(x.preco_custo || 0)}</td>
       <td>${moeda(x.preco_venda || 0)}</td>
@@ -3189,6 +3417,7 @@ async function render(){
       </td>
     </tr>`;
   }).join('');
+  document.getElementById('listaCategoriasEstoque').innerHTML = [...new Set(estoque.map(x => x.categoria).filter(Boolean))].map(c => `<option value="${escImp(c)}">`).join('');
   document.getElementById('estoqueEmpty').style.display = estoque.length ? 'none' : 'block';
 
   // tabela serviços (catálogo)
