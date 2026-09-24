@@ -187,6 +187,28 @@ tr:last-child td{border-bottom:none;}
 .status.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
 .status.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
 .status.concluida{background:rgba(47,184,114,.15); color:var(--ok);}
+.login-screen{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;}
+.login-box{width:340px;max-width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;}
+.login-box h2{margin:0 0 4px;} .login-box p{color:var(--text-dim);font-size:13px;margin:0 0 18px;}
+.login-erro{color:var(--accent);font-size:12px;min-height:16px;margin-top:6px;}
+.login-tabs{display:flex; gap:6px; margin-bottom:12px;}
+.login-tab{flex:1; padding:7px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-dim); font-size:13px; font-weight:600; cursor:pointer;}
+.login-tab.active{border-color:var(--accent); color:var(--accent); background:rgba(255,59,23,.1);}
+.portal-screen{position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;padding:24px 16px;}
+.portal-box{max-width:480px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;}
+.portal-passos{list-style:none;padding:0;margin:18px 0;}
+.portal-passos li{padding:8px 0 8px 30px;position:relative;color:var(--text-dim);font-size:13px;border-left:2px solid var(--border);margin-left:8px;}
+.portal-passos li:last-child{border-left:2px solid transparent;}
+.portal-passos li::before{content:'';position:absolute;left:-7px;top:10px;width:12px;height:12px;border-radius:50%;background:var(--border);}
+.portal-passos li.feito{color:var(--text);} .portal-passos li.feito::before{background:var(--ok);}
+.portal-passos li.atual{color:var(--accent);font-weight:700;} .portal-passos li.atual::before{background:var(--accent);}
+.portal-item{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border);}
+
+
+.caixa-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.caixa-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.caixa-card span{font-size:12px;color:var(--text-dim);} .caixa-card b{display:block;font-size:18px;margin-top:4px;}
+
 
 .placa-chip{
   font-family:'Inter',sans-serif; letter-spacing:.5px; white-space:nowrap; display:inline-block;
@@ -320,6 +342,7 @@ tr:last-child td{border-bottom:none;}
 #modalOrdem h3{font-size:17px; margin:0;}
 #modalOrdem .os-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
 #btnAjudaOS{padding:5px 12px; font-size:12px;}
+#osNumeroNf{opacity:.75; cursor:not-allowed;}
 .ajuda-os{font-size:13px; line-height:1.5; color:var(--text-dim);}
 .ajuda-os ol{margin:10px 0 0 20px; padding:0;} .ajuda-os li{margin-bottom:9px;} .ajuda-os strong{color:var(--text);}
 .ajuda-os .ajuda-caixa{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-top:12px;}
@@ -397,7 +420,65 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <div id="avisoPreview" class="preview-banner">⚠️ Modo prévia — sem conexão com o banco de dados agora. As telas funcionam normalmente, mas nada é salvo de verdade. Publique no GitHub Pages pra usar valendo.</div>
 
-<div class="app">
+<div class="portal-screen" id="telaPortal" style="display:none;">
+  <div class="portal-box">
+    <h2 style="margin:0 0 4px;">Paulo Mecânico</h2>
+    <p class="hint" style="margin:0 0 18px;">Acompanhamento da sua ordem de serviço</p>
+    <div id="portalConteudo"></div>
+  </div>
+</div>
+
+<div class="login-screen" id="telaLogin" style="display:none;">
+  <div class="login-box">
+    <h2>Paulo Mecânico</h2>
+    <p id="loginSubtitulo">Entre com e-mail, celular ou usuário e senha para acessar o sistema.</p>
+
+    <form id="formLogin">
+      <div class="login-tabs">
+        <button type="button" class="login-tab active" data-modo="email">E-mail</button>
+        <button type="button" class="login-tab" data-modo="celular">Celular</button>
+        <button type="button" class="login-tab" data-modo="usuario">Usuário</button>
+      </div>
+      <label id="loginCampoEmail">E-mail<input type="email" name="email" autocomplete="username"></label>
+      <label id="loginCampoCelular" style="display:none;">Celular<input type="tel" name="celular" placeholder="(00) 00000-0000" autocomplete="tel"></label>
+      <label id="loginCampoUsuario" style="display:none;">Usuário<input type="text" name="usuario" placeholder="Ex: admin" autocomplete="username"></label>
+      <label>Senha<input type="password" name="senha" required autocomplete="current-password"></label>
+      <div class="login-erro" id="loginErro"></div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:6px;">Entrar</button>
+    </form>
+    <button type="button" class="btn-ghost" id="btnEsqueciSenha" style="width:100%;margin-top:8px;">Esqueci minha senha</button>
+    <button type="button" class="btn-ghost" id="btnMostrarCriarUsuario" style="width:100%;margin-top:6px;">Criar novo usuário</button>
+
+    <form id="formCriarUsuario" style="display:none;">
+      <label>E-mail (obrigatório — é por ele que dá pra recuperar a senha)<input type="email" name="email" required autocomplete="username"></label>
+      <label>Celular (opcional — permite logar com celular também)<input type="tel" name="celular" placeholder="(00) 00000-0000" autocomplete="tel"></label>
+      <label>Usuário (opcional — permite logar sem digitar e-mail ou celular)<input type="text" name="usuario" placeholder="Ex: admin" autocomplete="username"></label>
+      <label>Senha (mínimo 6 caracteres)<input type="password" name="senha" required minlength="6" autocomplete="new-password"></label>
+      <label>Confirmar senha<input type="password" name="senha2" required minlength="6" autocomplete="new-password"></label>
+      <div class="login-erro" id="criarUsuarioErro"></div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:6px;">Criar usuário</button>
+    </form>
+
+    <form id="formEsqueciSenha" style="display:none;">
+      <p class="hint" style="margin-top:0;">Digite o e-mail cadastrado — vamos mandar um link pra você criar uma senha nova.</p>
+      <label>E-mail<input type="email" name="email" required autocomplete="username"></label>
+      <div class="login-erro" id="esqueciSenhaErro"></div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:6px;">Enviar link de recuperação</button>
+    </form>
+
+    <form id="formNovaSenha" style="display:none;">
+      <p class="hint" style="margin-top:0;">Digite a nova senha da sua conta.</p>
+      <label>Nova senha (mínimo 6 caracteres)<input type="password" name="senha" required minlength="6" autocomplete="new-password"></label>
+      <label>Confirmar nova senha<input type="password" name="senha2" required minlength="6" autocomplete="new-password"></label>
+      <div class="login-erro" id="novaSenhaErro"></div>
+      <button type="submit" class="btn-primary" style="width:100%;margin-top:6px;">Salvar nova senha</button>
+    </form>
+
+    <button type="button" class="btn-ghost" id="btnMostrarLogin" style="width:100%;margin-top:10px;display:none;">Voltar para o login</button>
+  </div>
+</div>
+
+<div class="app" id="telaApp" style="display:none;">
 
   <!-- SIDEBAR -->
   <aside class="side">
@@ -439,14 +520,13 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <button class="nav-item" data-view="pagar">Contas a Pagar</button>
           <button class="nav-item" data-view="receber">Contas a Receber</button>
           <button class="nav-item" data-view="relatorios">Relatórios</button>
+          <button class="nav-item" data-view="caixa">Caixa</button>
         </div>
       </div>
     </nav>
 
     <div class="side-foot">
-      <button class="nav-item disabled" disabled title="Login será ativado quando o Supabase for conectado">
-        Login <span class="tag">em breve</span>
-      </button>
+<button class="nav-item" id="btnSair" title="Sair"></button>
       <button id="themeToggle" class="theme-toggle">
         <span class="dot"></span> Tema claro
       </button>
@@ -661,6 +741,33 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
     </section>
 
+    <!-- CAIXA -->
+    <section class="view" id="view-caixa">
+      <header class="view-head"><h1>Caixa</h1><p>Abertura e fechamento do caixa do dia</p></header>
+      <div class="panel" id="caixaFechadoPanel" style="display:none;">
+        <p class="hint" style="margin-bottom:10px;">Nenhum caixa aberto no momento.</p>
+        <form id="formAbrirCaixa" class="grid2" style="align-items:end;">
+          <label>Valor de abertura (dinheiro na gaveta)<input type="number" step="0.01" min="0" name="valor_abertura" placeholder="0,00" required></label>
+          <button type="submit" class="btn-primary">Abrir caixa</button>
+        </form>
+      </div>
+      <div id="caixaAbertoPanel" style="display:none;">
+        <div class="panel" style="margin-bottom:14px;">
+          <p class="hint">Aberto em <strong id="caixaAbertoDesde"></strong> · valor inicial <strong id="caixaValorInicial"></strong></p>
+          <div class="caixa-resumo" id="caixaResumo"></div>
+          <p class="hint">"Esperado em dinheiro" = valor inicial + recebimentos em dinheiro − pagamentos em dinheiro de hoje.</p>
+        </div>
+        <div class="panel">
+          <h3 style="margin-top:0;">Fechar caixa</h3>
+          <form id="formFecharCaixa" class="grid2" style="align-items:end;">
+            <label>Valor contado na gaveta<input type="number" step="0.01" min="0" name="valor_fechamento" placeholder="0,00" required></label>
+            <label>Observação (opcional)<input type="text" name="observacao" placeholder="Ex: sobrou troco do dia anterior"></label>
+            <button type="submit" class="btn-primary">Fechar caixa</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
     <!-- CONTAS A PAGAR -->
     <section class="view" id="view-pagar">
       <header class="view-head">
@@ -825,7 +932,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
       <div class="panel" style="max-width:560px; margin-top:20px;">
         <div class="panel-head"><h2>Backup e exportação</h2></div>
-        <p style="color:var(--text-dim); font-size:13px; margin-bottom:4px;">Um backup automático completo é gerado todo dia às 22:00 (horário de São Paulo) e fica registrado no histórico abaixo.</p>
+        <p style="color:var(--text-dim); font-size:13px; margin-bottom:4px;">Um backup automático completo é gerado todo dia à meia-noite (horário de São Paulo) e fica registrado no histórico abaixo.</p>
         <p style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Você também pode baixar uma cópia manual a qualquer momento — é sua garantia caso algo dê errado.</p>
         <label>Observação (motivo do backup manual, opcional)
           <textarea id="backupObservacao" rows="2" placeholder="Ex: antes de mexer no estoque, fim do mês, etc."></textarea>
@@ -961,8 +1068,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
             <label>Garantia (meses)
               <input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3">
             </label>
-            <label>Nº da nota fiscal
-              <input type="text" name="numero_nf" placeholder="Ex: 1234">
+            <label>Nº da nota fiscal (automático)
+              <input type="text" id="osNumeroNf" readonly tabindex="-1" placeholder="Gerado ao emitir a nota">
             </label>
           </div>
           <label>Comentários (opcional)
@@ -1018,7 +1125,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <li><strong>Itens (serviços e peças)</strong> — escolha o <em>Tipo</em>: <em>Serviço</em> (mão de obra, vem de Cadastros › Serviços) ou <em>Peça</em> (vem do Estoque). Depois escolha o <em>Item</em>, informe a <em>Quantidade</em> e clique em <strong>+ Adicionar item</strong>. Repita para cada item; a lixeira remove. Para aparecer na lista, o serviço ou a peça precisa estar cadastrado antes.</li>
         <li><strong>Valor total</strong> — é somado sozinho a cada item adicionado. Para dar desconto ou fechar um valor, ajuste o campo <em>depois</em> de adicionar todos os itens (adicionar ou remover um item recalcula o total).</li>
         <li><strong>Garantia (meses)</strong> (opcional) — a garantia conta a partir da data da OS e aparece no histórico do cliente.</li>
-        <li><strong>Nº da nota fiscal</strong> e <strong>Comentários</strong> (opcionais) — a nota fica registrada na OS; os comentários são observações internas.</li>
+        <li><strong>Nº da nota fiscal</strong> — automático: você não digita. O sistema gera o número (sequencial, sem repetir) na primeira vez que você clica em <em>Gerar nota fiscal</em> da OS e ele fica gravado nela. <strong>Comentários</strong> (opcional) — observações internas.</li>
         <li>Clique em <strong>Salvar OS</strong>.</li>
       </ol>
       <div class="ajuda-caixa">
@@ -1453,6 +1560,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     </div>
     <div class="modal-actions">
       <button type="button" class="btn-ghost" data-close>Fechar</button>
+      <button type="button" class="btn-ghost" id="btnCopiarLinkPortal">🔗 Link p/ o cliente</button>
       <button type="button" class="btn-ghost" id="btnGerarPdfNotaFiscal">⬇ Gerar PDF</button>
       <button type="button" class="btn-primary" id="btnImprimirNotaFiscal">🖶 Imprimir</button>
     </div>
@@ -1515,6 +1623,17 @@ try {
       upload(){ return Promise.resolve({ error:{ message:'Anexos não funcionam na prévia — só no site publicado.' } }); },
       getPublicUrl(){ return { data:{ publicUrl:'' } }; },
     }; } },
+    rpc(){ return Promise.resolve({ data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado.' } }); },
+    auth:{
+      getSession: async () => ({ data:{ session:{ user:{ email:'previa@local' } } }, error:null }),
+      onAuthStateChange(){ return { data:{ subscription:{ unsubscribe(){} } } }; },
+      signInWithPassword: async () => ({ data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado pra entrar de verdade.' } }),
+      signUp: async () => ({ data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado pra criar o usuário de verdade.' } }),
+      resetPasswordForEmail: async () => ({ data:null, error:{ message:'Prévia sem conexão — abra o site publicado.' } }),
+      updateUser: async () => ({ data:null, error:{ message:'Prévia sem conexão — abra o site publicado.' } }),
+
+      signOut: async () => ({ error:null }),
+    },
   };
 }
 
@@ -1538,6 +1657,7 @@ async function testarConexao(){
    ========================================================== */
 const DB = {
   async getClientes(){
+    if(!(await sessaoAtivaAgora())) return cacheLer('clientes');
     try {
       const { data, error } = await supabaseClient.from('clientes').select('*').order('id', { ascending:false });
       if(error){ console.error(error); return cacheLer('clientes'); }
@@ -1567,6 +1687,7 @@ const DB = {
     } catch(err){ alert('Erro ao excluir cliente: ' + mensagemErro(err)); return false; }
   },
   async getOrdens(){
+    if(!(await sessaoAtivaAgora())) return cacheLer('ordens');
     try {
       const { data, error } = await supabaseClient.from('ordens').select('*').order('id', { ascending:false });
       if(error){ console.error(error); return cacheLer('ordens'); }
@@ -1609,10 +1730,12 @@ function mensagemErro(error){
 // Cache local de leitura: guarda a última listagem para o app abrir (somente leitura) sem internet
 const cacheLer = k => { try { return JSON.parse(localStorage.getItem('pm_cache_' + k)) || []; } catch(e){ return []; } };
 const cacheGravar = (k, d) => { try { localStorage.setItem('pm_cache_' + k, JSON.stringify(d)); } catch(e){} };
+async function sessaoAtivaAgora(){ try { const { data } = await supabaseClient.auth.getSession(); return !!(data && data.session); } catch(e){ return false; } }
 
 function crud(tabela){
   return {
     async listar(){
+      if(!(await sessaoAtivaAgora())) return cacheLer(tabela);
       try {
         const { data, error } = await supabaseClient.from(tabela).select('*').order('id', { ascending:false });
         if(error){ console.error(tabela, error); return cacheLer(tabela); }
@@ -1649,6 +1772,7 @@ DB.contasReceber = crud('contas_receber');
 
 DB.estoque = crud('estoque');
 DB.agendamentos = crud('agendamentos');
+DB.caixa = crud('caixa_sessoes');
 DB.servicos = crud('servicos');
 
 DB.interacoes = {
@@ -1947,6 +2071,7 @@ let stateContasPagar = [];
 let stateContasReceber = [];
 let stateEstoque = [];
 let stateAgendamentos = [];
+let stateCaixa = [];
 let stateServicos = [];
 let statePerfil = {};
 let itensOrdemAtual = [];
@@ -2095,7 +2220,6 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     valor: Number(f.get('valor')),
     status: querConcluir ? (statusAnterior || 'aberta') : f.get('status'),
     garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
-    numero_nf: f.get('numero_nf') || null,
     km: f.get('km') ? Number(f.get('km')) : null,
     comentarios: f.get('comentarios') || null,
   };
@@ -2140,7 +2264,7 @@ async function abrirEdicaoOrdem(id){
   f.valor.value = o.valor;
   f.status.value = o.status;
   f.garantia_meses.value = o.garantia_meses || '';
-  f.numero_nf.value = o.numero_nf || '';
+  document.getElementById('osNumeroNf').value = o.numero_nf || '';
   f.km.value = o.km || '';
   f.comentarios.value = o.comentarios || '';
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
@@ -3302,6 +3426,11 @@ function renderLembretes(){
   const dias = iso => Math.floor((new Date(iso) - agora) / DIA);      // negativo = passado
   const lem = []; // { pri, txt, acao, rotulo }
 
+  // 0) Estoque baixo — prioridade máxima: pode travar um serviço na hora
+  stateEstoque.filter(x => Number(x.quantidade) <= Number(x.quantidade_minima)).forEach(x => {
+    lem.push({ pri:1, txt:`Estoque baixo: ${x.nome} (${x.quantidade} un., mínimo ${x.quantidade_minima})`, acao:`irPara('estoque')`, rotulo:'Ver estoque' });
+  });
+
   // 1) OS parada há mais de 7 dias
   stateOrdens.filter(o => (o.status === 'aberta' || o.status === 'andamento') && (o.updated_at || o.created_at)).forEach(o => {
     const d = -dias(o.updated_at || o.created_at);
@@ -3356,7 +3485,7 @@ function irLembrete(view, campoId, termo){
 }
 
 async function render(){
-  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos] = await Promise.all([
+  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa] = await Promise.all([
     DB.getClientes(),
     DB.getOrdens(),
     DB.fornecedores.listar(),
@@ -3365,6 +3494,7 @@ async function render(){
     DB.estoque.listar(),
     DB.agendamentos.listar(),
     DB.servicos.listar(),
+    DB.caixa.listar(),
   ]);
   stateClientes = clientes;
   stateOrdens = ordens;
@@ -3374,6 +3504,8 @@ async function render(){
   stateEstoque = estoque;
   stateAgendamentos = agendamentos;
   stateServicos = servicos;
+  stateCaixa = caixa;
+  renderCaixa();
   renderLembretes();
   if(document.getElementById('view-relatorios').classList.contains('active')) renderRelatoriosVendas();
 
@@ -3700,9 +3832,228 @@ document.getElementById('formPerfil').addEventListener('submit', async e => {
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', 2500);
 });
-carregarPerfil();
 
-render();
+/* ==========================================================
+   CAIXA DIÁRIO — abertura, fechamento e conferência do dinheiro
+   ========================================================== */
+function caixaAberto(){ return stateCaixa.find(c => c.status === 'aberto') || null; }
+function renderCaixa(){
+  const c = caixaAberto();
+  document.getElementById('caixaFechadoPanel').style.display = c ? 'none' : '';
+  document.getElementById('caixaAbertoPanel').style.display = c ? '' : 'none';
+  if(!c) return;
+  const hoje = new Date(c.aberto_em).toISOString().slice(0,10);
+  const doDia = (lista, campoData) => lista.filter(x => (x[campoData] || '').slice(0,10) === hoje);
+  const porForma = (lista, campoForma, campoValor) => {
+    const t = { Pix:0, Dinheiro:0, 'Cartão de débito':0, 'Cartão de crédito':0, Outros:0 };
+    lista.forEach(x => { const f = x[campoForma] || 'Outros'; t[f] = (t[f] || 0) + (Number(x[campoValor]) || 0); });
+    return t;
+  };
+  const recebOs = doDia(stateOrdens.filter(o => o.pago), 'data_pagamento');
+  const recebContas = doDia(stateContasReceber.filter(r => r.status === 'recebido'), 'data_recebimento');
+  const pagos = doDia(stateContasPagar.filter(p => p.status === 'pago'), 'data_pagamento');
+  const entradas = porForma(recebOs, 'forma_pagamento', 'valor');
+  const entradasContas = porForma(recebContas, 'forma_pagamento', 'valor');
+  Object.keys(entradas).forEach(k => entradas[k] += entradasContas[k]);
+  const saidas = porForma(pagos, 'forma_pagamento', 'valor');
+  const totalEntradas = Object.values(entradas).reduce((a,b) => a+b, 0);
+  const totalSaidas = Object.values(saidas).reduce((a,b) => a+b, 0);
+  const dinheiroEsperado = Number(c.valor_abertura) + entradas.Dinheiro - saidas.Dinheiro;
+  document.getElementById('caixaAbertoDesde').textContent = new Date(c.aberto_em).toLocaleString('pt-BR');
+  document.getElementById('caixaValorInicial').textContent = moeda(c.valor_abertura);
+  document.getElementById('caixaResumo').innerHTML = `
+    <div class="caixa-card"><span>Entradas (todas as formas)</span><b style="color:var(--ok);">${moeda(totalEntradas)}</b></div>
+    <div class="caixa-card"><span>Saídas (todas as formas)</span><b style="color:var(--accent);">${moeda(totalSaidas)}</b></div>
+    <div class="caixa-card"><span>Esperado em dinheiro agora</span><b>${moeda(dinheiroEsperado)}</b></div>`;
+  document.getElementById('formFecharCaixa').dataset.esperado = dinheiroEsperado;
+}
+document.getElementById('formAbrirCaixa').addEventListener('submit', async e => {
+  e.preventDefault();
+  if(caixaAberto()){ alert('Já existe um caixa aberto.'); return; }
+  const valor = Number(new FormData(e.target).get('valor_abertura'));
+  const ok = await DB.caixa.criar({ valor_abertura: valor, status:'aberto', aberto_em: new Date().toISOString() });
+  if(!ok) return;
+  e.target.reset();
+  render();
+});
+document.getElementById('formFecharCaixa').addEventListener('submit', async e => {
+  e.preventDefault();
+  const c = caixaAberto(); if(!c) return;
+  const f = new FormData(e.target);
+  const valorContado = Number(f.get('valor_fechamento'));
+  const esperado = Number(e.target.dataset.esperado || 0);
+  const diferenca = Math.round((valorContado - esperado) * 100) / 100;
+  if(Math.abs(diferenca) > 0.01 && !confirm(`O valor contado ${diferenca > 0 ? 'está R$ ' + moeda(diferenca).replace('R$','').trim() + ' a mais' : 'está R$ ' + moeda(Math.abs(diferenca)).replace('R$','').trim() + ' a menos'} do que o esperado (${moeda(esperado)}). Fechar assim mesmo?`)) return;
+  const ok = await DB.caixa.atualizar(c.id, {
+    fechado_em: new Date().toISOString(), valor_fechamento: valorContado, diferenca,
+    observacao: f.get('observacao') || null, status:'fechado',
+  });
+  if(!ok) return;
+  alert(diferenca === 0 ? 'Caixa fechado — bateu certinho!' : `Caixa fechado. Diferença: ${moeda(diferenca)}.`);
+  e.target.reset();
+  render();
+});
+
+
+/* ==========================================================
+   LOGIN — trava o sistema até o usuário entrar com e-mail/senha
+   ========================================================== */
+function mostrarApp(email){
+  document.getElementById('telaLogin').style.display = 'none';
+  document.getElementById('telaApp').style.display = '';
+  document.getElementById('btnSair').textContent = '🚪 Sair (' + email + ')';
+}
+function mostrarLogin(){
+  document.getElementById('telaApp').style.display = 'none';
+  document.getElementById('telaLogin').style.display = 'flex';
+}
+document.getElementById('formLogin').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const erroEl = document.getElementById('loginErro');
+  erroEl.textContent = '';
+  const modo = document.querySelector('.login-tab.active').dataset.modo;
+  let email = f.get('email');
+  if(modo === 'celular' || modo === 'usuario'){
+    const rpcFn = modo === 'celular' ? 'email_por_telefone' : 'email_por_usuario';
+    const rpcArg = modo === 'celular' ? { p_telefone: f.get('celular') } : { p_usuario: f.get('usuario') };
+    const { data: emailAchado, error: erroRpc } = await supabaseClient.rpc(rpcFn, rpcArg);
+    if(erroRpc){ erroEl.textContent = mensagemErro(erroRpc); return; }
+    if(!emailAchado){ erroEl.textContent = modo === 'celular' ? 'Não achei nenhum usuário com esse celular.' : 'Não achei nenhum usuário com esse nome de usuário.'; return; }
+    email = emailAchado;
+  }
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: f.get('senha') });
+  if(error){ erroEl.textContent = error.message === 'Invalid login credentials' ? (modo === 'email' ? 'E-mail ou senha incorretos.' : (modo === 'celular' ? 'Celular ou senha incorretos.' : 'Usuário ou senha incorretos.')) : mensagemErro(error); return; }
+  mostrarApp(data.session.user.email);
+  carregarPerfil();
+  render();
+});
+document.querySelectorAll('.login-tab').forEach(tab => tab.addEventListener('click', () => {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  const modo = tab.dataset.modo;
+  document.getElementById('loginCampoEmail').style.display = modo === 'email' ? '' : 'none';
+  document.getElementById('loginCampoCelular').style.display = modo === 'celular' ? '' : 'none';
+  document.getElementById('loginCampoUsuario').style.display = modo === 'usuario' ? '' : 'none';
+  document.querySelector('#formLogin [name="email"]').required = modo === 'email';
+  document.querySelector('#formLogin [name="celular"]').required = modo === 'celular';
+  document.querySelector('#formLogin [name="usuario"]').required = modo === 'usuario';
+}));
+document.getElementById('btnEsqueciSenha').addEventListener('click', () => {
+  document.getElementById('formLogin').style.display = 'none';
+  document.getElementById('btnEsqueciSenha').style.display = 'none';
+  document.getElementById('btnMostrarCriarUsuario').style.display = 'none';
+  document.getElementById('formEsqueciSenha').style.display = '';
+  document.getElementById('btnMostrarLogin').style.display = '';
+});
+document.getElementById('formEsqueciSenha').addEventListener('submit', async e => {
+  e.preventDefault();
+  const erroEl = document.getElementById('esqueciSenhaErro');
+  erroEl.textContent = '';
+  const email = new FormData(e.target).get('email');
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: location.href.split('#')[0] });
+  if(error){ erroEl.textContent = mensagemErro(error); return; }
+  alert('Se esse e-mail estiver cadastrado, chega uma mensagem em instantes com o link pra criar uma senha nova. Confira também o spam.');
+  document.getElementById('btnMostrarLogin').click();
+});
+document.getElementById('formNovaSenha').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const erroEl = document.getElementById('novaSenhaErro');
+  erroEl.textContent = '';
+  if(f.get('senha') !== f.get('senha2')){ erroEl.textContent = 'As senhas não são iguais.'; return; }
+  const { error } = await supabaseClient.auth.updateUser({ password: f.get('senha') });
+  if(error){ erroEl.textContent = mensagemErro(error); return; }
+  alert('Senha atualizada! Você já está logado.');
+  document.getElementById('formNovaSenha').style.display = 'none';
+  document.getElementById('loginSubtitulo').style.display = '';
+  const { data } = await supabaseClient.auth.getSession();
+  mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups();
+});
+document.getElementById('btnMostrarCriarUsuario').addEventListener('click', () => {
+  document.getElementById('formLogin').style.display = 'none';
+  document.getElementById('btnMostrarCriarUsuario').style.display = 'none';
+  document.getElementById('formCriarUsuario').style.display = '';
+  document.getElementById('btnMostrarLogin').style.display = '';
+});
+document.getElementById('btnMostrarLogin').addEventListener('click', () => {
+  document.getElementById('formCriarUsuario').style.display = 'none';
+  document.getElementById('btnMostrarLogin').style.display = 'none';
+  document.getElementById('formLogin').style.display = '';
+  document.getElementById('btnMostrarCriarUsuario').style.display = '';
+});
+function apenasDigitosLogin(v){ return String(v || '').replace(/\D/g, ''); }
+document.getElementById('formCriarUsuario').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const erroEl = document.getElementById('criarUsuarioErro');
+  erroEl.textContent = '';
+  if(f.get('senha') !== f.get('senha2')){ erroEl.textContent = 'As senhas não são iguais.'; return; }
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: f.get('email'), password: f.get('senha'),
+    options: { data: { telefone: apenasDigitosLogin(f.get('celular') || ''), usuario: (f.get('usuario') || '').trim() || null } },
+  });
+  if(error){ erroEl.textContent = mensagemErro(error); return; }
+  if(data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); return; }
+  alert('Usuário criado! Se o Supabase pedir confirmação por e-mail, confira sua caixa de entrada antes de entrar. Se não pedir, já pode entrar direto.');
+  document.getElementById('btnMostrarLogin').click();
+});
+document.getElementById('btnSair').addEventListener('click', async () => {
+  if(!confirm('Sair do sistema?')) return;
+  await supabaseClient.auth.signOut();
+  mostrarLogin();
+});
+/* ==========================================================
+   PORTAL DO CLIENTE — página pública (sem login) pra acompanhar 1 O.S.
+   Acesso por link com ?os=TOKEN, gerado no botão "Link p/ o cliente"
+   dentro da Nota Fiscal. Mostra só o necessário: nada de outras O.S.,
+   nem comentários internos, nem forma de pagamento.
+   ========================================================== */
+const PASSOS_PORTAL = [
+  { chave:'orcamento', rotulo:'Orçamento enviado' },
+  { chave:'aberta', rotulo:'Aprovada, na fila' },
+  { chave:'andamento', rotulo:'Em andamento na oficina' },
+  { chave:'concluida', rotulo:'Concluída' },
+];
+async function abrirPortalCliente(token){
+  document.getElementById('telaPortal').style.display = 'block';
+  const el = document.getElementById('portalConteudo');
+  el.innerHTML = '<p class="hint">Carregando...</p>';
+  const { data: os, error } = await supabaseClient.rpc('consultar_os_publico', { p_token: token });
+  if(error || !os){
+    el.innerHTML = '<p class="hint">Não encontrei nenhuma ordem de serviço com esse link. Confira se copiou o endereço certinho, ou fale com a oficina.</p>';
+    return;
+  }
+  const passoAtual = PASSOS_PORTAL.findIndex(p => p.chave === os.status);
+  const passos = PASSOS_PORTAL.map((p, i) => `<li class="${i < passoAtual ? 'feito' : i === passoAtual ? 'atual' : ''}">${p.rotulo}</li>`).join('');
+  const itens = (os.itens || []).map(i => `<div class="portal-item"><span>${escImp(i.descricao)} ${i.quantidade > 1 ? '× ' + i.quantidade : ''}</span></div>`).join('')
+    || '<p class="hint" style="margin:4px 0;">Nenhum item lançado ainda.</p>';
+  el.innerHTML = `
+    <p style="margin-bottom:2px;"><strong>${escImp(os.cliente_nome)}</strong> · ${escImp(os.veiculo || '')}</p>
+    <p class="hint" style="margin-top:0;">Aberta em ${dataBR((os.created_at || '').slice(0,10))}${os.servico ? ' — ' + escImp(os.servico) : ''}</p>
+    <ul class="portal-passos">${passos}</ul>
+    <p style="font-weight:600;margin:14px 0 4px;">Itens</p>
+    ${itens}
+    <p style="font-weight:700;font-size:18px;margin-top:14px;">Total: ${moeda(Number(os.valor) || 0)}</p>
+    ${os.status === 'concluida' ? `<p class="hint">${os.pago ? '✅ Pagamento confirmado' + (os.data_pagamento ? ' em ' + dataBR(os.data_pagamento.slice(0,10)) : '') : '⏳ Pagamento pendente'}${os.garantia_meses ? ' · Garantia de ' + os.garantia_meses + ' mês(es)' : ''}${os.numero_nf ? ' · NF nº ' + escImp(os.numero_nf) : ''}</p>` : ''}
+  `;
+}
+
+(async () => {
+  const tokenPortalUrl = new URLSearchParams(location.search).get('os');
+  if(tokenPortalUrl){ abrirPortalCliente(tokenPortalUrl); return; }
+  const { data } = await supabaseClient.auth.getSession();
+  if(data && data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); } else { mostrarLogin(); }
+  if(supabaseClient.auth.onAuthStateChange) supabaseClient.auth.onAuthStateChange((event) => {
+    if(event === 'SIGNED_OUT') mostrarLogin();
+    if(event === 'PASSWORD_RECOVERY'){
+      mostrarLogin();
+      ['formLogin','btnEsqueciSenha','btnMostrarCriarUsuario','formCriarUsuario','formEsqueciSenha'].forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('loginSubtitulo').style.display = 'none';
+      document.getElementById('formNovaSenha').style.display = '';
+    }
+  });
+})();
 
 /* ==========================================================
    BUSCA GLOBAL (Ctrl+K) — procura em clientes, OS, fornecedores,
@@ -3834,7 +4185,7 @@ function montarNotaFiscalHTML(o, itens){
         <div style="text-align:right;">
           <h3 style="margin:0;">NOTA FISCAL / RECIBO</h3>
           <p style="margin:4px 0 0; font-size:13px;">
-            ${o.numero_nf ? 'Nº ' + o.numero_nf : 'Sem número de NF cadastrado'}<br>
+            ${o.numero_nf ? 'Nº ' + o.numero_nf : 'Número da NF não gerado'}<br>
             Emitido em: ${dataEmissao}
           </p>
         </div>
@@ -3870,6 +4221,16 @@ async function abrirNotaFiscal(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
   ordemNotaFiscalAtual = o;
+  if(!o.numero_nf){ // número sequencial gerado pelo banco na primeira emissão (nunca repete nem muda)
+    try {
+      const { data, error } = await supabaseClient.rpc('emitir_numero_nf', { p_ordem_id: id });
+      if(error) throw error;
+      if(data) o.numero_nf = data;
+    } catch(err){
+      console.error(err);
+      alert('Não consegui gerar o número da nota fiscal: ' + mensagemErro(err) + '\n\nA nota vai abrir sem número — feche e tente gerar de novo.');
+    }
+  }
   const itens = await DB.ordemItens.listar(id);
   document.getElementById('notaFiscalPreview').innerHTML = montarNotaFiscalHTML(o, itens);
   abrirModal('modalNotaFiscal');
@@ -3894,6 +4255,12 @@ function gerarPdfNotaFiscal(){
 }
 
 document.getElementById('btnImprimirNotaFiscal').addEventListener('click', imprimirNotaFiscal);
+document.getElementById('btnCopiarLinkPortal').addEventListener('click', async () => {
+  const o = ordemNotaFiscalAtual; if(!o || !o.portal_token) { alert('Essa OS ainda não tem um link de acompanhamento (abra-a de novo pra gerar um).'); return; }
+  const link = location.origin + location.pathname + '?os=' + o.portal_token;
+  try { await navigator.clipboard.writeText(link); alert('Link copiado! Manda pro cliente pelo WhatsApp:\n\n' + link); }
+  catch(e){ prompt('Copie o link abaixo:', link); }
+});
 document.getElementById('btnGerarPdfNotaFiscal').addEventListener('click', gerarPdfNotaFiscal);
 
 /* ==========================================================
@@ -3956,17 +4323,6 @@ async function carregarHistoricoBackups(){
 document.getElementById('btnBackupCompleto').addEventListener('click', exportarBackupCompleto);
 document.getElementById('btnExportarClientes').addEventListener('click', exportarClientesCSV);
 document.getElementById('btnExportarOrdens').addEventListener('click', exportarOrdensCSV);
-carregarHistoricoBackups();
-
-/* ==========================================================
-   TELA DE LOGIN — a fazer depois
-   Quando o Supabase Auth for integrado:
-   1. Criar view "login" (email + senha) como tela inicial.
-   2. Verificar sessão do Supabase antes de mostrar o .app.
-   3. Ativar o botão "Login" na barra lateral (remover .disabled).
-   4. Ajustar as policies de RLS das tabelas pra exigir usuário
-      autenticado (hoje estão abertas pra qualquer um, veja o SQL).
-   ========================================================== */
 
 
 /* PWA: service worker + aviso de modo offline */
