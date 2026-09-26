@@ -194,6 +194,15 @@ tr:last-child td{border-bottom:none;}
 .login-tabs{display:flex; gap:6px; margin-bottom:12px;}
 .login-tab{flex:1; padding:7px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-dim); font-size:13px; font-weight:600; cursor:pointer;}
 .login-tab.active{border-color:var(--accent); color:var(--accent); background:rgba(255,59,23,.1);}
+.btn-ajuda-view{margin-left:10px;font-size:14px;background:none;border:1px solid var(--border);border-radius:50%;width:24px;height:24px;line-height:1;cursor:pointer;color:var(--text-dim);vertical-align:middle;}
+.btn-ajuda-view:hover{border-color:var(--accent);color:var(--accent);}
+.auditoria-json{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow-y:auto;}
+.calc-custo{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px;margin:4px 0 14px;}
+.calc-custo .grid2{margin-bottom:8px;}
+.item-linha .adefinir{color:var(--amber,#b45309);font-weight:600;}
+.item-linha .lucro{color:var(--ok);font-size:11px;}
+
+
 .portal-screen{position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;padding:24px 16px;}
 .portal-box{max-width:480px;margin:0 auto;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;}
 .portal-passos{list-style:none;padding:0;margin:18px 0;}
@@ -331,10 +340,10 @@ tr:last-child td{border-bottom:none;}
 .tipo-chip{position:relative; flex:1 1 0; min-width:0; margin:0 !important; flex-direction:row !important; gap:0 !important;}
 .tipo-chip input{position:absolute; opacity:0; width:0; height:0; padding:0; border:0;}
 .tipo-chip span{display:flex; flex-direction:column; align-items:center; gap:3px; width:100%; padding:8px 2px; border:1px solid var(--border); border-radius:8px; background:var(--surface-2); color:var(--text-dim); font-size:11px; font-weight:600; cursor:pointer; text-align:center; white-space:nowrap;}
-.tipo-chip span svg{width:26px; height:26px;}
+.tipo-chip span svg{width:26px; height:26px; color:var(--accent);}
 .tipo-chip input:checked + span{border-color:var(--accent); color:var(--accent); background:rgba(255,59,23,.12);}
 .tipo-chip input:focus-visible + span{outline:2px solid var(--accent);}
-.veic-ico{display:inline-flex; vertical-align:middle; margin-right:6px; color:var(--text-dim);}
+.veic-ico{display:inline-flex; vertical-align:middle; margin-right:6px; color:var(--accent);}
 .veic-ico svg{width:18px; height:18px;}
 
 /* Nova OS compacta: 2 colunas pra caber tudo na tela sem rolar */
@@ -518,6 +527,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </button>
         <div class="nav-sub" id="sub-financeiro">
           <button class="nav-item" data-view="pagar">Contas a Pagar</button>
+          <button class="nav-item" data-view="despesas">Despesas do dia</button>
           <button class="nav-item" data-view="receber">Contas a Receber</button>
           <button class="nav-item" data-view="relatorios">Relatórios</button>
           <button class="nav-item" data-view="caixa">Caixa</button>
@@ -768,6 +778,35 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
     </section>
 
+    <!-- DESPESAS DO DIA -->
+    <section class="view" id="view-despesas">
+      <header class="view-head"><h1>Despesas do dia</h1><p>Gastos variáveis, lançados na hora (ex: peça comprada na autopeça)</p></header>
+      <div class="panel" style="margin-bottom:14px;">
+        <form id="formDespesa" class="grid2" style="align-items:end;">
+          <label>Descrição<input type="text" name="descricao" placeholder="Ex: Peça na Autopeças Brasil" required></label>
+          <label>Valor (R$)<input type="number" name="valor" step="0.01" min="0" required></label>
+          <label>Forma de pagamento
+            <select name="forma_pagamento" required>
+              <option value="" disabled selected hidden>Escolha a forma</option>
+              <option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Outros</option>
+            </select>
+          </label>
+          <label>Data<input type="date" name="data" required></label>
+          <label>O.S. relacionada (opcional)<select name="ordem_id" id="selectOrdemDespesa"><option value="">— nenhuma —</option></select></label>
+          <button type="submit" class="btn-primary">Lançar despesa</button>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table id="tabelaDespesas">
+            <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>O.S.</th><th>Valor</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="despesasEmpty" style="display:none;">Nenhuma despesa lançada ainda.</p>
+      </div>
+    </section>
+
     <!-- CONTAS A PAGAR -->
     <section class="view" id="view-pagar">
       <header class="view-head">
@@ -953,6 +992,18 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </div>
           <p class="empty" id="backupsEmpty" style="display:none;">Nenhum backup registrado ainda.</p>
         </div>
+
+        <div style="margin-top:24px;">
+          <h3 style="margin:0 0 8px; font-size:14px;">Auditoria — últimas alterações no sistema</h3>
+          <p class="hint" style="margin-top:0;">Registra sozinho quem criou, editou ou apagou cada cliente, O.S., conta, item de estoque, fornecedor, serviço, agendamento ou caixa.</p>
+          <div class="table-wrap">
+            <table id="tabelaAuditoria">
+              <thead><tr><th>Quando</th><th>Usuário</th><th>Tabela</th><th>Ação</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="auditoriaEmpty" style="display:none;">Nenhum registro de auditoria ainda.</p>
+        </div>
       </div>
     </section>
 
@@ -998,6 +1049,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <div class="modal" id="modalCliente">
   <div class="modal-box" style="width:480px;">
     <h3 id="tituloModalCliente">Novo cliente</h3>
+    <p id="clienteVeiculoResumo" style="display:none;font-size:13px;color:var(--text-dim);margin:-6px 0 12px;"></p>
     <form id="formCliente">
       <label>Nome completo
         <input type="text" name="nome" required>
@@ -1040,7 +1092,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL ORDEM -->
 <div class="modal" id="modalOrdem">
   <div class="modal-box">
-    <div class="os-head"><h3 id="tituloModalOrdem">Nova ordem de serviço</h3><button type="button" class="btn-ghost" id="btnAjudaOS">❓ Como preencher</button></div>
+    <div class="os-head" style="display:block;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><h3 id="tituloModalOrdem">Nova ordem de serviço</h3><button type="button" class="btn-ghost" id="btnAjudaOS">❓ Como preencher</button></div><p id="ordemVeiculoResumo" style="display:none;font-size:13px;color:var(--text-dim);margin:2px 0 0;"></p></div>
     <form id="formOrdem">
       <div class="os-cols">
         <div>
@@ -1085,21 +1137,33 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
                 <option value="" disabled selected hidden>Escolha o tipo</option>
                 <option value="servico">Serviço (mão de obra)</option>
                 <option value="peca">Peça (estoque)</option>
+                <option value="peca_avulsa">Peça de fora (autopeça)</option>
               </select>
             </label>
-            <label>Item
+            <label id="itemRefWrap">Item
               <select id="itemRefSelect"></select>
             </label>
           </div>
+          <div id="itemAvulsoWrap" class="grid2" style="display:none;">
+            <label>Descrição da peça<input type="text" id="itemAvulsoDescricao" placeholder="Ex: Bomba d'água"></label>
+            <label>Valor cobrado do cliente (R$)<input type="number" id="itemAvulsoValor" step="0.01" min="0"></label>
+          </div>
+          <div id="itemAvulsoCustoWrap" class="grid2" style="display:none;">
+            <label>Custo (o que você pagou na autopeça, opcional)<input type="number" id="itemAvulsoCusto" step="0.01" min="0"></label>
+            <span></span>
+          </div>
           <div class="grid2" style="align-items:end;">
             <label>Quantidade
-              <input type="number" id="itemQtdInput" value="1" min="1" step="1">
+              <input type="number" id="itemQtdInput" value="1" min="0.001" step="0.001">
             </label>
             <button type="button" class="btn-ghost" id="btnAddItem" style="margin-bottom:7px;">+ Adicionar item</button>
           </div>
+          <label style="flex-direction:row; align-items:center; gap:6px; margin-bottom:8px;">
+            <input type="checkbox" id="itemValorADefinirChk" style="width:auto;"> Valor a definir (preencher no final do serviço)
+          </label>
           <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:0 0 6px;"></p>
           <label>Valor total (R$)
-            <input type="number" name="valor" step="0.01" placeholder="0,00" required min="0">
+            <input type="number" name="valor" step="0.01" placeholder="0,00 (pode deixar em branco por enquanto)" min="0">
           </label>
         </div>
       </div>
@@ -1122,7 +1186,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <li><strong>Descrição do serviço</strong> — escreva o que será feito. Ex.: "Troca de óleo e filtro".</li>
         <li><strong>Quilometragem</strong> (opcional) — km que o veículo marca na entrada. Sai na nota/recibo e serve de base para a próxima revisão por km.</li>
         <li><strong>Status</strong> — <em>Orçamento</em>: o cliente ainda vai aprovar · <em>Aberta</em>: aprovada, ainda não começou · <em>Em andamento</em>: está sendo feita · <em>Concluída</em>: serviço pronto (veja o quadro abaixo).</li>
-        <li><strong>Itens (serviços e peças)</strong> — escolha o <em>Tipo</em>: <em>Serviço</em> (mão de obra, vem de Cadastros › Serviços) ou <em>Peça</em> (vem do Estoque). Depois escolha o <em>Item</em>, informe a <em>Quantidade</em> e clique em <strong>+ Adicionar item</strong>. Repita para cada item; a lixeira remove. Para aparecer na lista, o serviço ou a peça precisa estar cadastrado antes.</li>
+        <li><strong>Itens (serviços e peças)</strong> — escolha o <em>Tipo</em>: <em>Serviço</em> (mão de obra, vem de Cadastros › Serviços), <em>Peça</em> (vem do Estoque) ou <em>Peça de fora</em> (pra quando compra numa autopeça — digita a descrição e o valor na mão, sem precisar cadastrar no Estoque). Depois escolha o <em>Item</em> (ou preencha a descrição, na peça de fora), informe a <em>Quantidade</em> e clique em <strong>+ Adicionar item</strong>. Marque <em>Valor a definir</em> se ainda não souber o preço — dá pra preencher depois clicando no lápis do item, mas a OS não conclui enquanto tiver item pendente. Repita para cada item; a lixeira remove. Para aparecer na lista, o serviço ou a peça do Estoque precisa estar cadastrado antes.</li>
         <li><strong>Valor total</strong> — é somado sozinho a cada item adicionado. Para dar desconto ou fechar um valor, ajuste o campo <em>depois</em> de adicionar todos os itens (adicionar ou remover um item recalcula o total).</li>
         <li><strong>Garantia (meses)</strong> (opcional) — a garantia conta a partir da data da OS e aparece no histórico do cliente.</li>
         <li><strong>Nº da nota fiscal</strong> — automático: você não digita. O sistema gera o número (sequencial, sem repetir) na primeira vez que você clica em <em>Gerar nota fiscal</em> da OS e ele fica gravado nela. <strong>Comentários</strong> (opcional) — observações internas.</li>
@@ -1135,6 +1199,25 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="modal-actions" style="margin-top:14px;">
       <button type="button" class="btn-primary" data-close>Entendi</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL AJUDA GERAL (por tela) -->
+<div class="modal" id="modalAjudaGeral">
+  <div class="modal-box" style="width:480px;">
+    <h3 id="ajudaGeralTitulo">Ajuda</h3>
+    <div class="hint" id="ajudaGeralTexto" style="font-size:14px;line-height:1.6;"></div>
+    <div class="modal-actions"><button type="button" class="btn-primary" data-close>Entendi</button></div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE DA AUDITORIA -->
+<div class="modal" id="modalAuditoriaDetalhe">
+  <div class="modal-box" style="width:560px; max-height:88vh; overflow-y:auto;">
+    <h3>Detalhe do registro</h3>
+    <p class="hint" id="auditoriaDetalheResumo" style="margin-top:-6px;"></p>
+    <div id="auditoriaDetalheConteudo"></div>
+    <div class="modal-actions"><button type="button" class="btn-primary" data-close>Fechar</button></div>
   </div>
 </div>
 
@@ -1372,17 +1455,28 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Quantidade
-          <input type="number" name="quantidade" step="1" required min="0">
+          <input type="number" name="quantidade" step="0.001" required min="0">
         </label>
-        <label>Qtd. mínima (alerta)
-          <input type="number" name="quantidade_minima" step="1" value="0" min="0">
+        <label>Unidade
+          <select name="unidade"><option value="un">Unidade (un)</option><option value="L">Litro (L)</option><option value="ml">Mililitro (ml)</option><option value="kg">Quilo (kg)</option><option value="g">Grama (g)</option></select>
         </label>
       </div>
+      <label>Qtd. mínima (alerta)
+        <input type="number" name="quantidade_minima" step="0.001" value="0" min="0">
+      </label>
+      <div class="calc-custo">
+        <p class="hint" style="margin:0 0 8px;">🧮 Comprou um lote (ex: 5 litros por R$ 50) e quer o custo por unidade calculado sozinho?</p>
+        <div class="grid2">
+          <label style="margin:0;">Paguei no total (R$)<input type="number" id="calcCustoTotal" step="0.01" min="0"></label>
+          <label style="margin:0;">Rende quantas unidades<input type="number" id="calcCustoQtd" step="0.001" min="0"></label>
+        </div>
+        <button type="button" class="btn-ghost" id="btnCalcularCusto">Calcular e preencher o custo</button>
+      </div>
       <div class="grid2">
-        <label>Preço de custo (R$)
+        <label>Preço de custo por unidade (R$)
           <input type="number" name="preco_custo" step="0.01" min="0">
         </label>
-        <label>Preço de venda (R$)
+        <label>Preço de venda por unidade (R$)
           <input type="number" name="preco_venda" step="0.01" min="0">
         </label>
       </div>
@@ -1498,6 +1592,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <input type="checkbox" name="recorrente" style="width:auto;">
         Conta recorrente (repete todo mês — ex: aluguel, energia, internet)
       </label>
+      <label>Forma de pagamento (se já paga)
+        <select name="forma_pagamento"><option value="">—</option><option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Outros</option></select>
+      </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar conta</button>
@@ -1531,6 +1628,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <option value="pendente">Pendente</option>
           <option value="recebido">Recebido</option>
         </select>
+      </label>
+      <label>Forma de pagamento (se já recebida)
+        <select name="forma_pagamento"><option value="">—</option><option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option><option>Outros</option></select>
       </label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
@@ -1773,6 +1873,7 @@ DB.contasReceber = crud('contas_receber');
 DB.estoque = crud('estoque');
 DB.agendamentos = crud('agendamentos');
 DB.caixa = crud('caixa_sessoes');
+DB.despesas = crud('despesas');
 DB.servicos = crud('servicos');
 
 DB.interacoes = {
@@ -1848,6 +1949,7 @@ DB.ordemItens = {
         const linhas = itens.map(i => ({
           ordem_id: ordemId, tipo: i.tipo, referencia_id: i.referencia_id,
           descricao: i.descricao, quantidade: i.quantidade, valor_unitario: i.valor_unitario, valor_total: i.valor_total,
+          custo_unitario: i.custo_unitario ?? null, custo_total: i.custo_total ?? null,
         }));
         const { error } = await supabaseClient.from('ordem_itens').insert(linhas);
         if(error){ alert('Erro ao salvar itens da OS: ' + mensagemErro(error)); }
@@ -1908,6 +2010,7 @@ const VEICULOS_TIPOS = {
   moto:{label:'Moto', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M5 17l3-6h6"/><path d="M14.5 7H17"/><path d="M15.8 7l3.2 10"/><path d="M8 17h5l2-3.5h-4.5"/></svg>'},
   caminhonete:{label:'Caminhonete', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16.5v-4l3.2-.8 2.3-4h5l2 4.3H22v4.5"/><path d="M14.5 12v4.5"/><path d="M2 16.5h2M9.5 16.5h5M19.5 16.5H22"/><circle cx="7" cy="16.5" r="2"/><circle cx="17" cy="16.5" r="2"/></svg>'},
   caminhao:{label:'Caminhão', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>'},
+  van:{label:'Van', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5V8a1 1 0 0 1 1-1h11.5a1 1 0 0 1 .9.55L18.5 11H21a1 1 0 0 1 1 1v4.5"/><path d="M3 16.5h1.5M9.5 16.5h5M19.5 16.5H22"/><path d="M15.5 7v4.5H21"/><circle cx="7" cy="16.5" r="2"/><circle cx="17" cy="16.5" r="2"/></svg>'},
   outros:{label:'Outros', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'},
 };
 function iconeVeiculo(tipo){ const t = VEICULOS_TIPOS[tipo]; return t ? `<span class="veic-ico" title="${t.label}">${t.svg}</span>` : ''; }
@@ -2072,6 +2175,7 @@ let stateContasReceber = [];
 let stateEstoque = [];
 let stateAgendamentos = [];
 let stateCaixa = [];
+let stateDespesas = [];
 let stateServicos = [];
 let statePerfil = {};
 let itensOrdemAtual = [];
@@ -2088,6 +2192,7 @@ let editingServicoId = null;
 document.getElementById('btnNovoCliente').addEventListener('click', () => {
   editingClienteId = null;
   document.getElementById('formCliente').reset();
+  document.getElementById('clienteVeiculoResumo').style.display = 'none';
   document.getElementById('tituloModalCliente').textContent = 'Novo cliente';
   abrirModal('modalCliente');
 });
@@ -2095,6 +2200,7 @@ document.getElementById('btnNovaOrdem').addEventListener('click', async () => {
   editingOrdemId = null;
   document.getElementById('formOrdem').reset();
   document.getElementById('tituloModalOrdem').textContent = 'Nova ordem de serviço';
+  document.getElementById('ordemVeiculoResumo').style.display = 'none';
   itensOrdemAtual = [];
   await preencherSelectClientes();
   preencherSelectItemRef();
@@ -2180,6 +2286,9 @@ function abrirEdicaoCliente(id){
   f.placa.value = c.placa;
   f.cpf.value = c.cpf || '';
   f.querySelectorAll('[name="tipo_veiculo"]').forEach(r => r.checked = (r.value === c.tipo_veiculo));
+  const resumoVeicCliente = document.getElementById('clienteVeiculoResumo');
+  resumoVeicCliente.innerHTML = iconeVeiculo(c.tipo_veiculo) + escImp(c.veiculo || 'Sem veículo cadastrado') + (c.placa ? ' · ' + escImp(c.placa) : '');
+  resumoVeicCliente.style.display = '';
   f.revisao_intervalo_meses.value = c.revisao_intervalo_meses || '';
   f.revisao_intervalo_km.value = c.revisao_intervalo_km || '';
   document.getElementById('tituloModalCliente').textContent = 'Editar cliente';
@@ -2211,6 +2320,10 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   if(!cliente) return;
   const statusAnterior = editingOrdemId ? (stateOrdens.find(x => x.id === editingOrdemId) || {}).status : null;
   const querConcluir = f.get('status') === 'concluida' && statusAnterior !== 'concluida';
+  if(f.get('status') === 'concluida' && itensOrdemAtual.some(i => i.valor_total === null)){
+    alert('Tem item(ns) com "valor a definir" ainda sem preço. Preencha (lápis ao lado do item) antes de concluir a OS.');
+    return;
+  }
 
   const dados = {
     cliente_id: clienteId,
@@ -2268,6 +2381,10 @@ async function abrirEdicaoOrdem(id){
   f.km.value = o.km || '';
   f.comentarios.value = o.comentarios || '';
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
+  const clienteDaOrdem = stateClientes.find(x => x.id === o.cliente_id);
+  const resumoVeicOrdem = document.getElementById('ordemVeiculoResumo');
+  resumoVeicOrdem.innerHTML = iconeVeiculo(clienteDaOrdem && clienteDaOrdem.tipo_veiculo) + escImp(o.veiculo || '') + (placaDaOrdem(o) ? ' · ' + escImp(placaDaOrdem(o)) : '');
+  resumoVeicOrdem.style.display = '';
 
   const itensSalvos = await DB.ordemItens.listar(id);
   itensOrdemAtual = itensSalvos.map(i => {
@@ -2312,29 +2429,72 @@ function preencherSelectItemRef(){
       : '<option value="">Cadastre um serviço primeiro</option>';
   } else if(tipo === 'peca'){
     sel.innerHTML = stateEstoque.length
-      ? ph('Escolha a peça') + stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
+      ? ph('Escolha a peça') + stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-custo="${p.preco_custo||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
       : '<option value="">Cadastre um item de estoque primeiro</option>';
   } else {
     sel.innerHTML = ph('Escolha o tipo primeiro');
   }
 }
-document.getElementById('itemTipoSelect').addEventListener('change', preencherSelectItemRef);
+document.getElementById('itemTipoSelect').addEventListener('change', e => {
+  const avulsa = e.target.value === 'peca_avulsa';
+  document.getElementById('itemRefWrap').style.display = avulsa ? 'none' : '';
+  document.getElementById('itemAvulsoWrap').style.display = avulsa ? '' : 'none';
+  document.getElementById('itemAvulsoCustoWrap').style.display = avulsa ? '' : 'none';
+  if(!avulsa) preencherSelectItemRef();
+});
 document.getElementById('btnAjudaOS').addEventListener('click', () => abrirModal('modalAjudaOS'));
 
 document.getElementById('btnAddItem').addEventListener('click', () => {
   const tipo = document.getElementById('itemTipoSelect').value;
+  if(tipo === 'peca_avulsa'){
+    const descricao = document.getElementById('itemAvulsoDescricao').value.trim();
+    const valor = document.getElementById('itemAvulsoValor').value;
+    const custo = document.getElementById('itemAvulsoCusto').value;
+    const adefinirAvulsa = document.getElementById('itemValorADefinirChk').checked;
+    if(!descricao){ alert('Digite a descrição da peça.'); return; }
+    if(!adefinirAvulsa && valor === ''){ alert('Digite o valor cobrado do cliente, ou marque "Valor a definir".'); return; }
+    const qtdAvulsa = Number(document.getElementById('itemQtdInput').value) || 1;
+    const custoUnitAvulsa = custo !== '' ? Number(custo) : null;
+    itensOrdemAtual.push({
+      tipo:'peca_avulsa', referencia_id:null, descricao, quantidade: qtdAvulsa,
+      valor_unitario: adefinirAvulsa ? null : Number(valor), valor_total: adefinirAvulsa ? null : +(Number(valor) * qtdAvulsa).toFixed(2),
+      custo_unitario: custoUnitAvulsa, custo_total: custoUnitAvulsa !== null ? +(custoUnitAvulsa * qtdAvulsa).toFixed(2) : null,
+      tempo: 0,
+    });
+    document.getElementById('itemAvulsoDescricao').value = '';
+    document.getElementById('itemAvulsoValor').value = '';
+    document.getElementById('itemAvulsoCusto').value = '';
+    document.getElementById('itemQtdInput').value = 1;
+    document.getElementById('itemValorADefinirChk').checked = false;
+    renderItensOrdem();
+    return;
+  }
   const opt = document.getElementById('itemRefSelect').selectedOptions[0];
   if(!opt || !opt.value){ alert('Escolha o tipo e o item antes de clicar em "+ Adicionar item".'); return; }
   const qtd = Number(document.getElementById('itemQtdInput').value) || 1;
-  const preco = Number(opt.dataset.preco) || 0;
+  const adefinir = document.getElementById('itemValorADefinirChk').checked;
+  const preco = adefinir ? null : (Number(opt.dataset.preco) || 0);
+  const custoUnit = tipo === 'peca' ? (Number(opt.dataset.custo) || 0) : null;
   itensOrdemAtual.push({
     tipo, referencia_id: Number(opt.value), descricao: opt.dataset.nome,
-    quantidade: qtd, valor_unitario: preco, valor_total: +(preco * qtd).toFixed(2),
+    quantidade: qtd, valor_unitario: preco, valor_total: adefinir ? null : +(preco * qtd).toFixed(2),
+    custo_unitario: custoUnit, custo_total: custoUnit !== null ? +(custoUnit * qtd).toFixed(2) : null,
     tempo: Number(opt.dataset.tempo) || 0,
   });
   document.getElementById('itemQtdInput').value = 1;
+  document.getElementById('itemValorADefinirChk').checked = false;
   renderItensOrdem();
 });
+function editarValorItemOrdem(idx){
+  const i = itensOrdemAtual[idx]; if(!i) return;
+  const r = prompt(`Valor deste item — ${i.descricao} (${i.quantidade}× )`, i.valor_total !== null ? i.valor_total : '');
+  if(r === null) return;
+  const v = Number(r.replace(',', '.'));
+  if(isNaN(v) || v < 0){ alert('Digite um valor válido.'); return; }
+  i.valor_total = +v.toFixed(2);
+  i.valor_unitario = i.quantidade ? +(v / i.quantidade).toFixed(4) : v;
+  renderItensOrdem();
+}
 
 function removerItemOrdem(idx){
   itensOrdemAtual.splice(idx, 1);
@@ -2344,20 +2504,28 @@ function removerItemOrdem(idx){
 function renderItensOrdem(){
   const cont = document.getElementById('itensOrdemLista');
   cont.innerHTML = itensOrdemAtual.length
-    ? itensOrdemAtual.map((i, idx) => `
+    ? itensOrdemAtual.map((i, idx) => {
+        const lucro = i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null ? i.valor_total - i.custo_total : null;
+        return `
       <div class="item-linha">
-        <span>${i.tipo === 'servico' ? '🔧' : '🔩'} ${i.descricao} × ${i.quantidade}</span>
-        <span>${moeda(i.valor_total)}</span>
+        <span>${i.tipo === 'servico' ? '🔧' : i.tipo === 'peca_avulsa' ? '🧾' : '🔩'} ${i.descricao} × ${i.quantidade}${lucro !== null ? `<br><span class="lucro">lucro ${moeda(lucro)}</span>` : ''}</span>
+        <span>${i.valor_total === null ? '<span class="adefinir">A definir</span>' : moeda(i.valor_total)}</span>
+        <button type="button" class="btn-icon" title="Editar valor" onclick="editarValorItemOrdem(${idx})">${ICON_EDIT}</button>
         <button type="button" class="btn-icon danger" onclick="removerItemOrdem(${idx})">${ICON_DELETE}</button>
-      </div>`).join('')
+      </div>`;
+      }).join('')
     : '<p class="empty" style="padding:10px;">Nenhum item adicionado ainda.</p>';
 
-  const totalValor = itensOrdemAtual.reduce((acc, i) => acc + i.valor_total, 0);
+  const totalValor = itensOrdemAtual.reduce((acc, i) => acc + (i.valor_total || 0), 0);
   const totalTempo = itensOrdemAtual.filter(i => i.tipo === 'servico').reduce((acc, i) => acc + (i.tempo || 0) * i.quantidade, 0);
+  const totalCusto = itensOrdemAtual.reduce((acc, i) => acc + (i.custo_total || 0), 0);
+  const totalLucro = itensOrdemAtual.filter(i => i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null).reduce((acc, i) => acc + (i.valor_total - i.custo_total), 0);
   if(itensOrdemAtual.length) document.querySelector('#formOrdem [name="valor"]').value = totalValor.toFixed(2);
-  document.getElementById('tempoEstimadoTexto').textContent = totalTempo
-    ? `⏱ Tempo estimado de mão de obra: ${totalTempo}h`
-    : '';
+  const pendentes = itensOrdemAtual.filter(i => i.valor_total === null).length;
+  document.getElementById('tempoEstimadoTexto').innerHTML =
+    (totalTempo ? `⏱ Tempo estimado de mão de obra: ${totalTempo}h<br>` : '') +
+    (totalCusto ? `💰 Lucro estimado (peças): ${moeda(totalLucro)}<br>` : '') +
+    (pendentes ? `<span class="adefinir">⚠ ${pendentes} item(ns) com valor a definir</span>` : '');
 }
 
 // Muda o status direto na tabela (Aberta → Em andamento → Concluída)
@@ -2372,7 +2540,7 @@ async function comprimirImagem(file){
 }
 
 let fotosOrdemId = null;
-const FASES_FOTO = [['antes', 'Antes (danos/estado na entrada)'], ['depois', 'Depois (serviço pronto)']];
+const FASES_FOTO = [['antes', 'Antes (danos/estado na entrada)'], ['orcamento', 'Orçamento da autopeça'], ['depois', 'Depois (serviço pronto)']];
 async function abrirFotosOS(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
@@ -2701,8 +2869,11 @@ document.getElementById('formContaPagar').addEventListener('submit', async e => 
   const dados = {
     descricao: f.get('descricao'), fornecedor_id: fornecedorId, fornecedor_nome: fornecedor ? fornecedor.nome : null,
     valor: Number(f.get('valor')), vencimento: f.get('vencimento') || null, status: f.get('status'),
+    forma_pagamento: f.get('forma_pagamento') || null,
     recorrente: f.get('recorrente') === 'on',
   };
+  const antesEditar = editingContaPagarId ? stateContasPagar.find(c => c.id === editingContaPagarId) : null;
+  if(dados.status === 'pago' && (!antesEditar || antesEditar.status !== 'pago')) dados.data_pagamento = new Date().toISOString();
   const ok = editingContaPagarId
     ? await DB.contasPagar.atualizar(editingContaPagarId, dados)
     : await DB.contasPagar.criar(dados);
@@ -2720,6 +2891,7 @@ function abrirEdicaoContaPagar(id){
   const f = document.getElementById('formContaPagar');
   f.descricao.value = x.descricao; f.fornecedorId.value = x.fornecedor_id || ''; f.valor.value = x.valor;
   f.vencimento.value = x.vencimento || ''; f.status.value = x.status;
+  f.forma_pagamento.value = x.forma_pagamento || '';
   f.recorrente.checked = !!x.recorrente;
   document.getElementById('tituloModalContaPagar').textContent = 'Editar conta a pagar';
   abrirModal('modalContaPagar');
@@ -2771,7 +2943,10 @@ document.getElementById('formContaReceber').addEventListener('submit', async e =
   const dados = {
     descricao: f.get('descricao'), cliente_id: clienteId, cliente_nome: cliente ? cliente.nome : null,
     valor: Number(f.get('valor')), vencimento: f.get('vencimento') || null, status: f.get('status'),
+    forma_pagamento: f.get('forma_pagamento') || null,
   };
+  const antesEditarReceber = editingContaReceberId ? stateContasReceber.find(c => c.id === editingContaReceberId) : null;
+  if(dados.status === 'recebido' && (!antesEditarReceber || antesEditarReceber.status !== 'recebido')) dados.data_recebimento = new Date().toISOString();
   const ok = editingContaReceberId
     ? await DB.contasReceber.atualizar(editingContaReceberId, dados)
     : await DB.contasReceber.criar(dados);
@@ -2789,6 +2964,7 @@ function abrirEdicaoContaReceber(id){
   const f = document.getElementById('formContaReceber');
   f.descricao.value = x.descricao; f.clienteId.value = x.cliente_id || ''; f.valor.value = x.valor;
   f.vencimento.value = x.vencimento || ''; f.status.value = x.status;
+  f.forma_pagamento.value = x.forma_pagamento || '';
   document.getElementById('tituloModalContaReceber').textContent = 'Editar conta a receber';
   abrirModal('modalContaReceber');
 }
@@ -2807,6 +2983,13 @@ async function mudarStatusContaReceber(id, status){
 /* ==========================================================
    ESTOQUE
    ========================================================== */
+document.getElementById('btnCalcularCusto').addEventListener('click', () => {
+  const total = Number(document.getElementById('calcCustoTotal').value);
+  const qtd = Number(document.getElementById('calcCustoQtd').value);
+  if(!total || !qtd){ alert('Preencha quanto pagou e quantas unidades o lote rende.'); return; }
+  document.querySelector('#formEstoque [name="preco_custo"]').value = (total / qtd).toFixed(4);
+  alert(`Custo por unidade: ${moeda(total / qtd)}`);
+});
 document.getElementById('formEstoque').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
@@ -2815,6 +2998,7 @@ document.getElementById('formEstoque').addEventListener('submit', async e => {
     categoria: (f.get('categoria') || '').trim() || null,
     quantidade: Number(f.get('quantidade')),
     quantidade_minima: Number(f.get('quantidade_minima') || 0),
+    unidade: f.get('unidade') || 'un',
     preco_custo: Number(f.get('preco_custo') || 0),
     preco_venda: Number(f.get('preco_venda') || 0),
   };
@@ -2833,6 +3017,7 @@ function abrirEdicaoEstoque(id){
   editingEstoqueId = id;
   const f = document.getElementById('formEstoque');
   f.nome.value = x.nome; f.categoria.value = x.categoria || ''; f.quantidade.value = x.quantidade; f.quantidade_minima.value = x.quantidade_minima;
+  f.unidade.value = x.unidade || 'un';
   f.preco_custo.value = x.preco_custo; f.preco_venda.value = x.preco_venda;
   document.getElementById('tituloModalEstoque').textContent = 'Editar item';
   abrirModal('modalEstoque');
@@ -3485,7 +3670,7 @@ function irLembrete(view, campoId, termo){
 }
 
 async function render(){
-  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa] = await Promise.all([
+  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa, despesas] = await Promise.all([
     DB.getClientes(),
     DB.getOrdens(),
     DB.fornecedores.listar(),
@@ -3495,6 +3680,7 @@ async function render(){
     DB.agendamentos.listar(),
     DB.servicos.listar(),
     DB.caixa.listar(),
+    DB.despesas.listar(),
   ]);
   stateClientes = clientes;
   stateOrdens = ordens;
@@ -3505,7 +3691,9 @@ async function render(){
   stateAgendamentos = agendamentos;
   stateServicos = servicos;
   stateCaixa = caixa;
+  stateDespesas = despesas;
   renderCaixa();
+  renderDespesas();
   renderLembretes();
   if(document.getElementById('view-relatorios').classList.contains('active')) renderRelatoriosVendas();
 
@@ -3588,7 +3776,7 @@ async function render(){
     <tr>
       <td${x.observacoes ? ` title="${escImp(x.observacoes)}"` : ''}>${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
       <td>${x.categoria || '—'}</td>
-      <td>${x.quantidade}</td>
+      <td>${x.quantidade} ${x.unidade && x.unidade !== 'un' ? x.unidade : ''}</td>
       <td>${moeda(x.preco_custo || 0)}</td>
       <td>${moeda(x.preco_venda || 0)}</td>
       <td class="icon-row">
@@ -3852,10 +4040,13 @@ function renderCaixa(){
   const recebOs = doDia(stateOrdens.filter(o => o.pago), 'data_pagamento');
   const recebContas = doDia(stateContasReceber.filter(r => r.status === 'recebido'), 'data_recebimento');
   const pagos = doDia(stateContasPagar.filter(p => p.status === 'pago'), 'data_pagamento');
+  const despesasHoje = stateDespesas.filter(d => (d.data || '') === hoje);
   const entradas = porForma(recebOs, 'forma_pagamento', 'valor');
   const entradasContas = porForma(recebContas, 'forma_pagamento', 'valor');
   Object.keys(entradas).forEach(k => entradas[k] += entradasContas[k]);
   const saidas = porForma(pagos, 'forma_pagamento', 'valor');
+  const saidasDespesas = porForma(despesasHoje, 'forma_pagamento', 'valor');
+  Object.keys(saidas).forEach(k => saidas[k] += saidasDespesas[k]);
   const totalEntradas = Object.values(entradas).reduce((a,b) => a+b, 0);
   const totalSaidas = Object.values(saidas).reduce((a,b) => a+b, 0);
   const dinheiroEsperado = Number(c.valor_abertura) + entradas.Dinheiro - saidas.Dinheiro;
@@ -3968,7 +4159,7 @@ document.getElementById('formNovaSenha').addEventListener('submit', async e => {
   document.getElementById('formNovaSenha').style.display = 'none';
   document.getElementById('loginSubtitulo').style.display = '';
   const { data } = await supabaseClient.auth.getSession();
-  mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups();
+  mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); carregarAuditoria();
 });
 document.getElementById('btnMostrarCriarUsuario').addEventListener('click', () => {
   document.getElementById('formLogin').style.display = 'none';
@@ -3994,7 +4185,7 @@ document.getElementById('formCriarUsuario').addEventListener('submit', async e =
     options: { data: { telefone: apenasDigitosLogin(f.get('celular') || ''), usuario: (f.get('usuario') || '').trim() || null } },
   });
   if(error){ erroEl.textContent = mensagemErro(error); return; }
-  if(data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); return; }
+  if(data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); carregarAuditoria(); return; }
   alert('Usuário criado! Se o Supabase pedir confirmação por e-mail, confira sua caixa de entrada antes de entrar. Se não pedir, já pode entrar direto.');
   document.getElementById('btnMostrarLogin').click();
 });
@@ -4039,11 +4230,121 @@ async function abrirPortalCliente(token){
   `;
 }
 
+
+/* ==========================================================
+   AJUDA POR TELA — um "❓" ao lado do título de cada tela,
+   com uma explicação curta de como ela funciona
+   ========================================================== */
+const AJUDA_TEXTOS = {
+  'view-dashboard': 'Resumo do dia: orçamentos aguardando aprovação, O.S. abertas e em andamento, e os lembretes mais urgentes (estoque baixo, contas vencendo, garantias acabando, revisão a oferecer). Clique num lembrete pra ir direto na tela dele.',
+  'view-clientes': 'Cadastre nome, telefone, CPF (opcional), veículo, placa e o tipo de veículo (com ícone). Se preencher "revisar a cada X meses/km", o sistema agenda sozinho a próxima revisão quando uma O.S. desse cliente for concluída.',
+  'view-ordens': 'Toda ordem de serviço nasce aqui: escolha o cliente, descreva o serviço, adicione os itens (peças do estoque, "peça de fora" com valor manual — pra quando compra numa autopeça — ou mão de obra) e o status. Deixe "Valor a definir" quando ainda não souber o preço. Ao marcar como Concluída, abre a tela de recebimento, o sistema dá baixa nas peças do estoque e gera o link do Portal do Cliente (na Nota Fiscal). O botão de câmera na lista de O.S. anexa fotos de antes, do orçamento da autopeça e de depois.',
+  'view-agenda': 'Use pra marcar que um cliente vai trazer o veículo, antes de existir uma O.S. (ainda não se sabe o problema nem o valor). Quando o veículo chegar, crie a O.S. normalmente. Lembretes de revisão periódica aparecem aqui sozinhos.',
+  'view-fornecedores': 'Cadastro de fornecedores de peças e serviços, usado nas Contas a Pagar pra saber quem cobrar.',
+  'view-estoque': 'Controle de peças: quantidade, mínimo, custo e venda, com categoria opcional. O botão no topo importa uma planilha Excel inteira — o sistema tenta reconhecer as colunas sozinho, mas sempre mostra uma prévia antes de gravar qualquer coisa.',
+  'view-servicos': 'Catálogo de serviços com preço padrão e tempo estimado — aparecem na lista de itens ao montar uma O.S.',
+  'view-caixa': 'Abra o caixa no início do dia informando quanto dinheiro tem na gaveta. O sistema soma sozinho as entradas e saídas em dinheiro (O.S. pagas e contas do dia) e mostra o "esperado", pra você comparar com o que contou na hora de fechar.',
+  'view-pagar': 'Contas fixas e recorrentes da oficina (aluguel, internet, fornecedores a prazo). Marcar como paga entra na conta do Caixa do dia. Para gastos variáveis do dia a dia (ex: peça comprada na hora), use Despesas do dia.',
+  'view-despesas': 'Gastos variáveis do dia a dia — ex: pagou uma peça na autopeça na hora, comprou algo pontual. Lance na hora, com a forma de pagamento; entra na conta do Caixa do dia. Pode vincular a uma O.S. pra saber de qual serviço veio o gasto.',
+  'view-receber': 'Valores que ainda vão entrar (fiado, parcelamento). Marcar como recebido também entra na conta do Caixa do dia.',
+  'view-relatorios': 'Resumo de vendas, serviços mais pedidos e faturamento por período.',
+  'view-administracao': 'Dados da oficina, backups (automático à meia-noite e manual) e a Auditoria — histórico de tudo que foi criado, editado ou apagado no sistema, com data, hora e quem fez.',
+};
+function abrirAjudaGeral(viewId){
+  const h1 = document.querySelector(`#${viewId} .view-head h1`);
+  const tituloBase = h1 && h1.firstChild ? h1.firstChild.textContent.trim() : 'Ajuda';
+  document.getElementById('ajudaGeralTitulo').textContent = tituloBase + ' — Ajuda';
+  document.getElementById('ajudaGeralTexto').textContent = AJUDA_TEXTOS[viewId] || '';
+  abrirModal('modalAjudaGeral');
+}
+document.querySelectorAll('.view').forEach(v => {
+  const texto = AJUDA_TEXTOS[v.id];
+  const h1 = v.querySelector('.view-head h1');
+  if(!texto || !h1 || h1.querySelector('.btn-ajuda-view')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'btn-ajuda-view'; btn.title = 'Ajuda desta tela'; btn.textContent = '❓';
+  btn.addEventListener('click', () => abrirAjudaGeral(v.id));
+  h1.appendChild(btn);
+});
+
+
+/* ==========================================================
+   DESPESAS DO DIA — gastos variáveis (ex: peça paga na autopeça na hora),
+   separados das Contas a Pagar (que ficam pra contas fixas/recorrentes e
+   fornecedores a prazo)
+   ========================================================== */
+function renderDespesas(){
+  const sel = document.getElementById('selectOrdemDespesa');
+  if(sel) sel.innerHTML = '<option value="">— nenhuma —</option>' + stateOrdens.map(o => `<option value="${o.id}">#${o.id} — ${escImp(o.cliente_nome || '')} (${escImp(o.veiculo || '')})</option>`).join('');
+  const tbody = document.querySelector('#tabelaDespesas tbody');
+  if(!tbody) return;
+  const lista = [...stateDespesas].sort((a, b) => (b.data || '').localeCompare(a.data || '') || b.id - a.id);
+  tbody.innerHTML = lista.map(d => `
+    <tr>
+      <td>${d.data ? dataBR(d.data) : '—'}</td>
+      <td>${escImp(d.descricao)}</td>
+      <td>${escImp(d.forma_pagamento || '—')}</td>
+      <td>${d.ordem_id ? '#' + d.ordem_id : '—'}</td>
+      <td>${moeda(d.valor)}</td>
+      <td><button type="button" class="btn-icon danger" onclick="excluirDespesa(${d.id})">${ICON_DELETE}</button></td>
+    </tr>`).join('');
+  const empty = document.getElementById('despesasEmpty');
+  if(empty) empty.style.display = lista.length ? 'none' : 'block';
+}
+document.getElementById('formDespesa').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const ok = await DB.despesas.criar({
+    descricao: f.get('descricao'), valor: Number(f.get('valor')), forma_pagamento: f.get('forma_pagamento'),
+    data: f.get('data'), ordem_id: f.get('ordem_id') ? Number(f.get('ordem_id')) : null,
+  });
+  if(!ok) return;
+  e.target.reset();
+  document.querySelector('#formDespesa [name="data"]').value = new Date().toISOString().slice(0,10);
+  render();
+});
+async function excluirDespesa(id){
+  if(!confirm('Excluir esta despesa?')) return;
+  await DB.despesas.excluir(id);
+  render();
+}
+document.querySelector('#formDespesa [name="data"]').value = new Date().toISOString().slice(0,10);
+
+/* ==========================================================
+   AUDITORIA — histórico de criação/edição/exclusão em cada tabela
+   ========================================================== */
+const AUDITORIA_ACAO = { INSERT:'Criou', UPDATE:'Editou', DELETE:'Apagou' };
+let auditoriaCache = [];
+async function carregarAuditoria(){
+  const { data, error } = await supabaseClient.from('auditoria').select('*').order('criado_em', { ascending:false }).limit(50);
+  auditoriaCache = error ? [] : (data || []);
+  const tbody = document.querySelector('#tabelaAuditoria tbody');
+  if(!tbody) return;
+  tbody.innerHTML = auditoriaCache.map((a, i) => `
+    <tr>
+      <td>${new Date(a.criado_em).toLocaleString('pt-BR')}</td>
+      <td>${escImp(a.usuario_email || '—')}</td>
+      <td>${escImp(a.tabela)}</td>
+      <td>${AUDITORIA_ACAO[a.operacao] || a.operacao}</td>
+      <td><button type="button" class="btn-ghost" onclick="abrirDetalheAuditoria(${i})">Ver</button></td>
+    </tr>`).join('');
+  const empty = document.getElementById('auditoriaEmpty');
+  if(empty) empty.style.display = auditoriaCache.length ? 'none' : 'block';
+}
+function abrirDetalheAuditoria(i){
+  const a = auditoriaCache[i]; if(!a) return;
+  document.getElementById('auditoriaDetalheResumo').textContent =
+    `${escImp(a.usuario_email || '—')} · ${AUDITORIA_ACAO[a.operacao] || a.operacao} · ${escImp(a.tabela)} · ${new Date(a.criado_em).toLocaleString('pt-BR')}`;
+  const bloco = (titulo, obj) => obj ? `<p style="font-weight:600;margin:10px 0 4px;">${titulo}</p><div class="auditoria-json">${escImp(JSON.stringify(obj, null, 2))}</div>` : '';
+  document.getElementById('auditoriaDetalheConteudo').innerHTML = bloco('Antes', a.dados_antes) + bloco('Depois', a.dados_depois);
+  abrirModal('modalAuditoriaDetalhe');
+}
+
 (async () => {
   const tokenPortalUrl = new URLSearchParams(location.search).get('os');
   if(tokenPortalUrl){ abrirPortalCliente(tokenPortalUrl); return; }
   const { data } = await supabaseClient.auth.getSession();
-  if(data && data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); } else { mostrarLogin(); }
+  if(data && data.session){ mostrarApp(data.session.user.email); carregarPerfil(); render(); carregarHistoricoBackups(); carregarAuditoria(); } else { mostrarLogin(); }
   if(supabaseClient.auth.onAuthStateChange) supabaseClient.auth.onAuthStateChange((event) => {
     if(event === 'SIGNED_OUT') mostrarLogin();
     if(event === 'PASSWORD_RECOVERY'){
@@ -4305,7 +4606,7 @@ function exportarClientesCSV(){
 function exportarOrdensCSV(){
   baixarArquivo('ordens.csv', paraCSV(stateOrdens), 'text/csv;charset=utf-8');
 }
-const tipoBackupLabel = { automatico: 'Automático (22h)', manual: 'Manual' };
+const tipoBackupLabel = { automatico: 'Automático (meia-noite)', manual: 'Manual' };
 async function carregarHistoricoBackups(){
   const lista = await DB.backups.listarRecentes(30);
   const tbody = document.querySelector('#tabelaBackups tbody');
