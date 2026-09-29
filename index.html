@@ -207,6 +207,26 @@ tr:last-child td{border-bottom:none;}
 .receb-badge.pendente{background:rgba(180,83,9,.15);color:var(--amber,#b45309);}
 .receb-badge.recebido{background:rgba(47,184,114,.15);color:var(--ok);}
 .receb-badge.terceiro{background:rgba(100,116,139,.18);color:var(--text-dim);}
+#modalOrdem .os-topo{display:grid;grid-template-columns:2fr 1fr;gap:8px;}
+#modalOrdem .os-blocos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 4px;}
+#modalOrdem .os-bloco{border:1px solid var(--border);border-radius:10px;padding:10px;min-width:0;}
+#modalOrdem .os-bloco h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;}
+#modalOrdem .os-bloco h4 span{color:var(--text-dim);font-weight:500;}
+#modalOrdem .add-linha{display:grid;gap:6px;align-items:end;margin-top:6px;}
+#modalOrdem .add-linha.pecas{grid-template-columns:52px 1fr 1fr auto;}
+#modalOrdem .add-linha.servs{grid-template-columns:1fr auto;}
+#modalOrdem .add-linha .full{grid-column:1/-1;}
+#modalOrdem .add-linha label{margin:0;font-size:11px;}
+#modalOrdem .itens-lista{max-height:130px;overflow-y:auto;}
+.os-pagamentos{border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px;}
+.os-pagamentos h4{margin:0 0 6px;font-size:13px;}
+.pag-resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+.pag-card{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;}
+.pag-card span{font-size:11px;color:var(--text-dim);display:block;} .pag-card b{font-size:15px;}
+.pag-linha{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.pag-linha:last-child{border-bottom:none;}
+.os-mais{margin-top:8px;font-size:12px;} .os-mais summary{cursor:pointer;color:var(--text-dim);margin-bottom:6px;}
+@media(max-width:760px){#modalOrdem .os-blocos{grid-template-columns:1fr;}}
 
 
 
@@ -428,6 +448,19 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 .foto-item img{width:100%; height:100%; object-fit:cover; cursor:pointer; display:block;}
 .foto-item button{position:absolute; top:4px; right:4px; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer; background:rgba(0,0,0,.65); color:#fff; line-height:1;}
 .foto-fase{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px;}
+.fotos-grid.arrastando-sobre{outline:2px dashed var(--accent); outline-offset:4px; border-radius:8px;}
+.foto-item{cursor:grab;}
+.foto-item.arquivo{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:4px; text-align:center;}
+.foto-item.arquivo span{font-size:10px; color:var(--text-dim); word-break:break-all; line-height:1.2; max-height:2.4em; overflow:hidden;}
+.foto-item .icone-tipo{font-size:26px;}
+.foto-item video{width:100%; height:100%; object-fit:cover; pointer-events:none;}
+#modalLightbox .modal-box{background:transparent; box-shadow:none; padding:0; width:min(92vw,900px); max-height:92vh; display:flex; flex-direction:column; align-items:center; gap:10px;}
+#modalLightbox img, #modalLightbox video{max-width:100%; max-height:78vh; border-radius:8px; background:#000;}
+#modalLightbox iframe{width:min(92vw,900px); height:78vh; border:none; border-radius:8px; background:#fff;}
+.lightbox-nav{display:flex; gap:16px; align-items:center;}
+.lightbox-nav button{background:rgba(255,255,255,.12); border:none; color:#fff; width:40px; height:40px; border-radius:50%; font-size:18px; cursor:pointer;}
+.lightbox-nav button:hover{background:rgba(255,255,255,.22);}
+#modalLightbox .btn-ghost{color:#fff; border-color:rgba(255,255,255,.35);}
 .barra-rel{height:6px; border-radius:3px; background:var(--accent); min-width:2px;}
 #bannerOffline{display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#b45309; color:#fff; text-align:center; padding:8px; font-size:13px;}
 </style>
@@ -1101,80 +1134,63 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   <div class="modal-box">
     <div class="os-head" style="display:block;"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><h3 id="tituloModalOrdem">Nova ordem de serviço</h3><button type="button" class="btn-ghost" id="btnAjudaOS">❓ Como preencher</button></div><p id="ordemVeiculoResumo" style="display:none;font-size:13px;color:var(--text-dim);margin:2px 0 0;"></p></div>
     <form id="formOrdem">
-      <div class="os-cols">
-        <div>
-          <label>Cliente
-            <select name="clienteId" id="selectCliente" required></select>
-          </label>
-          <label>Descrição do serviço
-            <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e filtro" required></textarea>
-          </label>
-          <div class="grid2">
-            <label>Quilometragem
-              <input type="number" name="km" min="0" step="1" placeholder="Ex: 45000">
-            </label>
-            <label>Status
-              <select name="status" required>
-                <option value="" disabled selected hidden>Escolha o status</option>
-                <option value="orcamento">Orçamento</option>
-                <option value="aberta">Aberta</option>
-                <option value="andamento">Em andamento</option>
-                <option value="concluida">Concluída</option>
-              </select>
-            </label>
+      <div class="os-topo">
+        <label>Cliente
+          <select name="clienteId" id="selectCliente" required></select>
+        </label>
+        <label>Status
+          <select name="status" required>
+            <option value="" disabled selected hidden>Escolha o status</option>
+            <option value="orcamento">Orçamento</option>
+            <option value="aberta">Aberta</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+          </select>
+        </label>
+      </div>
+      <label>O que vai ser feito
+        <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
+      </label>
+      <input type="hidden" name="valor">
+
+      <div class="os-blocos">
+        <div class="os-bloco">
+          <h4>🔩 Peças <span id="subtotalPecas"></span></h4>
+          <div id="listaPecasOrdem" class="itens-lista"></div>
+          <div class="add-linha pecas">
+            <label class="full">Peça (digite ou escolha do estoque)<input type="text" id="pecaDesc" list="listaPecasEstoque" autocomplete="off" placeholder="Ex: Correia dentada"></label>
+            <label>Qtd<input type="number" id="pecaQtd" value="1" min="0.001" step="0.001"></label>
+            <label>Valor unit. (R$)<input type="number" id="pecaValor" step="0.01" min="0" placeholder="a definir"></label>
+            <label>Custo (opc.)<input type="number" id="pecaCusto" step="0.01" min="0"></label>
+            <button type="button" class="btn-ghost" id="btnAddPeca">+ Peça</button>
           </div>
-          <div class="grid2">
-            <label>Garantia (meses)
-              <input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3">
-            </label>
-            <label>Nº da nota fiscal (automático)
-              <input type="text" id="osNumeroNf" readonly tabindex="-1" placeholder="Gerado ao emitir a nota">
-            </label>
-          </div>
-          <label>Comentários (opcional)
-            <textarea name="comentarios" rows="2" placeholder="Observações internas, recados, detalhes do atendimento..."></textarea>
-          </label>
+          <datalist id="listaPecasEstoque"></datalist>
         </div>
-        <div>
-          <label style="margin-bottom:4px;">Itens (mão de obra e peças)</label>
-          <div id="itensOrdemLista" class="itens-lista"></div>
-          <div class="grid2">
-            <label>Tipo
-              <select id="itemTipoSelect">
-                <option value="" disabled selected hidden>Escolha o tipo</option>
-                <option value="servico">Serviço (mão de obra)</option>
-                <option value="peca">Peça (estoque)</option>
-                <option value="peca_avulsa">Peça de fora (autopeça)</option>
-              </select>
-            </label>
-            <label id="itemRefWrap">Item
-              <select id="itemRefSelect"></select>
-            </label>
+        <div class="os-bloco">
+          <h4>🔧 Mão de obra <span id="subtotalServicos"></span></h4>
+          <div id="listaServicosOrdem" class="itens-lista"></div>
+          <div class="add-linha servs">
+            <label class="full">Serviço (digite ou escolha do catálogo)<input type="text" id="servDesc" list="listaServicosCatalogo" autocomplete="off" placeholder="Ex: Troca de embreagem"></label>
+            <label>Valor (R$)<input type="number" id="servValor" step="0.01" min="0" placeholder="a definir"></label>
+            <button type="button" class="btn-ghost" id="btnAddServ">+ Serviço</button>
           </div>
-          <div id="itemAvulsoWrap" class="grid2" style="display:none;">
-            <label>Descrição da peça<input type="text" id="itemAvulsoDescricao" placeholder="Ex: Bomba d'água"></label>
-            <label>Valor cobrado do cliente (R$)<input type="number" id="itemAvulsoValor" step="0.01" min="0"></label>
-          </div>
-          <div id="itemAvulsoCustoWrap" class="grid2" style="display:none;">
-            <label>Custo (o que você pagou na autopeça, opcional)<input type="number" id="itemAvulsoCusto" step="0.01" min="0"></label>
-            <span></span>
-          </div>
-          <div class="grid2" style="align-items:end;">
-            <label>Quantidade
-              <input type="number" id="itemQtdInput" value="1" min="0.001" step="0.001">
-            </label>
-            <button type="button" class="btn-ghost" id="btnAddItem" style="margin-bottom:7px;">+ Adicionar item</button>
-          </div>
-          <label style="flex-direction:row; align-items:center; gap:6px; margin-bottom:8px;">
-            <input type="checkbox" id="itemValorADefinirChk" style="width:auto;"> Valor a definir (preencher no final do serviço)
-          </label>
-          <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:0 0 6px;"></p>
-          <label>Valor total (R$)
-            <input type="number" name="valor" step="0.01" placeholder="0,00 (pode deixar em branco por enquanto)" min="0">
-          </label>
-          <div id="recebimentoOrdemPainel"></div>
+          <datalist id="listaServicosCatalogo"></datalist>
         </div>
       </div>
+      <p id="tempoEstimadoTexto" style="font-size:12px; color:var(--text-dim); margin:4px 0 0;"></p>
+
+      <div class="os-pagamentos" id="pagamentosOrdemPainel"></div>
+
+      <details class="os-mais">
+        <summary>Mais detalhes (km, garantia, comentários)</summary>
+        <div class="grid2">
+          <label>Quilometragem<input type="number" name="km" min="0" step="1" placeholder="Ex: 45000"></label>
+          <label>Garantia (meses)<input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3"></label>
+        </div>
+        <label>Nº da nota fiscal (automático)<input type="text" id="osNumeroNf" readonly tabindex="-1" placeholder="Gerado ao emitir a nota"></label>
+        <label>Comentários (só você vê)<textarea name="comentarios" rows="2" placeholder="Observações internas, recados..."></textarea></label>
+      </details>
+
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar OS</button>
@@ -1188,21 +1204,14 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
   <div class="modal-box" style="width:640px; max-height:90vh; overflow-y:auto;">
     <h3>Como preencher a ordem de serviço</h3>
     <div class="ajuda-os">
-      Preencha na ordem abaixo (primeiro a coluna da esquerda, depois a da direita). Obrigatórios: <strong>Cliente, Descrição, Status e Valor total</strong> — o sistema avisa se faltar algum.
+      Preencha de cima pra baixo. Só precisa de <strong>Cliente, Status e "O que vai ser feito"</strong> pra salvar — o resto pode ir completando durante o serviço.
       <ol>
-        <li><strong>Cliente</strong> — escolha na lista (aparece nome — veículo). O veículo e a placa da OS vêm do cadastro dele. Se o cliente ainda não existe, cadastre antes em <em>Cadastros › Clientes</em>.</li>
-        <li><strong>Descrição do serviço</strong> — escreva o que será feito. Ex.: "Troca de óleo e filtro".</li>
-        <li><strong>Quilometragem</strong> (opcional) — km que o veículo marca na entrada. Sai na nota/recibo e serve de base para a próxima revisão por km.</li>
-        <li><strong>Status</strong> — <em>Orçamento</em>: o cliente ainda vai aprovar · <em>Aberta</em>: aprovada, ainda não começou · <em>Em andamento</em>: está sendo feita · <em>Concluída</em>: serviço pronto (veja o quadro abaixo).</li>
-        <li><strong>Itens (serviços e peças)</strong> — escolha o <em>Tipo</em>: <em>Serviço</em> (mão de obra, vem de Cadastros › Serviços), <em>Peça</em> (vem do Estoque) ou <em>Peça de fora</em> (pra quando compra numa autopeça — digita a descrição e o valor na mão, sem precisar cadastrar no Estoque). Depois escolha o <em>Item</em> (ou preencha a descrição, na peça de fora), informe a <em>Quantidade</em> e clique em <strong>+ Adicionar item</strong>. Marque <em>Valor a definir</em> se ainda não souber o preço — dá pra preencher depois clicando no lápis do item, mas a OS não conclui enquanto tiver item pendente. Repita para cada item; a lixeira remove. Para aparecer na lista, o serviço ou a peça do Estoque precisa estar cadastrado antes.</li>
-        <li><strong>Valor total</strong> — é somado sozinho a cada item adicionado. Para dar desconto ou fechar um valor, ajuste o campo <em>depois</em> de adicionar todos os itens (adicionar ou remover um item recalcula o total).</li>
-        <li><strong>Garantia (meses)</strong> (opcional) — a garantia conta a partir da data da OS e aparece no histórico do cliente.</li>
-        <li><strong>Nº da nota fiscal</strong> — automático: você não digita. O sistema gera o número (sequencial, sem repetir) na primeira vez que você clica em <em>Gerar nota fiscal</em> da OS e ele fica gravado nela. <strong>Comentários</strong> (opcional) — observações internas.</li>
-        <li>Clique em <strong>Salvar OS</strong>.</li>
+        <li><strong>Peças</strong> — digite o nome (ou escolha uma do estoque) e clique em <strong>+ Peça</strong>. Se comprou numa autopeça, é só digitar o nome, o valor cobrado do cliente e o custo (o que você pagou). Sem valor = "a definir".</li>
+        <li><strong>Mão de obra</strong> — digite o serviço (ou escolha do catálogo) e o valor. Se ainda não sabe quanto vai cobrar, deixe o valor em branco: fica "A definir" e você preenche depois no lápis ✏️. A OS só conclui quando não tiver nada "a definir".</li>
+        <li><strong>Pagamentos</strong> — depois de salvar a OS, use <strong>+ Registrar pagamento</strong> a cada vez que o cliente pagar alguma coisa (dinheiro, Pix, cartão/maquininha...). Pode ser em várias parcelas: o sistema mostra <em>Total, Recebido e Falta receber</em> e quanto falta em Peças e em Mão de obra. Se o cliente pagou direto na autopeça, marque isso no pagamento.</li>
+        <li><strong>Concluída</strong> — significa "o carro ficou pronto": baixa as peças do estoque e agenda a próxima revisão. Não depende de o cliente já ter pago; se ficar faltando, a OS aparece nos Lembretes do Painel até quitar.</li>
+        <li><strong>Mais detalhes</strong> — km, garantia e comentários internos (o cliente não vê).</li>
       </ol>
-      <div class="ajuda-caixa">
-        <strong>Ao salvar como "Concluída"</strong> abre a tela <em>Concluir OS e receber</em>: escolha se o cliente pagou agora (e a forma de pagamento) ou se fica a receber (com vencimento). Ao confirmar, o sistema dá baixa no estoque das peças usadas, registra o financeiro e, se o cliente tem revisão periódica cadastrada, agenda a próxima revisão. As peças só saem do estoque nesse momento.
-      </div>
     </div>
     <div class="modal-actions" style="margin-top:14px;">
       <button type="button" class="btn-primary" data-close>Entendi</button>
@@ -1232,48 +1241,56 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL RECEBIMENTO -->
 <div class="modal" id="modalFotosOS">
   <div class="modal-box" style="max-width:640px;">
-    <h3 id="tituloFotosOS">Fotos da OS</h3>
+    <h3 id="tituloFotosOS">Anexos da OS</h3>
+    <p class="hint" style="margin-top:-8px;">Fotos, vídeos e PDFs. Arraste um arquivo pra outra categoria pra reclassificar.</p>
     <div id="fotosBlocos"></div>
     <div class="modal-actions"><button type="button" class="btn-ghost" data-close>Fechar</button></div>
   </div>
 </div>
 
-<div class="modal" id="modalRecebimento">
+<div class="modal" id="modalLightbox">
   <div class="modal-box">
-    <h3 id="tituloRecebimento">Registrar recebimento</h3>
+    <div id="lightboxConteudo"></div>
+    <div class="lightbox-nav">
+      <button type="button" id="lightboxAnterior" title="Anterior">‹</button>
+      <button type="button" class="btn-ghost" data-close>Fechar</button>
+      <button type="button" id="lightboxProximo" title="Próximo">›</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalRecebimento">
+  <div class="modal-box" style="width:440px;">
+    <h3 id="tituloRecebimento">Registrar pagamento</h3>
     <form id="formRecebimento">
-      <p style="margin-bottom:14px; color:var(--text-dim); font-size:14px;">
-        Valor: <strong id="recebimentoValor" style="color:var(--text);"></strong>
-      </p>
-      <label id="recebimentoDestinoWrap" style="display:none;">Esse dinheiro...
-        <select id="recebimentoDestino">
-          <option value="oficina">Entrou no caixa da oficina</option>
-          <option value="terceiro">Foi pago direto pra autopeça (não passa pelo caixa)</option>
-        </select>
+      <label>Referente a
+        <select id="pagBucket"><option value="pecas">Peças</option><option value="servico">Mão de obra</option></select>
       </label>
-      <label>Situação do pagamento
-        <select name="quando" id="recebimentoQuando" required>
-          <option value="" disabled selected hidden>Escolha a situação do pagamento</option>
-          <option value="agora">Cliente pagou agora</option>
-          <option value="depois">Ficar a receber (fiado/parcelado)</option>
-        </select>
-      </label>
-      <label id="recebimentoVencWrap" style="display:none;">Vencimento
-        <input type="date" name="vencimento">
-      </label>
-      <label id="recebimentoFormaWrap">Forma de pagamento
-        <select name="forma">
-          <option value="" disabled selected hidden>Escolha a forma de pagamento</option>
-          <option value="Pix">Pix</option>
+      <p class="hint" id="pagFaltaInfo" style="margin:-4px 0 10px;"></p>
+      <div class="grid2">
+        <label>Valor pago agora (R$)<input type="number" id="pagValor" step="0.01" min="0.01" required></label>
+        <label>Data<input type="date" id="pagData" required></label>
+      </div>
+      <label>Forma de pagamento
+        <select id="pagForma" required>
+          <option value="" disabled selected hidden>Escolha a forma</option>
           <option value="Dinheiro">Dinheiro</option>
-          <option value="Cartão de débito">Cartão de débito</option>
-          <option value="Cartão de crédito">Cartão de crédito</option>
-          <option value="Outros">Outros</option>
+          <option value="Pix">Pix</option>
+          <option value="Cartão de débito">Cartão de débito (maquininha)</option>
+          <option value="Cartão de crédito">Cartão de crédito (maquininha)</option>
+          <option value="Outros">Outros (transferência, boleto...)</option>
         </select>
       </label>
+      <label id="pagDestinoWrap">Esse dinheiro...
+        <select id="pagDestino">
+          <option value="oficina">Entrou no caixa da oficina</option>
+          <option value="terceiro">Cliente pagou direto na autopeça (não passa pelo caixa)</option>
+        </select>
+      </label>
+      <label>Observação (opcional)<input type="text" id="pagObs" placeholder="Ex: pagou a correia; falta o filtro"></label>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
-        <button type="submit" class="btn-primary">Confirmar recebimento</button>
+        <button type="submit" class="btn-primary">Salvar pagamento</button>
       </div>
     </form>
   </div>
@@ -1888,6 +1905,7 @@ DB.estoque = crud('estoque');
 DB.agendamentos = crud('agendamentos');
 DB.caixa = crud('caixa_sessoes');
 DB.despesas = crud('despesas');
+DB.ordemPagamentos = crud('ordem_pagamentos');
 DB.servicos = crud('servicos');
 
 DB.interacoes = {
@@ -1931,7 +1949,7 @@ DB.fotosOS = {
       const { data, error } = await supabaseClient.storage.from('anexos').list(pasta, { limit:100, sortBy:{ column:'name', order:'asc' } });
       if(error){ console.error(error); return []; }
       return (data || []).filter(f => f.name && !f.name.startsWith('.')).map(f => ({
-        caminho: `${pasta}/${f.name}`, url: supabaseClient.storage.from('anexos').getPublicUrl(`${pasta}/${f.name}`).data.publicUrl,
+        caminho: `${pasta}/${f.name}`, nome: f.name, url: supabaseClient.storage.from('anexos').getPublicUrl(`${pasta}/${f.name}`).data.publicUrl,
       }));
     } catch(err){ console.error(err); return []; }
   },
@@ -1939,6 +1957,21 @@ DB.fotosOS = {
     const caminho = `os/${ordemId}/${fase}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`;
     const { error } = await supabaseClient.storage.from('anexos').upload(caminho, blob, { contentType:'image/jpeg' });
     if(error){ alert('Erro ao enviar foto: ' + mensagemErro(error)); return false; }
+    return true;
+  },
+  // Vídeo e PDF vão do jeito que são (sem recompactar); imagem continua comprimida (função "enviar" acima)
+  async enviarArquivo(ordemId, fase, file){
+    const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+    const caminho = `os/${ordemId}/${fase}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${file.name.replace(/[^a-zA-Z0-9.\-]/g,'_')}`;
+    const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file, { contentType: file.type || undefined });
+    if(error){ alert('Erro ao enviar arquivo: ' + mensagemErro(error)); return false; }
+    return true;
+  },
+  async mover(caminhoAntigo, novaFase){
+    const partes = caminhoAntigo.split('/'); // os/<id>/<faseAntiga>/<arquivo>
+    const destino = `${partes[0]}/${partes[1]}/${novaFase}/${partes[3]}`;
+    const { error } = await supabaseClient.storage.from('anexos').move(caminhoAntigo, destino);
+    if(error){ alert('Erro ao mover arquivo: ' + mensagemErro(error)); return false; }
     return true;
   },
   async remover(caminho){
@@ -2187,6 +2220,20 @@ let stateFornecedores = [];
 let stateContasPagar = [];
 let stateContasReceber = [];
 let stateEstoque = [];
+const r2 = v => Math.round((Number(v) || 0) * 100) / 100;
+const hojeLocal = () => new Date().toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' });
+const dataLocal = v => { if(!v) return ''; const t = String(v); return t.length > 10 ? new Date(t).toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' }) : t; };
+let stateOrdemPagamentos = [];
+const pagamentosDaOrdem = id => stateOrdemPagamentos.filter(p => p.ordem_id === id);
+const recebidoOrdem = o => r2(pagamentosDaOrdem(o.id).reduce((t, p) => t + (Number(p.valor) || 0), 0));
+const faltaOrdem = o => Math.max(0, r2((Number(o.valor) || 0) - recebidoOrdem(o)));
+const ehContaDeOS = c => (c.descricao || '').startsWith('OS #');
+function chipPagamentoOrdem(o){
+  if(o.status === 'orcamento' || !Number(o.valor)) return '—';
+  const falta = faltaOrdem(o), rec = recebidoOrdem(o);
+  if(falta <= 0.004) return '<span class="receb-badge recebido">Pago</span>';
+  return `<span class="receb-badge pendente">${rec > 0 ? 'Parcial · ' : ''}Falta ${moeda(falta)}</span>`;
+}
 let stateAgendamentos = [];
 let stateCaixa = [];
 let stateDespesas = [];
@@ -2368,7 +2415,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   itensOrdemAtual = [];
   fecharModal('modalOrdem');
   await render();
-  if(querConcluir) mostrarAviso('OS concluída: estoque baixado. Agora é só quitar Peças e Serviço quando o cliente pagar.');
+  if(querConcluir) mostrarAviso('OS concluída: estoque baixado. Registre os pagamentos do cliente dentro da OS.');
 });
 
 // Dá baixa automática no estoque das peças usadas numa OS nova (só na criação, pra não descontar 2x em edições)
@@ -2442,138 +2489,186 @@ async function excluirOrdem(id){
    ITENS DA OS — mão de obra (serviços) e peças (estoque)
    ========================================================== */
 function preencherSelectItemRef(){
-  const tipo = document.getElementById('itemTipoSelect').value;
-  const sel = document.getElementById('itemRefSelect');
-  const ph = t => `<option value="" disabled selected hidden>${t}</option>`;
-  if(tipo === 'servico'){
-    sel.innerHTML = stateServicos.length
-      ? ph('Escolha o serviço') + stateServicos.map(s => `<option value="${s.id}" data-preco="${s.preco_padrao}" data-tempo="${s.tempo_estimado_horas||0}" data-nome="${s.nome}">${s.nome} — ${moeda(s.preco_padrao)}</option>`).join('')
-      : '<option value="">Cadastre um serviço primeiro</option>';
-  } else if(tipo === 'peca'){
-    sel.innerHTML = stateEstoque.length
-      ? ph('Escolha a peça') + stateEstoque.map(p => `<option value="${p.id}" data-preco="${p.preco_venda||0}" data-custo="${p.preco_custo||0}" data-tempo="0" data-nome="${p.nome}">${p.nome} — ${moeda(p.preco_venda||0)}</option>`).join('')
-      : '<option value="">Cadastre um item de estoque primeiro</option>';
-  } else {
-    sel.innerHTML = ph('Escolha o tipo primeiro');
-  }
+  const lp = document.getElementById('listaPecasEstoque');
+  if(lp) lp.innerHTML = stateEstoque.map(p => `<option value="${escImp(p.nome)}">`).join('');
+  const ls = document.getElementById('listaServicosCatalogo');
+  if(ls) ls.innerHTML = stateServicos.map(x => `<option value="${escImp(x.nome)}">`).join('');
 }
-document.getElementById('itemTipoSelect').addEventListener('change', e => {
-  const avulsa = e.target.value === 'peca_avulsa';
-  document.getElementById('itemRefWrap').style.display = avulsa ? 'none' : '';
-  document.getElementById('itemAvulsoWrap').style.display = avulsa ? '' : 'none';
-  document.getElementById('itemAvulsoCustoWrap').style.display = avulsa ? '' : 'none';
-  if(!avulsa) preencherSelectItemRef();
-});
 document.getElementById('btnAjudaOS').addEventListener('click', () => abrirModal('modalAjudaOS'));
-
-document.getElementById('btnAddItem').addEventListener('click', () => {
-  const tipo = document.getElementById('itemTipoSelect').value;
-  if(tipo === 'peca_avulsa'){
-    const descricao = document.getElementById('itemAvulsoDescricao').value.trim();
-    const valor = document.getElementById('itemAvulsoValor').value;
-    const custo = document.getElementById('itemAvulsoCusto').value;
-    const adefinirAvulsa = document.getElementById('itemValorADefinirChk').checked;
-    if(!descricao){ alert('Digite a descrição da peça.'); return; }
-    if(!adefinirAvulsa && valor === ''){ alert('Digite o valor cobrado do cliente, ou marque "Valor a definir".'); return; }
-    const qtdAvulsa = Number(document.getElementById('itemQtdInput').value) || 1;
-    const custoUnitAvulsa = custo !== '' ? Number(custo) : null;
-    itensOrdemAtual.push({
-      tipo:'peca_avulsa', referencia_id:null, descricao, quantidade: qtdAvulsa,
-      valor_unitario: adefinirAvulsa ? null : Number(valor), valor_total: adefinirAvulsa ? null : +(Number(valor) * qtdAvulsa).toFixed(2),
-      custo_unitario: custoUnitAvulsa, custo_total: custoUnitAvulsa !== null ? +(custoUnitAvulsa * qtdAvulsa).toFixed(2) : null,
-      tempo: 0,
+const acharPorNome = (lista, nome) => lista.find(x => (x.nome || '').trim().toLowerCase() === (nome || '').trim().toLowerCase());
+// Ao escolher um item conhecido (estoque/catálogo), já sugere valor/custo; se mudar o nome, limpa o que foi sugerido
+function autoPreencher(descEl, getLista, campos){
+  descEl.addEventListener('input', () => {
+    const it = acharPorNome(getLista(), descEl.value);
+    campos.forEach(({ el, get }) => {
+      if(it){ if(el.value === '' || el.dataset.auto === '1'){ const v = Number(get(it)) || 0; el.value = v > 0 ? v : ''; el.dataset.auto = '1'; } }
+      else if(el.dataset.auto === '1'){ el.value = ''; el.dataset.auto = ''; }
     });
-    document.getElementById('itemAvulsoDescricao').value = '';
-    document.getElementById('itemAvulsoValor').value = '';
-    document.getElementById('itemAvulsoCusto').value = '';
-    document.getElementById('itemQtdInput').value = 1;
-    document.getElementById('itemValorADefinirChk').checked = false;
-    renderItensOrdem();
-    return;
-  }
-  const opt = document.getElementById('itemRefSelect').selectedOptions[0];
-  if(!opt || !opt.value){ alert('Escolha o tipo e o item antes de clicar em "+ Adicionar item".'); return; }
-  const qtd = Number(document.getElementById('itemQtdInput').value) || 1;
-  const adefinir = document.getElementById('itemValorADefinirChk').checked;
-  const preco = adefinir ? null : (Number(opt.dataset.preco) || 0);
-  const custoUnit = tipo === 'peca' ? (Number(opt.dataset.custo) || 0) : null;
-  itensOrdemAtual.push({
-    tipo, referencia_id: Number(opt.value), descricao: opt.dataset.nome,
-    quantidade: qtd, valor_unitario: preco, valor_total: adefinir ? null : +(preco * qtd).toFixed(2),
-    custo_unitario: custoUnit, custo_total: custoUnit !== null ? +(custoUnit * qtd).toFixed(2) : null,
-    tempo: Number(opt.dataset.tempo) || 0,
   });
-  document.getElementById('itemQtdInput').value = 1;
-  document.getElementById('itemValorADefinirChk').checked = false;
+  campos.forEach(({ el }) => el.addEventListener('input', () => { el.dataset.auto = ''; }));
+}
+autoPreencher(document.getElementById('pecaDesc'), () => stateEstoque, [
+  { el: document.getElementById('pecaValor'), get: p => p.preco_venda }, { el: document.getElementById('pecaCusto'), get: p => p.preco_custo } ]);
+autoPreencher(document.getElementById('servDesc'), () => stateServicos, [
+  { el: document.getElementById('servValor'), get: x => x.preco_padrao } ]);
+
+document.getElementById('btnAddPeca').addEventListener('click', () => {
+  const desc = document.getElementById('pecaDesc').value.trim();
+  if(!desc){ alert('Digite o nome da peça.'); return; }
+  const est = acharPorNome(stateEstoque, desc);
+  const qtd = Number(document.getElementById('pecaQtd').value) || 1;
+  const valorTxt = document.getElementById('pecaValor').value, custoTxt = document.getElementById('pecaCusto').value;
+  const adefinir = valorTxt === '';
+  const vu = adefinir ? null : Number(valorTxt);
+  const custoUnit = custoTxt !== '' ? Number(custoTxt) : null;
+  itensOrdemAtual.push({
+    tipo: est ? 'peca' : 'peca_avulsa', referencia_id: est ? est.id : null, descricao: est ? est.nome : desc, quantidade: qtd,
+    valor_unitario: vu, valor_total: adefinir ? null : +(vu * qtd).toFixed(2),
+    custo_unitario: custoUnit, custo_total: custoUnit !== null ? +(custoUnit * qtd).toFixed(2) : null, tempo: 0,
+  });
+  ['pecaDesc','pecaValor','pecaCusto'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.dataset.auto = ''; });
+  document.getElementById('pecaQtd').value = 1;
+  document.getElementById('pecaDesc').focus();
+  renderItensOrdem();
+});
+document.getElementById('btnAddServ').addEventListener('click', () => {
+  const desc = document.getElementById('servDesc').value.trim();
+  if(!desc){ alert('Digite o serviço (mão de obra).'); return; }
+  const cat = acharPorNome(stateServicos, desc);
+  const valorTxt = document.getElementById('servValor').value;
+  const adefinir = valorTxt === '';
+  const v = adefinir ? null : Number(valorTxt);
+  itensOrdemAtual.push({
+    tipo:'servico', referencia_id: cat ? cat.id : null, descricao: cat ? cat.nome : desc, quantidade: 1,
+    valor_unitario: v, valor_total: v, custo_unitario: null, custo_total: null, tempo: cat ? (Number(cat.tempo_estimado_horas) || 0) : 0,
+  });
+  ['servDesc','servValor'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.dataset.auto = ''; });
+  document.getElementById('servDesc').focus();
   renderItensOrdem();
 });
 function editarValorItemOrdem(idx){
   const i = itensOrdemAtual[idx]; if(!i) return;
-  const r = prompt(`Valor deste item — ${i.descricao} (${i.quantidade}× )`, i.valor_total !== null ? i.valor_total : '');
+  const r = prompt(`Valor total deste item — ${i.descricao} (${i.quantidade}×)`, i.valor_total !== null ? i.valor_total : '');
   if(r === null) return;
-  const v = Number(r.replace(',', '.'));
-  if(isNaN(v) || v < 0){ alert('Digite um valor válido.'); return; }
+  const v = Number(String(r).replace(',', '.'));
+  if(r.trim() === '' || isNaN(v) || v < 0){ alert('Digite um valor válido.'); return; }
   i.valor_total = +v.toFixed(2);
   i.valor_unitario = i.quantidade ? +(v / i.quantidade).toFixed(4) : v;
   renderItensOrdem();
 }
-
 function removerItemOrdem(idx){
   itensOrdemAtual.splice(idx, 1);
   renderItensOrdem();
 }
-
+function linhaItemHTML(i, idx){
+  const lucro = i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null ? i.valor_total - i.custo_total : null;
+  return `
+    <div class="item-linha">
+      <span>${escImp(i.descricao)} × ${i.quantidade}${lucro !== null ? `<br><span class="lucro">lucro ${moeda(lucro)}</span>` : ''}</span>
+      <span>${i.valor_total === null ? '<span class="adefinir">A definir</span>' : moeda(i.valor_total)}</span>
+      <button type="button" class="btn-icon" title="Editar valor" onclick="editarValorItemOrdem(${idx})">${ICON_EDIT}</button>
+      <button type="button" class="btn-icon danger" onclick="removerItemOrdem(${idx})">${ICON_DELETE}</button>
+    </div>`;
+}
 function renderItensOrdem(){
-  const cont = document.getElementById('itensOrdemLista');
-  cont.innerHTML = itensOrdemAtual.length
-    ? itensOrdemAtual.map((i, idx) => {
-        const lucro = i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null ? i.valor_total - i.custo_total : null;
-        return `
-      <div class="item-linha">
-        <span>${i.tipo === 'servico' ? '🔧' : i.tipo === 'peca_avulsa' ? '🧾' : '🔩'} ${i.descricao} × ${i.quantidade}${lucro !== null ? `<br><span class="lucro">lucro ${moeda(lucro)}</span>` : ''}</span>
-        <span>${i.valor_total === null ? '<span class="adefinir">A definir</span>' : moeda(i.valor_total)}</span>
-        <button type="button" class="btn-icon" title="Editar valor" onclick="editarValorItemOrdem(${idx})">${ICON_EDIT}</button>
-        <button type="button" class="btn-icon danger" onclick="removerItemOrdem(${idx})">${ICON_DELETE}</button>
-      </div>`;
-      }).join('')
-    : '<p class="empty" style="padding:10px;">Nenhum item adicionado ainda.</p>';
-
+  const pecas = [], servs = [];
+  itensOrdemAtual.forEach((i, idx) => (i.tipo === 'servico' ? servs : pecas).push(linhaItemHTML(i, idx)));
+  document.getElementById('listaPecasOrdem').innerHTML = pecas.join('') || '<p class="empty" style="padding:8px;">Nenhuma peça ainda.</p>';
+  document.getElementById('listaServicosOrdem').innerHTML = servs.join('') || '<p class="empty" style="padding:8px;">Nenhum serviço ainda.</p>';
   const totalValor = itensOrdemAtual.reduce((acc, i) => acc + (i.valor_total || 0), 0);
   const totalTempo = itensOrdemAtual.filter(i => i.tipo === 'servico').reduce((acc, i) => acc + (i.tempo || 0) * i.quantidade, 0);
   const totalCusto = itensOrdemAtual.reduce((acc, i) => acc + (i.custo_total || 0), 0);
   const totalLucro = itensOrdemAtual.filter(i => i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null).reduce((acc, i) => acc + (i.valor_total - i.custo_total), 0);
-  if(itensOrdemAtual.length) document.querySelector('#formOrdem [name="valor"]').value = totalValor.toFixed(2);
+  if(itensOrdemAtual.length) document.querySelector('#formOrdem [name="valor"]').value = r2(totalValor);
+  document.getElementById('subtotalPecas').textContent = moeda(totalBucket(itensOrdemAtual, 'pecas'));
+  document.getElementById('subtotalServicos').textContent = moeda(totalBucket(itensOrdemAtual, 'servico'));
   const pendentes = itensOrdemAtual.filter(i => i.valor_total === null).length;
   document.getElementById('tempoEstimadoTexto').innerHTML =
-    (totalTempo ? `⏱ Tempo estimado de mão de obra: ${totalTempo}h<br>` : '') +
-    (totalCusto ? `💰 Lucro estimado (peças): ${moeda(totalLucro)}<br>` : '') +
+    (totalTempo ? `⏱ Tempo estimado de mão de obra: ${totalTempo}h · ` : '') +
+    (totalCusto ? `💰 Lucro estimado nas peças: ${moeda(totalLucro)} · ` : '') +
     (pendentes ? `<span class="adefinir">⚠ ${pendentes} item(ns) com valor a definir</span>` : '');
-  renderRecebimentoOrdemPainel();
+  renderPagamentosOrdemPainel();
 }
-// Painel de recebimento dentro da OS: Peças e Serviço são quitados separado, cada um na sua hora
-function renderRecebimentoOrdemPainel(){
-  const cont = document.getElementById('recebimentoOrdemPainel');
+// Soma dos itens de um tipo (peças = peca + peca_avulsa; serviço = servico)
+function totalBucket(itens, bucket){
+  const tipos = bucket === 'pecas' ? ['peca', 'peca_avulsa'] : ['servico'];
+  return itens.filter(i => tipos.includes(i.tipo)).reduce((t, i) => t + (Number(i.valor_total) || 0), 0);
+}
+// Resumo de quanto já foi pago e quanto falta (total, peças e mão de obra) da OS aberta na tela
+function calcularResumoOrdem(){
+  const total = r2(Number(document.querySelector('#formOrdem [name="valor"]').value) || 0);
+  const pags = pagamentosDaOrdem(editingOrdemId);
+  const soma = arr => r2(arr.reduce((t, p) => t + (Number(p.valor) || 0), 0));
+  const totPecas = r2(totalBucket(itensOrdemAtual, 'pecas')), totServ = r2(totalBucket(itensOrdemAtual, 'servico'));
+  const recPecas = soma(pags.filter(p => p.bucket === 'pecas')), recServ = soma(pags.filter(p => p.bucket !== 'pecas'));
+  const recebido = soma(pags);
+  return { total, recebido, falta: Math.max(0, r2(total - recebido)), totPecas, totServ, recPecas, recServ, pags };
+}
+function renderPagamentosOrdemPainel(){
+  const cont = document.getElementById('pagamentosOrdemPainel');
   if(!cont) return;
-  if(!editingOrdemId){ cont.innerHTML = ''; return; } // só existe pra OS já salva
-  const o = stateOrdens.find(x => x.id === editingOrdemId);
-  if(!o){ cont.innerHTML = ''; return; }
-  const linha = (bucket, rotulo) => {
-    const valor = totalBucket(itensOrdemAtual, bucket);
-    const status = o[`${bucket}_status`] || 'pendente';
-    const destino = bucket === 'pecas' ? (o.pecas_destino || 'oficina') : null;
-    const badge = destino === 'terceiro'
-      ? `<span class="receb-badge terceiro">Pago à autopeça</span>`
-      : `<span class="receb-badge ${status}">${status === 'recebido' ? 'Recebido' : 'Pendente'}</span>`;
-    return `<div class="receb-linha">
-      <span>${rotulo}: <strong>${moeda(valor)}</strong> ${badge}</span>
-      <button type="button" class="btn-ghost" onclick="abrirQuitarBucket(${o.id}, '${bucket}', ${valor})">Quitar</button>
-    </div>`;
-  };
-  cont.innerHTML = `<p style="font-weight:600;margin:14px 0 2px;">Recebimento</p>` + linha('pecas', 'Peças') + linha('servico', 'Serviço');
+  if(!editingOrdemId){ cont.innerHTML = '<h4>💰 Pagamentos</h4><p class="hint" style="margin:0;">Salve a OS primeiro; depois é só clicar em editar pra registrar cada pagamento do cliente (pode ser parcelado).</p>'; return; }
+  const r = calcularResumoOrdem();
+  const faltaB = (t, rec) => Math.max(0, r2(t - rec));
+  const linhaBucket = (rotulo, t, rec) => (t > 0 || rec > 0) ? `<div class="pag-linha"><span>${rotulo}: ${moeda(t)}</span><span>pago ${moeda(rec)} · <b style="color:${faltaB(t, rec) > 0.004 ? 'var(--amber,#b45309)' : 'var(--ok)'};">falta ${moeda(faltaB(t, rec))}</b></span></div>` : '';
+  const gastoPecas = r2(stateDespesas.filter(d => d.ordem_id === editingOrdemId).reduce((t, d) => t + (Number(d.valor) || 0), 0));
+  cont.innerHTML = `
+    <h4>💰 Pagamentos</h4>
+    <div class="pag-resumo">
+      <div class="pag-card"><span>Total da OS</span><b>${moeda(r.total)}</b></div>
+      <div class="pag-card"><span>Já recebido</span><b style="color:var(--ok);">${moeda(r.recebido)}</b></div>
+      <div class="pag-card"><span>Falta receber</span><b style="color:${r.falta > 0.004 ? 'var(--amber,#b45309)' : 'var(--ok)'};">${moeda(r.falta)}</b></div>
+    </div>
+    ${linhaBucket('🔩 Peças', r.totPecas, r.recPecas)}${linhaBucket('🔧 Mão de obra', r.totServ, r.recServ)}
+    ${gastoPecas > 0 ? `<p class="hint" style="margin:6px 0 0;">Você já gastou ${moeda(gastoPecas)} em Despesas ligadas a esta OS (compra das peças).</p>` : ''}
+    <div style="margin:8px 0 4px;"><button type="button" class="btn-primary" onclick="abrirRegistrarPagamento()">+ Registrar pagamento</button></div>
+    ${r.pags.length ? r.pags.map(p => `<div class="pag-linha"><span>${dataBR(p.data)} · ${p.bucket === 'pecas' ? 'Peças' : 'Mão de obra'} · ${escImp(p.forma_pagamento)}${p.destino === 'terceiro' ? ' · <i>pago direto na autopeça</i>' : ''}${p.obs ? ' · ' + escImp(p.obs) : ''}</span><span>${moeda(p.valor)} <button type="button" class="btn-icon danger" title="Excluir pagamento" onclick="excluirPagamento(${p.id})">${ICON_DELETE}</button></span></div>`).join('') : '<p class="hint" style="margin:4px 0 0;">Nenhum pagamento registrado ainda.</p>'}`;
+}
+let pagResumo = null;
+function abrirRegistrarPagamento(){
+  if(!editingOrdemId){ alert('Salve a OS primeiro pra registrar pagamentos.'); return; }
+  recebendoOrdemId = editingOrdemId;
+  pagResumo = calcularResumoOrdem();
+  document.getElementById('pagBucket').value = (pagResumo.totPecas - pagResumo.recPecas) > 0.004 ? 'pecas' : 'servico';
+  atualizarCamposPagamento();
+  document.getElementById('pagData').value = hojeLocal();
+  document.getElementById('pagForma').value = '';
+  document.getElementById('pagObs').value = '';
+  abrirModal('modalRecebimento');
+}
+function atualizarCamposPagamento(){
+  const b = document.getElementById('pagBucket').value, r = pagResumo;
+  const faltaBucket = Math.max(0, r2((b === 'pecas' ? r.totPecas - r.recPecas : r.totServ - r.recServ)));
+  const sugestao = (r.totPecas + r.totServ) === 0 ? r.falta : faltaBucket;
+  document.getElementById('pagFaltaInfo').textContent = `Falta receber de ${b === 'pecas' ? 'Peças' : 'Mão de obra'}: ${moeda(faltaBucket)} · Falta na OS toda: ${moeda(r.falta)}`;
+  document.getElementById('pagValor').value = sugestao > 0 ? sugestao : '';
+  document.getElementById('pagDestinoWrap').style.display = b === 'pecas' ? '' : 'none';
+}
+document.getElementById('pagBucket').addEventListener('change', atualizarCamposPagamento);
+document.getElementById('formRecebimento').addEventListener('submit', async e => {
+  e.preventDefault();
+  const bucket = document.getElementById('pagBucket').value;
+  const valor = r2(document.getElementById('pagValor').value);
+  if(!(valor > 0)){ alert('Digite o valor pago.'); return; }
+  if(valor > pagResumo.falta + 0.005 && !confirm(`Esse valor (${moeda(valor)}) é maior que o que falta receber na OS (${moeda(pagResumo.falta)}). Registrar mesmo assim?`)) return;
+  const ok = await DB.ordemPagamentos.criar({
+    ordem_id: recebendoOrdemId, bucket, valor, forma_pagamento: document.getElementById('pagForma').value,
+    data: document.getElementById('pagData').value, destino: bucket === 'pecas' ? document.getElementById('pagDestino').value : 'oficina',
+    obs: document.getElementById('pagObs').value.trim() || null,
+  });
+  fecharModal('modalRecebimento');
+  if(!ok) return;
+  mostrarAviso('Pagamento registrado.');
+  await render();
+  renderPagamentosOrdemPainel();
+});
+async function excluirPagamento(id){
+  if(!confirm('Excluir este pagamento?')) return;
+  await DB.ordemPagamentos.excluir(id);
+  await render();
+  renderPagamentosOrdemPainel();
 }
 
-// Muda o status direto na tabela (Aberta → Em andamento → Concluída)
-// Reduz a foto (máx. 1280px, JPEG 75%) antes de enviar — economiza dados e espaço no celular
 async function comprimirImagem(file){
   const bmp = await createImageBitmap(file);
   const esc = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
@@ -2585,35 +2680,87 @@ async function comprimirImagem(file){
 
 let fotosOrdemId = null;
 const FASES_FOTO = [['antes', 'Antes (danos/estado na entrada)'], ['orcamento', 'Orçamento da autopeça'], ['depois', 'Depois (serviço pronto)']];
+let lightboxLista = [], lightboxIndex = 0;
+function tipoArquivo(nomeOuUrl){
+  const ext = (nomeOuUrl.split('.').pop() || '').toLowerCase().split('?')[0];
+  if(['jpg','jpeg','png','gif','webp','heic'].includes(ext)) return 'imagem';
+  if(['mp4','webm','mov','m4v'].includes(ext)) return 'video';
+  if(ext === 'pdf') return 'pdf';
+  return 'arquivo';
+}
 async function abrirFotosOS(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
   fotosOrdemId = id;
-  document.getElementById('tituloFotosOS').textContent = `Fotos — OS #${id} · ${o.cliente_nome}`;
+  document.getElementById('tituloFotosOS').textContent = `Anexos — OS #${id} · ${o.cliente_nome}`;
   abrirModal('modalFotosOS');
   await renderFotosOS();
+}
+function itemAnexoHTML(f, fase){
+  const tipo = tipoArquivo(f.nome || f.caminho);
+  const conteudo = tipo === 'imagem' ? `<img src="${f.url}" loading="lazy">`
+    : tipo === 'video' ? `<video src="${f.url}" muted preload="metadata"></video>`
+    : `<span class="icone-tipo">${tipo === 'pdf' ? '📄' : '📎'}</span><span>${escImp(f.nome || '')}</span>`;
+  const classe = tipo === 'imagem' || tipo === 'video' ? 'foto-item' : 'foto-item arquivo';
+  return `<div class="${classe}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${f.caminho}')"
+      onclick="abrirLightbox('${fase}', '${f.caminho}')">${conteudo}<button title="Remover" onclick="event.stopPropagation(); removerFotoOS('${f.caminho}')">×</button></div>`;
 }
 async function renderFotosOS(){
   const cont = document.getElementById('fotosBlocos');
   const listas = await Promise.all(FASES_FOTO.map(([f]) => DB.fotosOS.listar(fotosOrdemId, f)));
+  FASES_FOTO.forEach(([fase], i) => { FASES_FOTO[i][2] = listas[i]; }); // guarda pra lightbox navegar sem refazer a busca
   cont.innerHTML = FASES_FOTO.map(([fase, rotulo], i) => `
     <div class="foto-fase"><strong>${rotulo}</strong>
-      <label class="btn-ghost" style="cursor:pointer;">+ Adicionar<input type="file" accept="image/*" multiple hidden onchange="enviarFotosOS('${fase}', this)"></label>
+      <label class="btn-ghost" style="cursor:pointer;">+ Adicionar<input type="file" accept="image/*,video/*,application/pdf" multiple hidden onchange="enviarFotosOS('${fase}', this)"></label>
     </div>
-    <div class="fotos-grid">${listas[i].length ? listas[i].map(f => `
-      <div class="foto-item"><img src="${f.url}" loading="lazy" onclick="window.open('${f.url}','_blank')"><button title="Remover" onclick="removerFotoOS('${f.caminho}')">×</button></div>`).join('')
-      : '<span class="empty" style="grid-column:1/-1;padding:6px 0;">Sem fotos.</span>'}</div>`).join('');
+    <div class="fotos-grid" ondragover="event.preventDefault(); this.classList.add('arrastando-sobre')" ondragleave="this.classList.remove('arrastando-sobre')"
+      ondrop="moverAnexoOS(event, '${fase}')">${listas[i].length ? listas[i].map(f => itemAnexoHTML(f, fase)).join('')
+      : '<span class="empty" style="grid-column:1/-1;padding:6px 0;">Nada aqui ainda — solte um arquivo ou clique em Adicionar.</span>'}</div>`).join('');
+}
+async function moverAnexoOS(ev, novaFase){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('arrastando-sobre');
+  const caminho = ev.dataTransfer.getData('text/plain');
+  if(!caminho) return;
+  const faseAtual = caminho.split('/')[2];
+  if(faseAtual === novaFase) return;
+  if(await DB.fotosOS.mover(caminho, novaFase)) renderFotosOS();
 }
 async function enviarFotosOS(fase, input){
   const arquivos = [...input.files]; if(!arquivos.length) return;
-  mostrarAviso(`Enviando ${arquivos.length} foto(s)...`);
+  mostrarAviso(`Enviando ${arquivos.length} arquivo(s)...`);
   for(const a of arquivos){
-    const blob = await comprimirImagem(a).catch(() => null);
-    if(!blob) continue;
-    if(!(await DB.fotosOS.enviar(fotosOrdemId, fase, blob))) break;
+    const ehImagem = a.type.startsWith('image/');
+    const ok = ehImagem
+      ? await (async () => { const blob = await comprimirImagem(a).catch(() => null); return blob ? DB.fotosOS.enviar(fotosOrdemId, fase, blob) : false; })()
+      : await DB.fotosOS.enviarArquivo(fotosOrdemId, fase, a);
+    if(!ok) break;
   }
+  input.value = '';
   await renderFotosOS();
 }
+// Lightbox: abre o item clicado e deixa navegar entre os arquivos daquela categoria (setinhas)
+function abrirLightbox(fase, caminho){
+  lightboxLista = (FASES_FOTO.find(([f]) => f === fase) || [])[2] || [];
+  lightboxIndex = lightboxLista.findIndex(f => f.caminho === caminho);
+  if(lightboxIndex < 0) return;
+  renderLightbox();
+  abrirModal('modalLightbox');
+}
+function renderLightbox(){
+  const f = lightboxLista[lightboxIndex];
+  const tipo = tipoArquivo(f.nome || f.caminho);
+  document.getElementById('lightboxConteudo').innerHTML =
+    tipo === 'imagem' ? `<img src="${f.url}">`
+    : tipo === 'video' ? `<video src="${f.url}" controls autoplay></video>`
+    : tipo === 'pdf' ? `<iframe src="${f.url}"></iframe>`
+    : `<p class="hint" style="color:#fff;">Não dá pra pré-visualizar esse tipo de arquivo. <a href="${f.url}" target="_blank" style="color:#fff;text-decoration:underline;">Baixar / abrir</a></p>`;
+  const varios = lightboxLista.length > 1;
+  document.getElementById('lightboxAnterior').style.display = varios ? '' : 'none';
+  document.getElementById('lightboxProximo').style.display = varios ? '' : 'none';
+}
+document.getElementById('lightboxAnterior').addEventListener('click', () => { lightboxIndex = (lightboxIndex - 1 + lightboxLista.length) % lightboxLista.length; renderLightbox(); });
+document.getElementById('lightboxProximo').addEventListener('click', () => { lightboxIndex = (lightboxIndex + 1) % lightboxLista.length; renderLightbox(); });
 async function removerFotoOS(caminho){
   if(!confirm('Remover esta foto?')) return;
   if(await DB.fotosOS.remover(caminho)) renderFotosOS();
@@ -2626,7 +2773,7 @@ async function mudarStatusOrdem(id, status){
   if(ok && vaiConcluir){
     const itens = await DB.ordemItens.listar(id);
     await concluirServicoFisico(id, itens);
-    mostrarAviso('OS concluída: estoque baixado. Quitar Peças e Serviço quando o cliente pagar.');
+    mostrarAviso('OS concluída: estoque baixado. Registre os pagamentos do cliente dentro da OS.');
   }
   render();
 }
@@ -2660,75 +2807,6 @@ async function agendarRevisaoAutomatica(ordem){
 }
 
 // Recebimento: marca a OS como paga, com forma de pagamento e data
-function abrirQuitarBucket(id, bucket, valor){
-  const o = stateOrdens.find(x => x.id === id);
-  if(!o) return;
-  recebendoOrdemId = id;
-  recebendoBucket = bucket;
-  const rotulo = bucket === 'pecas' ? 'Peças' : 'Serviço';
-  document.getElementById('tituloRecebimento').textContent = `Quitar ${rotulo}`;
-  document.getElementById('recebimentoValor').textContent = moeda(valor);
-  document.getElementById('recebimentoDestinoWrap').style.display = bucket === 'pecas' ? '' : 'none';
-  document.getElementById('recebimentoDestino').value = o.pecas_destino || 'oficina';
-  document.getElementById('recebimentoQuando').value = '';
-  document.getElementById('recebimentoQuando').dispatchEvent(new Event('change'));
-  abrirModal('modalRecebimento');
-}
-document.getElementById('recebimentoQuando').addEventListener('change', e => {
-  const agora = e.target.value === 'agora', depois = e.target.value === 'depois';
-  document.getElementById('recebimentoVencWrap').style.display = depois ? '' : 'none';
-  document.getElementById('recebimentoFormaWrap').style.display = agora ? '' : 'none';
-  const forma = document.querySelector('#formRecebimento [name="forma"]');
-  forma.required = agora; // só é obrigatória quando aparece
-  if(!agora) forma.value = '';
-});
-
-// Soma dos itens de um tipo (peças = peca + peca_avulsa; serviço = servico)
-function totalBucket(itens, bucket){
-  const tipos = bucket === 'pecas' ? ['peca', 'peca_avulsa'] : ['servico'];
-  return itens.filter(i => tipos.includes(i.tipo)).reduce((s, i) => s + (Number(i.valor_total) || 0), 0);
-}
-// Quita um dos dois lançamentos da OS (peças ou serviço), cada um com sua própria forma/data/destino.
-// Se for peça paga direto pro fornecedor, não gera conta a receber (esse dinheiro nunca passa pelo caixa daqui).
-async function quitarBucket(id, bucket, { agora, forma, vencimento, destino }){
-  const o = stateOrdens.find(x => x.id === id);
-  if(!o) return false;
-  const agoraISO = new Date().toISOString();
-  const hoje = agoraISO.slice(0, 10);
-  const rotulo = bucket === 'pecas' ? 'Peças' : 'Serviço';
-  const patch = { [`${bucket}_status`]: agora ? 'recebido' : 'pendente' };
-  if(agora){ patch[`${bucket}_forma_pagamento`] = forma; patch[`${bucket}_data_pagamento`] = agoraISO; }
-  if(bucket === 'pecas') patch.pecas_destino = destino;
-  const ok = await DB.atualizarOrdem(id, patch);
-  if(!ok) return false;
-
-  const paraTerceiro = bucket === 'pecas' && destino === 'terceiro';
-  if(!paraTerceiro){
-    const valorBucket = totalBucket(await DB.ordemItens.listar(id), bucket);
-    const marca = `OS #${id} (${rotulo}) —`;
-    const existente = stateContasReceber.find(c => (c.descricao || '').startsWith(marca));
-    const conta = {
-      descricao: `${marca} ${o.servico}`, cliente_id: o.cliente_id, cliente_nome: o.cliente_nome, valor: valorBucket,
-      vencimento: agora ? hoje : (vencimento || hoje), status: agora ? 'recebido' : 'pendente',
-    };
-    if(agora) conta.data_recebimento = agoraISO;
-    if(existente){ if(existente.status !== 'recebido') await DB.contasReceber.atualizar(existente.id, conta); }
-    else await DB.contasReceber.criar(conta);
-  }
-  return true;
-}
-document.getElementById('formRecebimento').addEventListener('submit', async e => {
-  e.preventDefault();
-  const f = new FormData(e.target);
-  const ok = await quitarBucket(recebendoOrdemId, recebendoBucket, {
-    agora: f.get('quando') === 'agora', forma: f.get('forma'), vencimento: f.get('vencimento'),
-    destino: document.getElementById('recebimentoDestino').value,
-  });
-  fecharModal('modalRecebimento');
-  if(ok) mostrarAviso('Recebimento atualizado.');
-  render();
-});
-
 const statusLabel = { orcamento:'Orçamento', aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
 const moeda = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 const dataBR = iso => { if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
@@ -3620,10 +3698,7 @@ const linhaOrdem = o => `
         </select>
       </td>
       <td>${moeda(o.valor)}</td>
-      <td>
-        <span class="receb-badge ${o.pecas_destino === 'terceiro' ? 'terceiro' : (o.pecas_status || 'pendente')}" title="Peças">P: ${o.pecas_destino === 'terceiro' ? 'Autopeça' : (o.pecas_status === 'recebido' ? 'Recebido' : 'Pendente')}</span>
-        <span class="receb-badge ${o.servico_status || 'pendente'}" title="Serviço">S: ${o.servico_status === 'recebido' ? 'Recebido' : 'Pendente'}</span>
-      </td>
+      <td>${chipPagamentoOrdem(o)}</td>
       <td class="icon-row">
         ${o.status === 'orcamento' ? `<button class="btn-icon" title="Aprovar orçamento" onclick="aprovarOrcamento(${o.id})">✅</button>` : ''}
         <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
@@ -3664,6 +3739,11 @@ function renderLembretes(){
   const DIA = 86400000, agora = new Date(), hoje = agora.toISOString().slice(0, 10);
   const dias = iso => Math.floor((new Date(iso) - agora) / DIA);      // negativo = passado
   const lem = []; // { pri, txt, acao, rotulo }
+
+  // OS concluída com pagamento em aberto
+  stateOrdens.filter(o => o.status === 'concluida' && faltaOrdem(o) > 0.004).forEach(o => {
+    lem.push({ pri:2, txt:`Falta receber ${moeda(faltaOrdem(o))} da OS #${o.id} — ${o.cliente_nome}`, acao:`abrirEdicaoOrdem(${o.id})`, rotulo:'Abrir' });
+  });
 
   // 0) Estoque baixo — prioridade máxima: pode travar um serviço na hora
   stateEstoque.filter(x => Number(x.quantidade) <= Number(x.quantidade_minima)).forEach(x => {
@@ -3724,7 +3804,7 @@ function irLembrete(view, campoId, termo){
 }
 
 async function render(){
-  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa, despesas] = await Promise.all([
+  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa, despesas, ordemPagamentos] = await Promise.all([
     DB.getClientes(),
     DB.getOrdens(),
     DB.fornecedores.listar(),
@@ -3735,6 +3815,7 @@ async function render(){
     DB.servicos.listar(),
     DB.caixa.listar(),
     DB.despesas.listar(),
+    DB.ordemPagamentos.listar(),
   ]);
   stateClientes = clientes;
   stateOrdens = ordens;
@@ -3746,6 +3827,7 @@ async function render(){
   stateServicos = servicos;
   stateCaixa = caixa;
   stateDespesas = despesas;
+  stateOrdemPagamentos = ordemPagamentos;
   renderCaixa();
   renderDespesas();
   renderLembretes();
@@ -3884,11 +3966,10 @@ async function render(){
   const soma = (arr, campo) => arr.reduce((acc, x) => acc + Number(x[campo] || 0), 0);
 
   const faturamento = soma(ordens.filter(o => o.status === 'concluida'), 'valor');
-  const osQuitada = o => (o.pecas_status === 'recebido' || o.pecas_destino === 'terceiro') && o.servico_status === 'recebido';
-  const recebidoOrdens = soma(ordens.filter(osQuitada), 'valor');
-  const recebidoContas = soma(contasReceber.filter(c => c.status === 'recebido'), 'valor');
-  const aReceberOrdens = soma(ordens.filter(o => !osQuitada(o)), 'valor');
-  const aReceberContas = soma(contasReceber.filter(c => c.status === 'pendente'), 'valor');
+  const recebidoOrdens = soma(stateOrdemPagamentos.filter(p => p.destino !== 'terceiro'), 'valor');
+  const recebidoContas = soma(contasReceber.filter(c => c.status === 'recebido' && !ehContaDeOS(c)), 'valor');
+  const aReceberOrdens = ordens.filter(o => o.status !== 'orcamento').reduce((t, o) => t + faltaOrdem(o), 0);
+  const aReceberContas = soma(contasReceber.filter(c => c.status === 'pendente' && !ehContaDeOS(c)), 'valor');
   const aPagarContas = soma(contasPagar.filter(c => c.status === 'pendente'), 'valor');
   const totalRecebido = recebidoOrdens + recebidoContas;
   const totalAReceber = aReceberOrdens + aReceberContas;
@@ -4085,22 +4166,21 @@ function renderCaixa(){
   document.getElementById('caixaFechadoPanel').style.display = c ? 'none' : '';
   document.getElementById('caixaAbertoPanel').style.display = c ? '' : 'none';
   if(!c) return;
-  const hoje = new Date(c.aberto_em).toISOString().slice(0,10);
-  const doDia = (lista, campoData) => lista.filter(x => (x[campoData] || '').slice(0,10) === hoje);
+  const hoje = dataLocal(c.aberto_em);
+  const doDia = (lista, campoData) => lista.filter(x => dataLocal(x[campoData]) === hoje);
+  const somar = (a, b) => { Object.keys(b).forEach(k => { a[k] = (a[k] || 0) + b[k]; }); return a; };
   const porForma = (lista, campoForma, campoValor) => {
     const t = { Pix:0, Dinheiro:0, 'Cartão de débito':0, 'Cartão de crédito':0, Outros:0 };
     lista.forEach(x => { const f = x[campoForma] || 'Outros'; t[f] = (t[f] || 0) + (Number(x[campoValor]) || 0); });
     return t;
   };
-  // Peças e Serviço de cada OS viram uma Conta a Receber por baixo dos panos (uma pra cada),
-  // já excluindo peças pagas direto pra autopeça — então a receita do dia já vem certinha daqui:
-  const recebContas = doDia(stateContasReceber.filter(r => r.status === 'recebido'), 'data_recebimento');
+  // Entradas: pagamentos lançados nas OS (menos os que o cliente pagou direto na autopeça) + contas a receber avulsas
+  const pagamentosOS = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro' && dataLocal(p.data) === hoje);
+  const recebContas = doDia(stateContasReceber.filter(r => r.status === 'recebido' && !ehContaDeOS(r)), 'data_recebimento');
   const pagos = doDia(stateContasPagar.filter(p => p.status === 'pago'), 'data_pagamento');
-  const despesasHoje = stateDespesas.filter(d => (d.data || '') === hoje);
-  const entradas = porForma(recebContas, 'forma_pagamento', 'valor');
-  const saidas = porForma(pagos, 'forma_pagamento', 'valor');
-  const saidasDespesas = porForma(despesasHoje, 'forma_pagamento', 'valor');
-  Object.keys(saidas).forEach(k => saidas[k] += saidasDespesas[k]);
+  const despesasHoje = stateDespesas.filter(d => dataLocal(d.data) === hoje);
+  const entradas = somar(porForma(pagamentosOS, 'forma_pagamento', 'valor'), porForma(recebContas, 'forma_pagamento', 'valor'));
+  const saidas = somar(porForma(pagos, 'forma_pagamento', 'valor'), porForma(despesasHoje, 'forma_pagamento', 'valor'));
   const totalEntradas = Object.values(entradas).reduce((a,b) => a+b, 0);
   const totalSaidas = Object.values(saidas).reduce((a,b) => a+b, 0);
   const dinheiroEsperado = Number(c.valor_abertura) + entradas.Dinheiro - saidas.Dinheiro;
@@ -4280,7 +4360,7 @@ async function abrirPortalCliente(token){
     <p style="font-weight:600;margin:14px 0 4px;">Itens</p>
     ${itens}
     <p style="font-weight:700;font-size:18px;margin-top:14px;">Total: ${moeda(Number(os.valor) || 0)}</p>
-    ${os.status === 'concluida' ? `<p class="hint">${os.pecas_status === 'recebido' ? '✅ Peças recebidas' : '⏳ Peças pendentes'} · ${os.servico_status === 'recebido' ? '✅ Serviço recebido' : '⏳ Serviço pendente'}${os.garantia_meses ? ' · Garantia de ' + os.garantia_meses + ' mês(es)' : ''}${os.numero_nf ? ' · NF nº ' + escImp(os.numero_nf) : ''}</p>` : ''}
+    <p class="hint">💰 Pago: ${moeda(Number(os.recebido) || 0)} · Falta: ${moeda(Math.max(0, (Number(os.valor) || 0) - (Number(os.recebido) || 0)))}${os.garantia_meses ? ' · Garantia de ' + os.garantia_meses + ' mês(es)' : ''}${os.numero_nf ? ' · NF nº ' + escImp(os.numero_nf) : ''}</p>
   `;
 }
 
@@ -4292,7 +4372,7 @@ async function abrirPortalCliente(token){
 const AJUDA_TEXTOS = {
   'view-dashboard': 'Resumo do dia: orçamentos aguardando aprovação, O.S. abertas e em andamento, e os lembretes mais urgentes (estoque baixo, contas vencendo, garantias acabando, revisão a oferecer). Clique num lembrete pra ir direto na tela dele.',
   'view-clientes': 'Cadastre nome, telefone, CPF (opcional), veículo, placa e o tipo de veículo (com ícone). Se preencher "revisar a cada X meses/km", o sistema agenda sozinho a próxima revisão quando uma O.S. desse cliente for concluída.',
-  'view-ordens': 'Toda ordem de serviço nasce aqui: escolha o cliente, descreva o serviço, adicione os itens (peças do estoque, "peça de fora" com valor manual — pra quando compra numa autopeça — ou mão de obra) e o status. Deixe "Valor a definir" quando ainda não souber o preço. Ao marcar como Concluída, abre a tela de recebimento, o sistema dá baixa nas peças do estoque e gera o link do Portal do Cliente (na Nota Fiscal). O botão de câmera na lista de O.S. anexa fotos de antes, do orçamento da autopeça e de depois.',
+  'view-ordens': 'Cada ordem de serviço tem dois blocos: Peças e Mão de obra (valor em branco = "a definir", preenche depois). Depois de salva, registre os pagamentos do cliente dentro da OS, quantos forem (dinheiro, Pix, cartão...): o sistema mostra o que já recebeu e o que falta receber, separado em peças e mão de obra. Concluída = carro pronto (baixa o estoque); não depende de o cliente já ter pago. O botão de câmera anexa fotos de antes, do orçamento da autopeça e de depois.',
   'view-agenda': 'Use pra marcar que um cliente vai trazer o veículo, antes de existir uma O.S. (ainda não se sabe o problema nem o valor). Quando o veículo chegar, crie a O.S. normalmente. Lembretes de revisão periódica aparecem aqui sozinhos.',
   'view-fornecedores': 'Cadastro de fornecedores de peças e serviços, usado nas Contas a Pagar pra saber quem cobrar.',
   'view-estoque': 'Controle de peças: quantidade, mínimo, custo e venda, com categoria opcional. O botão no topo importa uma planilha Excel inteira — o sistema tenta reconhecer as colunas sozinho, mas sempre mostra uma prévia antes de gravar qualquer coisa.',
@@ -4354,7 +4434,7 @@ document.getElementById('formDespesa').addEventListener('submit', async e => {
   });
   if(!ok) return;
   e.target.reset();
-  document.querySelector('#formDespesa [name="data"]').value = new Date().toISOString().slice(0,10);
+  document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
   render();
 });
 async function excluirDespesa(id){
@@ -4362,7 +4442,7 @@ async function excluirDespesa(id){
   await DB.despesas.excluir(id);
   render();
 }
-document.querySelector('#formDespesa [name="data"]').value = new Date().toISOString().slice(0,10);
+document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
 
 /* ==========================================================
    AUDITORIA — histórico de criação/edição/exclusão em cada tabela
@@ -4551,8 +4631,7 @@ function montarNotaFiscalHTML(o, itens){
         <strong>Veículo:</strong> ${o.veiculo}<br>
         ${o.km ? `<strong>Quilometragem:</strong> ${o.km.toLocaleString('pt-BR')} km<br>` : ''}
         <strong>Data da OS:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}<br>
-        <strong>Peças:</strong> ${o.pecas_destino === 'terceiro' ? 'pagas direto à autopeça' : (o.pecas_status === 'recebido' ? 'recebido' + (o.pecas_forma_pagamento ? ' · ' + o.pecas_forma_pagamento : '') : 'pendente')}
-        · <strong>Serviço:</strong> ${o.servico_status === 'recebido' ? 'recebido' + (o.servico_forma_pagamento ? ' · ' + o.servico_forma_pagamento : '') : 'pendente'}
+        <strong>Pago:</strong> ${moeda(recebidoOrdem(o))} de ${moeda(Number(o.valor) || 0)}${faltaOrdem(o) > 0.004 ? ' · <strong>Falta:</strong> ' + moeda(faltaOrdem(o)) : ''}
       </p>
       ${itens.length ? '' : `<p><strong>Serviço:</strong> ${o.servico}</p>`}
       ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
