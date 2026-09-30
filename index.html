@@ -620,6 +620,15 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
       </div>
 
+      <div class="panel" id="painelRecebido" style="margin-bottom:18px;">
+        <div class="panel-head"><h2>💰 Recebido × A receber</h2></div>
+        <div class="cards" style="margin-bottom:0;">
+          <div class="card"><span class="card-num" style="color:var(--ok);" id="painelTotalRecebido">R$ 0</span><span class="card-label">Recebido (todo o histórico)</span></div>
+          <div class="card"><span class="card-num" style="color:var(--amber,#b45309);" id="painelTotalAReceber">R$ 0</span><span class="card-label">Falta receber agora</span></div>
+        </div>
+        <div id="painelListaAReceber" style="margin-top:10px;"></div>
+      </div>
+
       <div class="panel" id="painelLembretes" style="margin-bottom:18px; display:none;">
         <div class="panel-head"><h2>🔔 Lembretes <span id="lembretesTotal" style="color:var(--text-dim); font-size:13px;"></span></h2></div>
         <div id="listaLembretes"></div>
@@ -3735,6 +3744,22 @@ document.getElementById('buscaOrdens').addEventListener('input', () => { ordensP
 document.getElementById('filtroStatusOrdens').addEventListener('change', () => { ordensPaginaAtual = 1; renderTabelaOrdens(); });
 
 // Lembretes inteligentes do painel: OS paradas, contas vencendo, garantias expirando e revisões a oferecer
+// Painel: visão rápida de tudo que já entrou e tudo que ainda falta receber das O.S.
+function renderPainelRecebido(){
+  const totalRecebido = r2(stateOrdemPagamentos.filter(p => p.destino !== 'terceiro').reduce((t, p) => t + (Number(p.valor) || 0), 0));
+  const pendentes = stateOrdens.filter(o => o.status !== 'orcamento' && faltaOrdem(o) > 0.004)
+    .map(o => ({ o, falta: faltaOrdem(o) })).sort((a, b) => b.falta - a.falta);
+  const totalAReceber = r2(pendentes.reduce((t, x) => t + x.falta, 0));
+  document.getElementById('painelTotalRecebido').textContent = moeda(totalRecebido);
+  document.getElementById('painelTotalAReceber').textContent = moeda(totalAReceber);
+  const lista = document.getElementById('painelListaAReceber');
+  lista.innerHTML = pendentes.length ? pendentes.slice(0, 8).map(({ o, falta }) => `
+    <div class="pag-linha" style="cursor:pointer;" onclick="abrirEdicaoOrdem(${o.id})">
+      <span>OS #${o.id} · ${escImp(o.cliente_nome || '')} — ${escImp(o.veiculo || '')}</span>
+      <span><b style="color:var(--amber,#b45309);">${moeda(falta)}</b></span>
+    </div>`).join('') + (pendentes.length > 8 ? `<p class="hint" style="margin:6px 0 0;">+ ${pendentes.length - 8} outra(s) OS com saldo em aberto.</p>` : '')
+    : '<p class="hint" style="margin:0;">Nada pendente — tudo recebido 🎉</p>';
+}
 function renderLembretes(){
   const DIA = 86400000, agora = new Date(), hoje = agora.toISOString().slice(0, 10);
   const dias = iso => Math.floor((new Date(iso) - agora) / DIA);      // negativo = passado
@@ -3844,6 +3869,7 @@ async function render(){
     a.status !== 'cancelado' && a.status !== 'concluido' &&
     new Date(a.data_hora) >= new Date() && new Date(a.data_hora) <= em7dias
   ).length;
+  renderPainelRecebido();
 
   // tabela clientes (busca + paginação)
   renderTabelaClientes();
