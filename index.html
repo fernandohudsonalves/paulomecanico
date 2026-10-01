@@ -936,6 +936,17 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
 
       <div class="panel" style="margin-top:20px;">
+        <div class="panel-head"><h2>Recebimentos por cliente</h2></div>
+        <div class="table-wrap">
+          <table id="tabelaRecebPorCliente">
+            <thead><tr><th>Cliente</th><th>Total nas O.S.</th><th>Recebido</th><th>Falta receber</th><th>Como pagou</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="recebPorClienteEmpty">Nenhuma O.S. (fora orçamento) registrada ainda.</p>
+      </div>
+
+      <div class="panel" style="margin-top:20px;">
         <div class="panel-head"><h2>Fluxo de caixa projetado (30 dias)</h2></div>
         <div class="table-wrap">
           <table id="tabelaFluxoCaixa">
@@ -2231,6 +2242,12 @@ let stateContasReceber = [];
 let stateEstoque = [];
 const r2 = v => Math.round((Number(v) || 0) * 100) / 100;
 const hojeLocal = () => new Date().toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' });
+// O campo datetime-local não tem fuso — trata sempre como horário de São Paulo (-03:00),
+// pra não depender do fuso configurado no celular/computador de quem está usando o sistema.
+const paraInstanteSP = v => v ? new Date(v + ':00-03:00').toISOString() : null;
+const paraCampoLocalSP = iso => { if(!iso) return ''; const d = new Date(iso); const p = (n, w=2) => String(n).padStart(w, '0');
+  const sp = new Date(d.toLocaleString('en-US', { timeZone:'America/Sao_Paulo' }));
+  return `${sp.getFullYear()}-${p(sp.getMonth()+1)}-${p(sp.getDate())}T${p(sp.getHours())}:${p(sp.getMinutes())}`; };
 const dataLocal = v => { if(!v) return ''; const t = String(v); return t.length > 10 ? new Date(t).toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' }) : t; };
 let stateOrdemPagamentos = [];
 const pagamentosDaOrdem = id => stateOrdemPagamentos.filter(p => p.ordem_id === id);
@@ -3415,12 +3432,12 @@ function renderAgendaCalendario(){
   const primeiroDiaSemana = new Date(ano, mes, 1).getDay(); // 0 = domingo
   const diasNoMes = new Date(ano, mes + 1, 0).getDate();
   const diasMesAnterior = new Date(ano, mes, 0).getDate();
-  const hojeStr = new Date().toISOString().slice(0, 10);
+  const hojeStr = hojeLocal();
 
   const porDia = {};
   stateAgendamentos.forEach(a => {
     if(!a.data_hora) return;
-    const dia = a.data_hora.slice(0, 10);
+    const dia = dataLocal(a.data_hora);
     (porDia[dia] = porDia[dia] || []).push(a);
   });
 
@@ -3432,11 +3449,12 @@ function renderAgendaCalendario(){
     if(numDia < 1){ dataCel = new Date(ano, mes - 1, diasMesAnterior + numDia); outroMes = true; }
     else if(numDia > diasNoMes){ dataCel = new Date(ano, mes + 1, numDia - diasNoMes); outroMes = true; }
     else { dataCel = new Date(ano, mes, numDia); }
-    const diaStr = dataCel.toISOString().slice(0, 10);
+    const pad2 = n => String(n).padStart(2, '0');
+    const diaStr = `${dataCel.getFullYear()}-${pad2(dataCel.getMonth() + 1)}-${pad2(dataCel.getDate())}`;
     const eventosDia = (porDia[diaStr] || []).sort((a, b) => (a.data_hora || '').localeCompare(b.data_hora || ''));
     const maxVisiveis = 3;
     const eventosHtml = eventosDia.slice(0, maxVisiveis).map(a => {
-      const hora = a.data_hora ? a.data_hora.slice(11, 16) : '';
+      const hora = a.data_hora ? paraCampoLocalSP(a.data_hora).slice(11, 16) : '';
       const titulo = `${a.cliente_nome || ''}${a.servico ? ' — ' + a.servico : ''}`.replace(/"/g, '&quot;');
       return `<div class="cal-evento ${a.tipo === 'revisao' ? 'revisao' : ''}" title="${titulo}" onclick="abrirEdicaoAgendamento(${a.id})">${hora ? hora + ' ' : ''}${a.cliente_nome || ''}</div>`;
     }).join('');
@@ -3467,7 +3485,7 @@ document.getElementById('formAgendamento').addEventListener('submit', async e =>
     cliente_id: clienteId,
     cliente_nome: cliente.nome,
     veiculo: cliente.veiculo,
-    data_hora: new Date(f.get('dataHora')).toISOString(),
+    data_hora: paraInstanteSP(f.get('dataHora')),
     tipo: f.get('tipo'),
     servico: f.get('servico'),
     observacoes: f.get('observacoes'),
@@ -3489,7 +3507,7 @@ function abrirEdicaoAgendamento(id){
   preencherSelectClientesAgenda();
   const f = document.getElementById('formAgendamento');
   f.clienteId.value = x.cliente_id || '';
-  f.dataHora.value = x.data_hora ? x.data_hora.slice(0,16) : '';
+  f.dataHora.value = x.data_hora ? paraCampoLocalSP(x.data_hora) : '';
   f.tipo.value = x.tipo; f.servico.value = x.servico || ''; f.observacoes.value = x.observacoes || ''; f.status.value = x.status;
   document.getElementById('tituloModalAgendamento').textContent = 'Editar agendamento';
   abrirModal('modalAgendamento');
@@ -3969,7 +3987,7 @@ async function render(){
   const agendaOrdenada = [...agendamentos].sort((a,b) => (a.data_hora||'').localeCompare(b.data_hora||''));
   document.querySelector('#tabelaAgenda tbody').innerHTML = agendaOrdenada.map(a => `
     <tr>
-      <td>${a.data_hora ? new Date(a.data_hora).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td>
+      <td>${a.data_hora ? new Date(a.data_hora).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'America/Sao_Paulo' }) : '—'}</td>
       <td>${a.cliente_nome || '—'}</td><td>${a.veiculo || '—'}</td>
       <td><span class="status ${a.tipo === 'revisao' ? 'andamento' : 'aberta'}">${tipoLabel[a.tipo] || a.tipo}</span></td>
       <td>${a.servico || '—'}</td>
@@ -4058,6 +4076,30 @@ async function render(){
     <tr><td>${i+1}º</td><td>${c.nome}</td><td>${c.qtd}</td><td>${moeda(c.total)}</td></tr>
   `).join('');
   document.getElementById('rankingClientesEmpty').style.display = ranking.length ? 'none' : 'block';
+
+  // ---- recebimentos por cliente: total, recebido, falta e como pagou (com base nos pagamentos lançados nas OS) ----
+  const porClienteReceb = {};
+  stateOrdens.filter(o => o.status !== 'orcamento' && o.cliente_id).forEach(o => {
+    const c = porClienteReceb[o.cliente_id] || (porClienteReceb[o.cliente_id] = { nome: o.cliente_nome, total: 0, recebido: 0, formas: {} });
+    c.total += Number(o.valor) || 0;
+  });
+  stateOrdemPagamentos.forEach(p => {
+    const o = stateOrdens.find(x => x.id === p.ordem_id);
+    if(!o || !o.cliente_id || !porClienteReceb[o.cliente_id]) return;
+    porClienteReceb[o.cliente_id].recebido += Number(p.valor) || 0;
+    if(p.destino !== 'terceiro'){
+      const c = porClienteReceb[o.cliente_id];
+      c.formas[p.forma_pagamento] = (c.formas[p.forma_pagamento] || 0) + (Number(p.valor) || 0);
+    }
+  });
+  const linhasReceb = Object.values(porClienteReceb).sort((a, b) => (b.total - b.recebido) - (a.total - a.recebido));
+  document.querySelector('#tabelaRecebPorCliente tbody').innerHTML = linhasReceb.map(c => {
+    const falta = Math.max(0, r2(c.total - c.recebido));
+    const comoPagou = Object.entries(c.formas).map(([f, v]) => `${escImp(f)} ${moeda(v)}`).join(', ') || '—';
+    return `<tr><td>${escImp(c.nome)}</td><td>${moeda(c.total)}</td><td>${moeda(c.recebido)}</td>
+      <td>${falta > 0.004 ? `<strong style="color:var(--amber,#b45309);">${moeda(falta)}</strong>` : moeda(0)}</td><td>${comoPagou}</td></tr>`;
+  }).join('');
+  document.getElementById('recebPorClienteEmpty').style.display = linhasReceb.length ? 'none' : 'block';
 }
 
 /* ==========================================================
