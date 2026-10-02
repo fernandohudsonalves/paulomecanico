@@ -113,6 +113,7 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 }
 .nav{display:flex; flex-direction:column; gap:2px; margin-top:28px;}
 .nav-group{display:flex; flex-direction:column;}
+.nav-group-toggle > span:first-child{font-style:italic; font-weight:700;}
 .nav-group-toggle{
   display:flex; justify-content:space-between; align-items:center; width:100%;
   background:none; border:none; cursor:pointer;
@@ -450,6 +451,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 .foto-fase{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px;}
 .fotos-grid.arrastando-sobre{outline:2px dashed var(--accent); outline-offset:4px; border-radius:8px;}
 .foto-item{cursor:grab;}
+.cel-servico{max-width:300px;}
+.cel-servico .servico-texto{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;}
+.cel-servico.expandido .servico-texto{-webkit-line-clamp:unset;display:block;}
+.cel-servico .ver-mais{font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;padding:3px 0 0;display:block;}
 .foto-item.arquivo{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:4px; text-align:center;}
 .foto-item.arquivo span{font-size:10px; color:var(--text-dim); word-break:break-all; line-height:1.2; max-height:2.4em; overflow:hidden;}
 .foto-item .icone-tipo{font-size:26px;}
@@ -1169,21 +1174,29 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
       </div>
       <label>O que vai ser feito
-        <textarea name="servico" rows="2" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
+        <textarea name="servico" id="servicoTextarea" rows="2" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
       </label>
       <input type="hidden" name="valor">
 
       <div class="os-blocos">
         <div class="os-bloco">
           <h4>🔩 Peças <span id="subtotalPecas"></span></h4>
-          <div id="listaPecasOrdem" class="itens-lista"></div>
-          <div class="add-linha pecas">
-            <label class="full">Peça (digite ou escolha do estoque)<input type="text" id="pecaDesc" list="listaPecasEstoque" autocomplete="off" placeholder="Ex: Correia dentada"></label>
-            <label>Qtd<input type="number" id="pecaQtd" value="1" min="0.001" step="0.001"></label>
-            <label>Valor unit. (R$)<input type="number" id="pecaValor" step="0.01" min="0" placeholder="a definir"></label>
-            <label>Custo (opc.)<input type="number" id="pecaCusto" step="0.01" min="0"></label>
-            <button type="button" class="btn-ghost" id="btnAddPeca">+ Peça</button>
+          <label style="flex-direction:row; align-items:center; gap:6px; margin-bottom:6px;">
+            <input type="checkbox" id="chkPecasCliente" style="width:auto;"> Cliente trouxe as peças (não lança nada aqui embaixo)
+          </label>
+          <div id="blocoPecasNormal">
+            <div id="listaPecasOrdem" class="itens-lista"></div>
+            <div class="add-linha pecas">
+              <label class="full">Peça (digite ou escolha do estoque)<input type="text" id="pecaDesc" list="listaPecasEstoque" autocomplete="off" placeholder="Ex: Correia dentada"></label>
+              <label>Qtd<input type="number" id="pecaQtd" value="1" min="0.001" step="0.001"></label>
+              <label>Valor unit. (R$)<input type="number" id="pecaValor" step="0.01" min="0" placeholder="a definir"></label>
+              <label>Custo (opc.)<input type="number" id="pecaCusto" step="0.01" min="0"></label>
+              <button type="button" class="btn-ghost" id="btnAddPeca">+ Peça</button>
+            </div>
           </div>
+          <label id="blocoPecasClienteObs" style="display:none;">Quais peças o cliente trouxe (observação)
+            <textarea id="pecasClienteObs" rows="2" placeholder="Ex: trouxe pastilha de freio e filtro de óleo"></textarea>
+          </label>
           <datalist id="listaPecasEstoque"></datalist>
         </div>
         <div class="os-bloco">
@@ -2293,6 +2306,10 @@ document.getElementById('btnNovoCliente').addEventListener('click', () => {
 document.getElementById('btnNovaOrdem').addEventListener('click', async () => {
   editingOrdemId = null;
   document.getElementById('formOrdem').reset();
+  document.getElementById('servicoTextarea').value = '• ';
+  document.getElementById('chkPecasCliente').checked = false;
+  document.getElementById('pecasClienteObs').value = '';
+  document.getElementById('chkPecasCliente').dispatchEvent(new Event('change'));
   document.getElementById('tituloModalOrdem').textContent = 'Nova ordem de serviço';
   document.getElementById('ordemVeiculoResumo').style.display = 'none';
   itensOrdemAtual = [];
@@ -2429,6 +2446,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
     km: f.get('km') ? Number(f.get('km')) : null,
     comentarios: f.get('comentarios') || null,
+    pecas_cliente_obs: document.getElementById('chkPecasCliente').checked ? (document.getElementById('pecasClienteObs').value.trim() || null) : null,
   };
   const ok = editingOrdemId
     ? await DB.atualizarOrdem(editingOrdemId, dados)
@@ -2475,6 +2493,9 @@ async function abrirEdicaoOrdem(id){
   document.getElementById('osNumeroNf').value = o.numero_nf || '';
   f.km.value = o.km || '';
   f.comentarios.value = o.comentarios || '';
+  document.getElementById('chkPecasCliente').checked = !!o.pecas_cliente_obs;
+  document.getElementById('pecasClienteObs').value = o.pecas_cliente_obs || '';
+  document.getElementById('chkPecasCliente').dispatchEvent(new Event('change'));
   document.getElementById('tituloModalOrdem').textContent = 'Editar ordem de serviço';
   const clienteDaOrdem = stateClientes.find(x => x.id === o.cliente_id);
   const resumoVeicOrdem = document.getElementById('ordemVeiculoResumo');
@@ -2514,6 +2535,19 @@ async function excluirOrdem(id){
 /* ==========================================================
    ITENS DA OS — mão de obra (serviços) e peças (estoque)
    ========================================================== */
+// Ao apertar Enter no "O que vai ser feito", já começa a linha de baixo com o mesmo símbolo (•) da primeira
+document.getElementById('servicoTextarea').addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || e.shiftKey) return;
+  const el = e.target, pos = el.selectionStart;
+  const linhaAtual = el.value.slice(0, pos).split('\n').pop();
+  const marcador = (linhaAtual.match(/^(\s*[•\-*]\s*)/) || [, '• '])[1];
+  e.preventDefault();
+  el.setRangeText('\n' + marcador, pos, el.selectionEnd, 'end');
+});
+document.getElementById('chkPecasCliente').addEventListener('change', e => {
+  document.getElementById('blocoPecasNormal').style.display = e.target.checked ? 'none' : '';
+  document.getElementById('blocoPecasClienteObs').style.display = e.target.checked ? '' : 'none';
+});
 function preencherSelectItemRef(){
   const lp = document.getElementById('listaPecasEstoque');
   if(lp) lp.innerHTML = stateEstoque.map(p => `<option value="${escImp(p.nome)}">`).join('');
@@ -3715,7 +3749,7 @@ const tipoVeiculoDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id)
 const placaDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id) || {}).placa) || '';
 const linhaOrdem = o => `
     <tr>
-      <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td>${o.servico}</td>
+      <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td class="cel-servico"><div class="servico-texto">${escImp(o.servico)}</div><button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido')">ver mais / ver menos</button></td>
       <td>
         <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
           <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
@@ -4424,6 +4458,7 @@ async function abrirPortalCliente(token){
   el.innerHTML = `
     <p style="margin-bottom:2px;"><strong>${escImp(os.cliente_nome)}</strong> · ${escImp(os.veiculo || '')}</p>
     <p class="hint" style="margin-top:0;">Aberta em ${dataBR((os.created_at || '').slice(0,10))}${os.servico ? ' — ' + escImp(os.servico) : ''}</p>
+    ${os.pecas_cliente_obs ? `<p class="hint">Peças trazidas por você: ${escImp(os.pecas_cliente_obs)}</p>` : ''}
     <ul class="portal-passos">${passos}</ul>
     <p style="font-weight:600;margin:14px 0 4px;">Itens</p>
     ${itens}
@@ -4654,6 +4689,7 @@ async function imprimirOrdem(id){
         ${garantiaTxt}
       </p>
       ${itens.length ? '' : `<p><strong>Serviço:</strong> ${o.servico}</p>`}
+      ${o.pecas_cliente_obs ? `<p><strong>Peças trazidas pelo cliente:</strong> ${escImp(o.pecas_cliente_obs)}</p>` : ''}
       ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
@@ -4702,6 +4738,7 @@ function montarNotaFiscalHTML(o, itens){
         <strong>Pago:</strong> ${moeda(recebidoOrdem(o))} de ${moeda(Number(o.valor) || 0)}${faltaOrdem(o) > 0.004 ? ' · <strong>Falta:</strong> ' + moeda(faltaOrdem(o)) : ''}
       </p>
       ${itens.length ? '' : `<p><strong>Serviço:</strong> ${o.servico}</p>`}
+      ${o.pecas_cliente_obs ? `<p><strong>Peças trazidas pelo cliente:</strong> ${escImp(o.pecas_cliente_obs)}</p>` : ''}
       ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
