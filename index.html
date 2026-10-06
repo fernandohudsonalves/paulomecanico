@@ -793,6 +793,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <h1>Serviços</h1>
         <p>Catálogo de serviços — preço padrão e tempo estimado</p>
         <button class="btn-primary" id="btnNovoServico">+ Novo serviço</button>
+        <button class="btn-ghost" id="btnImportarServicosOS" type="button">⤓ Importar serviços das O.S.</button>
       </header>
 
       <div class="panel">
@@ -850,6 +851,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <label>O.S. relacionada (opcional)<select name="ordem_id" id="selectOrdemDespesa"><option value="">— nenhuma —</option></select></label>
           <button type="submit" class="btn-primary">Lançar despesa</button>
         </form>
+      </div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3 style="margin:0 0 6px;">Lançar várias de uma vez</h3>
+        <p class="hint" style="margin:0 0 8px;">Uma por linha, no formato: descrição | valor</p>
+        <textarea id="loteDespesasTxt" rows="9" style="width:100%;" placeholder="Shampoo automotivo | 35,00"></textarea>
+        <div class="grid2" style="margin-top:8px;align-items:end;">
+          <label>Forma de pagamento<select id="loteDespesasForma"><option>Outros</option><option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option></select></label>
+          <label>Data<input type="date" id="loteDespesasData"></label>
+        </div>
+        <button type="button" class="btn-primary" id="btnLoteDespesas" style="margin-top:8px;">Lançar todas</button>
       </div>
       <div class="panel">
         <div class="table-wrap">
@@ -1207,6 +1218,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
       <label>O que vai ser feito
         <textarea name="servico" id="servicoTextarea" rows="8" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
+        <button type="button" class="btn-ghost" id="btnLinhasParaItens" style="margin-top:6px;">↧ Criar um item de mão de obra por linha (com preço do catálogo, se existir)</button>
       </label>
       <input type="hidden" name="valor">
 
@@ -1223,6 +1235,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
               <label>Qtd<input type="number" id="pecaQtd" value="1" min="0.001" step="0.001"></label>
               <label>Valor unit. (R$)<input type="number" id="pecaValor" step="0.01" min="0" placeholder="a definir"></label>
               <label>Custo (opc.)<input type="number" id="pecaCusto" step="0.01" min="0"></label>
+              <label>Marca (opc.)<input type="text" id="pecaMarca" placeholder="Ex: TRW"></label>
               <button type="button" class="btn-ghost" id="btnAddPeca">+ Peça</button>
             </div>
           </div>
@@ -1253,6 +1266,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <label>Garantia (meses)<input type="number" name="garantia_meses" min="0" step="1" placeholder="Ex: 3"></label>
         </div>
         <label>Nº da nota fiscal (automático)<input type="text" id="osNumeroNf" readonly tabindex="-1" placeholder="Gerado ao emitir a nota"></label>
+        <label>Brindes (aparecem no orçamento do cliente — um por linha)<textarea name="brindes" rows="3" placeholder="Ex: Lavagem no motor&#10;Jet cera"></textarea></label>
         <label>Comentários (só você vê)<textarea name="comentarios" rows="2" placeholder="Observações internas, recados..."></textarea></label>
       </details>
 
@@ -1750,7 +1764,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <!-- MODAL NOTA FISCAL / RECIBO -->
 <div class="modal" id="modalNotaFiscal">
   <div class="modal-box" style="width:620px; max-height:90vh; display:flex; flex-direction:column;">
-    <h3>Nota fiscal / Recibo</h3>
+    <h3 id="tituloModalNota">Nota fiscal / Recibo</h3>
     <div style="overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:#fff;">
       <div id="notaFiscalPreview"></div>
     </div>
@@ -1902,6 +1916,7 @@ const DB = {
     try {
       const { data, error } = await supabaseClient.from('ordens').update(o).eq('id', id).select();
       if(error){ alert('Erro ao atualizar OS: ' + mensagemErro(error)); return null; }
+      if(!data || !data.length){ alert('O banco não gravou a alteração da OS #' + id + ' (0 linhas atualizadas). Isso indica uma regra/permissão (RLS ou trigger) no Supabase bloqueando a edição — veja abaixo como liberar.'); return null; }
       return data[0];
     } catch(err){ alert('Erro ao atualizar OS: ' + mensagemErro(err)); return null; }
   },
@@ -2543,7 +2558,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   const f = new FormData(e.target);
   const clienteId = Number(f.get('clienteId'));
   const cliente = stateClientes.find(c => c.id === clienteId);
-  if(!cliente) return;
+  if(!cliente){ alert('Escolha o cliente da OS antes de salvar.'); return; }
   const veiculoId = Number(f.get('veiculoId')) || null;
   const veic = veiculoId ? stateVeiculos.find(v => v.id === veiculoId) : null;
   if(!veic){ alert('Escolha o veículo dessa OS (ou cadastre um veículo pra esse cliente antes).'); return; }
@@ -2565,6 +2580,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
     km: f.get('km') ? Number(f.get('km')) : null,
     comentarios: f.get('comentarios') || null,
+    brindes: (f.get('brindes') || '').trim() || null,
     pecas_cliente_obs: document.getElementById('chkPecasCliente').checked ? (document.getElementById('pecasClienteObs').value.trim() || null) : null,
   };
   const ok = editingOrdemId
@@ -2613,6 +2629,7 @@ async function abrirEdicaoOrdem(id){
   document.getElementById('osNumeroNf').value = o.numero_nf || '';
   f.km.value = o.km || '';
   f.comentarios.value = o.comentarios || '';
+  f.brindes.value = o.brindes || '';
   document.getElementById('chkPecasCliente').checked = !!o.pecas_cliente_obs;
   document.getElementById('pecasClienteObs').value = o.pecas_cliente_obs || '';
   document.getElementById('chkPecasCliente').dispatchEvent(new Event('change'));
@@ -2702,14 +2719,15 @@ document.getElementById('btnAddPeca').addEventListener('click', () => {
   const vu = adefinir ? null : Number(valorTxt);
   const custoUnit = custoTxt !== '' ? Number(custoTxt) : null;
   itensOrdemAtual.push({
-    tipo: est ? 'peca' : 'peca_avulsa', referencia_id: est ? est.id : null, descricao: est ? est.nome : desc, quantidade: qtd,
+    tipo: est ? 'peca' : 'peca_avulsa', referencia_id: est ? est.id : null, descricao: est ? est.nome : desc + (document.getElementById('pecaMarca').value.trim() ? ' — ' + document.getElementById('pecaMarca').value.trim() : ''), quantidade: qtd,
     valor_unitario: vu, valor_total: adefinir ? null : +(vu * qtd).toFixed(2),
     custo_unitario: custoUnit, custo_total: custoUnit !== null ? +(custoUnit * qtd).toFixed(2) : null, tempo: 0,
   });
-  ['pecaDesc','pecaValor','pecaCusto'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.dataset.auto = ''; });
+  ['pecaDesc','pecaValor','pecaCusto','pecaMarca'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.dataset.auto = ''; });
   document.getElementById('pecaQtd').value = 1;
   document.getElementById('pecaDesc').focus();
   renderItensOrdem();
+  persistirItensOrdemAgora();
 });
 document.getElementById('btnAddServ').addEventListener('click', () => {
   const desc = document.getElementById('servDesc').value.trim();
@@ -2725,7 +2743,33 @@ document.getElementById('btnAddServ').addEventListener('click', () => {
   ['servDesc','servValor'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.dataset.auto = ''; });
   document.getElementById('servDesc').focus();
   renderItensOrdem();
+  persistirItensOrdemAgora();
 });
+document.getElementById('btnLinhasParaItens').addEventListener('click', () => {
+  const nm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  const linhas = document.getElementById('servicoTextarea').value.split('\n').map(l => l.replace(/^[\s•\-–*·]+/, '').trim()).filter(Boolean);
+  const ja = new Set(itensOrdemAtual.filter(i => i.tipo === 'servico').map(i => nm(i.descricao)));
+  let n = 0;
+  linhas.forEach(l => {
+    if(ja.has(nm(l))) return;
+    const cat = acharPorNome(stateServicos, l);
+    const v = cat && Number(cat.preco_padrao) > 0 ? Number(cat.preco_padrao) : null;
+    itensOrdemAtual.push({ tipo:'servico', referencia_id: cat ? cat.id : null, descricao: cat ? cat.nome : l, quantidade: 1, valor_unitario: v, valor_total: v, custo_unitario: null, custo_total: null, tempo: cat ? (Number(cat.tempo_estimado_horas) || 0) : 0 });
+    n++;
+  });
+  renderItensOrdem();
+  persistirItensOrdemAgora();
+  mostrarAviso(n ? `${n} item(ns) criado(s) — preencha o preço de cada um à direita.` : 'Nenhuma linha nova para criar.');
+});
+function definirValorItemOrdem(idx, txt){
+  const i = itensOrdemAtual[idx]; if(!i) return;
+  const v = String(txt).trim() === '' ? null : Number(String(txt).replace(',', '.'));
+  if(v !== null && (isNaN(v) || v < 0)){ alert('Digite um valor válido.'); renderItensOrdem(); return; }
+  i.valor_total = v === null ? null : +v.toFixed(2);
+  i.valor_unitario = v === null ? null : (i.quantidade ? +(v / i.quantidade).toFixed(4) : v);
+  renderItensOrdem();
+  persistirItensOrdemAgora();
+}
 function editarValorItemOrdem(idx){
   const i = itensOrdemAtual[idx]; if(!i) return;
   const r = prompt(`Valor total deste item — ${i.descricao} (${i.quantidade}×)`, i.valor_total !== null ? i.valor_total : '');
@@ -2735,18 +2779,31 @@ function editarValorItemOrdem(idx){
   i.valor_total = +v.toFixed(2);
   i.valor_unitario = i.quantidade ? +(v / i.quantidade).toFixed(4) : v;
   renderItensOrdem();
+  persistirItensOrdemAgora();
+}
+let _persistTimer = null;
+function persistirItensOrdemAgora(){
+  if(!editingOrdemId) return;
+  clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(async () => {
+    const id = editingOrdemId; if(!id) return;
+    const total = r2(itensOrdemAtual.reduce((a, i) => a + (Number(i.valor_total) || 0), 0));
+    await DB.ordemItens.substituir(id, itensOrdemAtual);
+    const ok = await DB.atualizarOrdem(id, { valor: total });
+    if(ok){ mostrarAviso('Valor salvo na OS #' + id); const o = stateOrdens.find(x => x.id === id); if(o) o.valor = total; }
+  }, 300);
 }
 function removerItemOrdem(idx){
   itensOrdemAtual.splice(idx, 1);
   renderItensOrdem();
+  persistirItensOrdemAgora();
 }
 function linhaItemHTML(i, idx){
   const lucro = i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null ? i.valor_total - i.custo_total : null;
   return `
     <div class="item-linha">
       <span>${escImp(i.descricao)} × ${i.quantidade}${lucro !== null ? `<br><span class="lucro">lucro ${moeda(lucro)}</span>` : ''}</span>
-      <span>${i.valor_total === null ? '<span class="adefinir">A definir</span>' : moeda(i.valor_total)}</span>
-      <button type="button" class="btn-icon" title="Editar valor" onclick="editarValorItemOrdem(${idx})">${ICON_EDIT}</button>
+      <span><input type="number" step="0.01" min="0" placeholder="a definir" title="Valor total do item (R$)" value="${i.valor_total === null ? '' : i.valor_total}" onchange="definirValorItemOrdem(${idx}, this.value)" style="width:100px;text-align:right;"></span>
       <button type="button" class="btn-icon danger" onclick="removerItemOrdem(${idx})">${ICON_DELETE}</button>
     </div>`;
 }
@@ -3524,6 +3581,37 @@ document.getElementById('formMovimento').addEventListener('submit', async e => {
 /* ==========================================================
    SERVIÇOS — catálogo (preço padrão e tempo estimado)
    ========================================================== */
+
+// Importa para o catálogo todos os serviços já usados nas O.S. (itens de mão de obra + texto antigo do campo "serviço")
+document.getElementById('btnImportarServicosOS').addEventListener('click', async () => {
+  const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  const limpa = t => String(t || '').replace(/^[\s•\-–*·]+/, '').replace(/\s+/g, ' ').trim();
+  const achados = new Map(); // chave -> {nome, preco, ordem}
+  const guardar = (nome, preco, ordemId) => {
+    nome = limpa(nome); if(nome.length < 2 || nome.length > 120) return;
+    const k = norm(nome), at = achados.get(k);
+    if(!at || ordemId >= at.ordem) achados.set(k, { nome: at ? at.nome : nome, preco: preco || (at ? at.preco : 0) || 0, ordem: ordemId });
+  };
+  let itens = [];
+  try { const { data } = await supabaseClient.from('ordem_itens').select('ordem_id, tipo, descricao, valor_unitario'); itens = data || []; } catch(e){ console.error(e); }
+  const comItens = new Set();
+  itens.filter(i => i.tipo === 'servico').forEach(i => { comItens.add(i.ordem_id); guardar(i.descricao, Number(i.valor_unitario) || 0, i.ordem_id); });
+  stateOrdens.filter(o => !comItens.has(o.id)).forEach(o => {
+    const linhas = String(o.servico || '').split(/\n/).map(limpa).filter(Boolean);
+    linhas.forEach(l => guardar(l, linhas.length === 1 ? (Number(o.valor) || 0) : 0, o.id));
+  });
+  const existentes = new Set(stateServicos.map(x => norm(x.nome)));
+  const novos = [...achados.entries()].filter(([k]) => !existentes.has(k)).map(([, v]) => v);
+  if(!novos.length){ alert('Nenhum serviço novo encontrado nas O.S.'); return; }
+  if(!confirm(`Cadastrar ${novos.length} serviço(s) encontrados nas O.S.?\nO preço será o do último uso (0 quando não houver) e você pode editar ou excluir depois.`)) return;
+  let ok = 0;
+  for(const n of novos){
+    const r = await DB.servicos.criar({ nome: n.nome, categoria: '', preco_padrao: n.preco, tempo_estimado_horas: 0 });
+    if(r) ok++; else break;
+  }
+  alert(`${ok} serviço(s) cadastrado(s).`);
+  render();
+});
 document.getElementById('formServico').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
@@ -3887,6 +3975,7 @@ const linhaOrdem = o => `
         <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
         <button class="btn-icon" title="Fotos (antes/depois)" onclick="abrirFotosOS(${o.id})">📷</button>
         <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
+        <button class="btn-icon" title="Orçamento p/ cliente (PDF/WhatsApp)" onclick="abrirOrcamentoCliente(${o.id})">📄</button>
         <button class="btn-icon" title="Gerar nota fiscal" onclick="abrirNotaFiscal(${o.id})">${ICON_INVOICE}</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
@@ -4084,6 +4173,7 @@ async function render(){
         </select>
       </td>
       <td class="icon-row">
+        <button class="btn-icon" title="Mover para Despesas do dia" onclick="moverContaParaDespesa(${x.id})">⇄</button>
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoContaPagar(${x.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirContaPagar(${x.id})">${ICON_DELETE}</button>
       </td>
@@ -4664,6 +4754,34 @@ document.getElementById('formDespesa').addEventListener('submit', async e => {
   document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
   render();
 });
+async function moverContaParaDespesa(id){
+  const x = stateContasPagar.find(c => c.id === id); if(!x) return;
+  if(!confirm(`Mover "${x.descricao}" (${moeda(x.valor)}) para Despesas do dia?\nEla sai de Contas a Pagar.`)) return;
+  const dia = x.data_pagamento ? String(x.data_pagamento).slice(0, 10) : hojeLocal();
+  const ok = await DB.despesas.criar({ descricao: x.descricao, valor: Number(x.valor), forma_pagamento: x.forma_pagamento || 'Outros', data: dia, ordem_id: null });
+  if(!ok) return;
+  await DB.contasPagar.excluir(id);
+  render();
+}
+document.getElementById('loteDespesasData').value = hojeLocal();
+document.getElementById('btnLoteDespesas').addEventListener('click', async () => {
+  const linhas = document.getElementById('loteDespesasTxt').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.lastIndexOf('|'); if(i < 0) return null;
+    const valor = Number(l.slice(i + 1).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
+    const descricao = l.slice(0, i).trim();
+    return descricao && valor > 0 ? { descricao, valor } : null;
+  });
+  if(linhas.some(x => !x)){ alert('Alguma linha está fora do formato "descrição | valor".'); return; }
+  if(!linhas.length) return;
+  const total = linhas.reduce((t, x) => t + x.valor, 0);
+  if(!confirm(`Lançar ${linhas.length} despesas, total ${moeda(total)}?`)) return;
+  const forma = document.getElementById('loteDespesasForma').value, data = document.getElementById('loteDespesasData').value || hojeLocal();
+  let ok = 0;
+  for(const x of linhas){ if(await DB.despesas.criar({ ...x, forma_pagamento: forma, data, ordem_id: null })) ok++; else break; }
+  if(ok === linhas.length) document.getElementById('loteDespesasTxt').value = '';
+  mostrarAviso(`${ok} despesa(s) lançada(s).`);
+  render();
+});
 async function excluirDespesa(id){
   if(!confirm('Excluir esta despesa?')) return;
   await DB.despesas.excluir(id);
@@ -4785,13 +4903,14 @@ document.getElementById('buscaGlobalInput').addEventListener('input', e => {
 /* ==========================================================
    IMPRIMIR ORDEM DE SERVIÇO
    ========================================================== */
+function linhasTxt(t){ return escImp(String(t || '')).replace(/\n/g, '<br>'); }
 async function imprimirOrdem(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
   const itens = await DB.ordemItens.listar(id);
   const linhasHtml = itens.length
     ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
-    : `<tr><td colspan="4">${o.servico}</td></tr>`;
+    : `<tr><td colspan="4">${linhasTxt(o.servico)}</td></tr>`;
   let garantiaTxt = '';
   if(o.garantia_meses && o.created_at){
     const ate = new Date(o.created_at);
@@ -4812,9 +4931,9 @@ async function imprimirOrdem(id){
         ${o.numero_nf ? `<br><strong>Nota fiscal:</strong> ${o.numero_nf}` : ''}
         ${garantiaTxt}
       </p>
-      ${itens.length ? '' : `<p><strong>Serviço:</strong> ${o.servico}</p>`}
+      ${itens.length ? '' : `<p><strong>Serviço:</strong><br>${linhasTxt(o.servico)}</p>`}
       ${o.pecas_cliente_obs ? `<p><strong>Peças trazidas pelo cliente:</strong> ${escImp(o.pecas_cliente_obs)}</p>` : ''}
-      ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
+      ${o.comentarios ? `<p><strong>Comentários:</strong><br>${linhasTxt(o.comentarios)}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
         <tbody>${linhasHtml}</tbody>
@@ -4827,12 +4946,12 @@ async function imprimirOrdem(id){
 /* ==========================================================
    NOTA FISCAL / RECIBO (com linha de assinatura do cliente)
    ========================================================== */
-let ordemNotaFiscalAtual = null;
+let ordemNotaFiscalAtual = null, docNotaModo = 'nota-fiscal';
 
 function montarNotaFiscalHTML(o, itens){
   const linhasHtml = itens.length
     ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
-    : `<tr><td colspan="4">${o.servico}</td></tr>`;
+    : `<tr><td colspan="4">${linhasTxt(o.servico)}</td></tr>`;
   const agora = new Date();
   const dataEmissao = agora.toLocaleDateString('pt-BR');
   return `
@@ -4861,9 +4980,9 @@ function montarNotaFiscalHTML(o, itens){
         <strong>Data da OS:</strong> ${o.created_at ? dataBR(o.created_at.slice(0,10)) : '—'}<br>
         <strong>Pago:</strong> ${moeda(recebidoOrdem(o))} de ${moeda(Number(o.valor) || 0)}${faltaOrdem(o) > 0.004 ? ' · <strong>Falta:</strong> ' + moeda(faltaOrdem(o)) : ''}
       </p>
-      ${itens.length ? '' : `<p><strong>Serviço:</strong> ${o.servico}</p>`}
+      ${itens.length ? '' : `<p><strong>Serviço:</strong><br>${linhasTxt(o.servico)}</p>`}
       ${o.pecas_cliente_obs ? `<p><strong>Peças trazidas pelo cliente:</strong> ${escImp(o.pecas_cliente_obs)}</p>` : ''}
-      ${o.comentarios ? `<p><strong>Comentários:</strong> ${o.comentarios}</p>` : ''}
+      ${o.comentarios ? `<p><strong>Comentários:</strong><br>${linhasTxt(o.comentarios)}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
         <tbody>${linhasHtml}</tbody>
@@ -4881,10 +5000,68 @@ function montarNotaFiscalHTML(o, itens){
     </div>`;
 }
 
+function montarOrcamentoClienteHTML(o, itens){
+  const R = '#e11d1d', K = '#111';
+  const cli = stateClientes.find(c => c.id === o.cliente_id) || {};
+  const placa = (typeof placaDaOrdem === 'function' && placaDaOrdem(o)) || '';
+  const dataOS = o.created_at ? dataBR(o.created_at.slice(0,10)) : dataBR(new Date().toISOString().slice(0,10));
+  const servs = itens.filter(i => i.tipo === 'servico');
+  const pecas = itens.filter(i => i.tipo !== 'servico');
+  const linhasServ = servs.length ? servs : String(o.servico || '').split('\n').map(l => l.replace(/^[\s•\-–*·]+/, '').trim()).filter(Boolean).map(l => ({ descricao: l, valor_total: null, _txt: true }));
+  const val = i => i.valor_total === null || i.valor_total === undefined ? `<span style="color:#777;font-weight:400;">${i._txt ? '—' : '(valor a definir)'}</span>` : moeda(i.valor_total);
+  const th = t => `<div style="background:${R};color:#fff;font-weight:800;padding:8px 12px;font-size:15px;letter-spacing:.5px;border-radius:6px 6px 0 0;">${t}</div>`;
+  const linha = (a, b) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 12px;border-bottom:1px solid #e3e3e3;font-size:13px;"><span style="white-space:pre-line;">${escImp(a)}</span><b style="white-space:nowrap;">${b}</b></div>`;
+  const totServ = servs.reduce((t, i) => t + (Number(i.valor_total) || 0), 0), totPecas = pecas.reduce((t, i) => t + (Number(i.valor_total) || 0), 0);
+  const barra = (t, v) => `<div style="background:${K};color:#fff;display:flex;justify-content:space-between;padding:9px 12px;font-weight:800;border-radius:0 0 6px 6px;"><span>${t}</span><span>${v}</span></div>`;
+  let garantia = '';
+  if(o.garantia_meses){ garantia = `<div style="margin-top:12px;">${th('GARANTIA')}<div style="background:#f1f1f1;padding:10px 12px;font-size:13px;">Garantia da mão de obra: <b>${o.garantia_meses} ${Number(o.garantia_meses) === 1 ? 'mês' : 'meses'}</b> a contar da data de aprovação do orçamento <b>${dataOS}</b></div></div>`; }
+  return `
+  <style>.orc *{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box}</style>
+  <div class="orc" style="font-family:Arial,sans-serif;color:#111;background:#fff;">
+    <div style="background:${K};color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;overflow:hidden;">
+      <div><div style="font-size:30px;font-weight:900;font-style:italic;letter-spacing:1px;">ORÇAMENTO</div>
+      <div style="font-size:12px;letter-spacing:4px;margin-top:2px;">${escImp((statePerfil.nome_oficina || 'Serviços automotivos').toUpperCase())}</div></div>
+      <div style="display:flex;gap:6px;transform:skewX(-20deg);"><i style="width:10px;height:56px;background:${R};display:block"></i><i style="width:10px;height:56px;background:${R};display:block"></i><i style="width:10px;height:56px;background:${R};display:block"></i></div>
+    </div>
+    <div style="display:flex;gap:12px;background:#f6f6f6;padding:12px 16px;font-size:13px;line-height:1.5;">
+      <div style="flex:1;"><b style="font-size:11px;color:#555;">VEÍCULO</b><br><b>${escImp(o.veiculo || '')}</b>${placa ? '<br>Placa: ' + escImp(placa) : ''}${o.km ? '<br>' + Number(o.km).toLocaleString('pt-BR') + ' km' : ''}</div>
+      <div style="flex:1;"><b style="font-size:11px;color:#555;">CLIENTE</b><br><b>${escImp(o.cliente_nome || '')}</b>${cli.telefone ? '<br>WhatsApp: ' + escImp(cli.telefone) : ''}</div>
+      <div style="flex:1;"><b style="font-size:11px;color:#555;">DATA DO ORÇAMENTO</b><br><b>${dataOS}</b></div>
+    </div>
+    <div style="padding:12px 16px;">
+      <div>${th('🔧 SERVIÇOS')}${linhasServ.map(i => linha(i.descricao, val(i))).join('') || linha('—', '')}${barra('TOTAL DOS SERVIÇOS', moeda(totServ))}</div>
+      ${(pecas.length || o.pecas_cliente_obs) ? `<div style="margin-top:12px;">${th('⚙ PEÇAS')}
+        ${o.pecas_cliente_obs ? `<div style="background:#f1f1f1;padding:8px 12px;font-size:13px;border-bottom:1px solid #e3e3e3;"><b style="font-size:11px;">PEÇAS COMPRADAS PELO CLIENTE</b><br>✔ ${escImp(o.pecas_cliente_obs).replace(/\n/g, '<br>✔ ')}</div>` : ''}
+        ${pecas.map(i => linha(Number(i.quantidade) !== 1 ? i.descricao + ' × ' + i.quantidade : i.descricao, val(i))).join('')}
+        ${pecas.length ? barra('TOTAL DAS PEÇAS', moeda(totPecas)) : ''}</div>` : ''}
+      ${o.brindes ? `<div style="margin-top:12px;">${th('🎁 BRINDES')}<div style="background:#f1f1f1;padding:10px 12px;font-size:13px;line-height:1.7;">✔ ${escImp(o.brindes).split('\n').filter(x => x.trim()).join('<br>✔ ')}</div></div>` : ''}
+      ${garantia}
+      ${o.comentarios ? `<div style="margin-top:12px;font-size:13px;white-space:pre-line;"><b>Observações:</b><br>${escImp(o.comentarios)}</div>` : ''}
+      <div style="margin-top:14px;display:flex;border-radius:6px;overflow:hidden;font-weight:800;">
+        <div style="background:${K};color:#fff;padding:14px 16px;flex:1;font-size:15px;">VALOR TOTAL DO ORÇAMENTO <span style="font-weight:400;font-size:12px;">(serviços + peças)</span></div>
+        <div style="background:${R};color:#fff;padding:14px 18px;font-size:22px;">${moeda(o.valor)}</div>
+      </div>
+      <div style="margin-top:46px;display:flex;gap:40px;font-size:12px;text-align:center;">
+        <div style="flex:1;border-top:1px solid #111;padding-top:6px;"><b>${escImp(statePerfil.nome_oficina || 'Oficina')}</b><br>Responsável técnico</div>
+        <div style="flex:1;border-top:1px solid #111;padding-top:6px;">Assinatura do cliente</div>
+      </div>
+      <div style="margin-top:14px;background:${K};color:#fff;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;"><span>${escImp(o.veiculo || '')}${placa ? ' | Placa: ' + escImp(placa) : ''}</span><span>${escImp(statePerfil.telefone || '')}</span></div>
+    </div>
+  </div>`;
+}
+async function abrirOrcamentoCliente(id){
+  const o = stateOrdens.find(x => x.id === id); if(!o) return;
+  ordemNotaFiscalAtual = o; docNotaModo = 'orcamento';
+  document.getElementById('tituloModalNota').textContent = 'Orçamento para o cliente';
+  const itens = await DB.ordemItens.listar(id);
+  document.getElementById('notaFiscalPreview').innerHTML = montarOrcamentoClienteHTML(o, itens);
+  abrirModal('modalNotaFiscal');
+}
 async function abrirNotaFiscal(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
-  ordemNotaFiscalAtual = o;
+  ordemNotaFiscalAtual = o; docNotaModo = 'nota-fiscal';
+  document.getElementById('tituloModalNota').textContent = 'Nota fiscal / Recibo';
   if(!o.numero_nf){ // número sequencial gerado pelo banco na primeira emissão (nunca repete nem muda)
     try {
       const { data, error } = await supabaseClient.rpc('emitir_numero_nf', { p_ordem_id: id });
@@ -4908,10 +5085,10 @@ function imprimirNotaFiscal(){
 function gerarPdfNotaFiscal(){
   const el = document.getElementById('notaFiscalPreview');
   if(!window.html2pdf){ alert('Não foi possível carregar o gerador de PDF (verifique sua internet) — use o botão Imprimir e escolha "Salvar como PDF".'); return; }
-  const numero = ordemNotaFiscalAtual && ordemNotaFiscalAtual.numero_nf ? ordemNotaFiscalAtual.numero_nf : (ordemNotaFiscalAtual ? ordemNotaFiscalAtual.id : 'ordem');
+  const numero = docNotaModo === 'orcamento' ? 'os' + ordemNotaFiscalAtual.id : (ordemNotaFiscalAtual && ordemNotaFiscalAtual.numero_nf ? ordemNotaFiscalAtual.numero_nf : (ordemNotaFiscalAtual ? ordemNotaFiscalAtual.id : 'ordem'));
   html2pdf().set({
     margin: 10,
-    filename: `nota-fiscal-${numero}.pdf`,
+    filename: `${docNotaModo === 'orcamento' ? 'orcamento' : 'nota-fiscal'}-${numero}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
