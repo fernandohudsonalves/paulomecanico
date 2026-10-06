@@ -139,6 +139,14 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
   background:var(--accent); border-radius:2px;
 }
 .nav-item.disabled{opacity:.45; cursor:not-allowed;}
+.nav-group{margin-top:12px;}
+.nav-group-toggle{padding:8px 14px 6px;}
+.nav-group-toggle > span:first-child{font-style:normal; letter-spacing:1px; color:var(--text);}
+.nav-sub{margin-left:20px; padding-left:6px; border-left:2px solid var(--border);}
+.nav-sub .nav-item{color:var(--text-dim); font-size:14px; font-weight:500; padding:8px 12px;}
+.nav-sub .nav-item.active{color:var(--text); font-weight:700;}
+.nav-sub .nav-item.active::before{left:-8px; top:6px; bottom:6px;}
+.nav-item.nav-principal{font-size:16px; font-weight:800; color:var(--text);}
 .tag{font-size:10px; background:var(--surface-2); padding:2px 6px; border-radius:20px; margin-left:6px;}
 
 .side-foot{margin-top:auto; display:flex; flex-direction:column; gap:8px; padding-top:16px; border-top:1px solid var(--border);}
@@ -184,6 +192,7 @@ tr:last-child td{border-bottom:none;}
 .empty{color:var(--text-dim); text-align:center; padding:20px 0; font-size:14px;}
 
 .status{padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block;}
+.status.rascunho{background:rgba(234,179,8,.18); color:#b8860b;}
 .status.orcamento{background:rgba(150,150,255,.15); color:#9aa3ff;}
 .status.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
 .status.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
@@ -257,6 +266,7 @@ tr:last-child td{border-bottom:none;}
   border-radius:20px; font-weight:700; font-size:12px; padding:6px 10px; border:1px solid transparent; cursor:pointer;
   font-family:'Inter',sans-serif;
 }
+.status-select.rascunho{background:rgba(234,179,8,.18); color:#b8860b;}
 .status-select.orcamento{background:rgba(150,150,255,.15); color:#9aa3ff;}
 .status-select.aberta{background:rgba(255,59,23,.15); color:var(--accent);}
 .status-select.andamento{background:rgba(232,185,59,.15); color:var(--wait);}
@@ -543,40 +553,34 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="version-tag">v2.0</div>
 
     <nav class="nav">
-      <button class="nav-item active" data-view="dashboard">Painel</button>
+      <button class="nav-item nav-principal active" data-view="dashboard">🏠 Painel</button>
 
-      <div class="nav-group">
-        <button class="nav-group-toggle" data-toggle="cadastros">
-          <span>Cadastros</span><span class="chevron">▾</span>
-        </button>
-        <div class="nav-sub" id="sub-cadastros">
-          <button class="nav-item" data-view="clientes">Clientes</button>
-          <button class="nav-item" data-view="fornecedores">Fornecedores</button>
-          <button class="nav-item" data-view="estoque">Estoque</button>
-          <button class="nav-item" data-view="servicos">Serviços</button>
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="nav-group-toggle" data-toggle="operacao">
-          <span>Operação</span><span class="chevron">▾</span>
-        </button>
+      <div class="nav-group open">
+        <button class="nav-group-toggle" data-toggle="operacao"><span>🔧 Operação</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-operacao">
-          <button class="nav-item" data-view="ordens">Ordens de Serviço</button>
+          <button class="nav-item" data-view="ordens">Ordens de serviço</button>
           <button class="nav-item" data-view="agenda">Agenda</button>
         </div>
       </div>
 
-      <div class="nav-group">
-        <button class="nav-group-toggle" data-toggle="financeiro">
-          <span>Financeiro</span><span class="chevron">▾</span>
-        </button>
+      <div class="nav-group open">
+        <button class="nav-group-toggle" data-toggle="cadastros"><span>📇 Cadastros</span><span class="chevron">▾</span></button>
+        <div class="nav-sub" id="sub-cadastros">
+          <button class="nav-item" data-view="clientes">Clientes</button>
+          <button class="nav-item" data-view="servicos">Serviços (catálogo)</button>
+          <button class="nav-item" data-view="estoque">Estoque / peças</button>
+          <button class="nav-item" data-view="fornecedores">Fornecedores</button>
+        </div>
+      </div>
+
+      <div class="nav-group open">
+        <button class="nav-group-toggle" data-toggle="financeiro"><span>💰 Financeiro</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-financeiro">
-          <button class="nav-item" data-view="pagar">Contas a Pagar</button>
-          <button class="nav-item" data-view="despesas">Despesas do dia</button>
-          <button class="nav-item" data-view="receber">Contas a Receber</button>
-          <button class="nav-item" data-view="relatorios">Relatórios</button>
           <button class="nav-item" data-view="caixa">Caixa</button>
+          <button class="nav-item" data-view="despesas">Despesas do dia</button>
+          <button class="nav-item" data-view="pagar">Contas a pagar</button>
+          <button class="nav-item" data-view="receber">Contas a receber</button>
+          <button class="nav-item" data-view="relatorios">Relatórios</button>
         </div>
       </div>
     </nav>
@@ -686,6 +690,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <input type="text" id="buscaOrdens" placeholder="Buscar por cliente, placa/veículo ou serviço..." style="width:240px;">
           <select id="filtroStatusOrdens" style="width:170px;">
             <option value="">Todos os status</option>
+            <option value="rascunho">Rascunho</option>
             <option value="orcamento">Orçamento</option>
             <option value="aberta">Aberta</option>
             <option value="andamento">Em andamento</option>
@@ -1209,6 +1214,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <label>Status
           <select name="status" required>
             <option value="" disabled selected hidden>Escolha o status</option>
+            <option value="rascunho">Rascunho</option>
             <option value="orcamento">Orçamento</option>
             <option value="aberta">Aberta</option>
             <option value="andamento">Em andamento</option>
@@ -1220,7 +1226,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <textarea name="servico" id="servicoTextarea" rows="8" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
         <button type="button" class="btn-ghost" id="btnLinhasParaItens" style="margin-top:6px;">↧ Criar um item de mão de obra por linha (com preço do catálogo, se existir)</button>
       </label>
-      <input type="hidden" name="valor">
+      <label style="margin-top:10px;">💰 Valor total da O.S. (R$)
+        <input type="number" name="valor" id="osValorTotal" step="0.01" min="0" placeholder="0,00" style="font-size:18px;font-weight:700;">
+        <span class="hint" id="osValorDica">Digite só o valor total. Quando você lançar peças/serviços com preço, o total passa a ser a soma deles.</span>
+      </label>
 
       <div class="os-blocos">
         <div class="os-bloco">
@@ -2781,6 +2790,13 @@ function editarValorItemOrdem(idx){
   renderItensOrdem();
   persistirItensOrdemAgora();
 }
+document.getElementById('osValorTotal').addEventListener('input', () => { renderPagamentosOrdemPainel(); });
+document.getElementById('osValorTotal').addEventListener('change', async e => {
+  if(!editingOrdemId || e.target.readOnly) return;
+  const v = Number(e.target.value) || 0;
+  const ok = await DB.atualizarOrdem(editingOrdemId, { valor: v });
+  if(ok){ const o = stateOrdens.find(x => x.id === editingOrdemId); if(o) o.valor = v; mostrarAviso('Valor salvo na OS #' + editingOrdemId); }
+});
 let _persistTimer = null;
 function persistirItensOrdemAgora(){
   if(!editingOrdemId) return;
@@ -2789,6 +2805,7 @@ function persistirItensOrdemAgora(){
     const id = editingOrdemId; if(!id) return;
     const total = r2(itensOrdemAtual.reduce((a, i) => a + (Number(i.valor_total) || 0), 0));
     await DB.ordemItens.substituir(id, itensOrdemAtual);
+    if(!itensOrdemAtual.some(i => i.valor_total !== null && i.valor_total !== undefined)) return;
     const ok = await DB.atualizarOrdem(id, { valor: total });
     if(ok){ mostrarAviso('Valor salvo na OS #' + id); const o = stateOrdens.find(x => x.id === id); if(o) o.valor = total; }
   }, 300);
@@ -2816,7 +2833,10 @@ function renderItensOrdem(){
   const totalTempo = itensOrdemAtual.filter(i => i.tipo === 'servico').reduce((acc, i) => acc + (i.tempo || 0) * i.quantidade, 0);
   const totalCusto = itensOrdemAtual.reduce((acc, i) => acc + (i.custo_total || 0), 0);
   const totalLucro = itensOrdemAtual.filter(i => i.custo_total !== null && i.custo_total !== undefined && i.valor_total !== null).reduce((acc, i) => acc + (i.valor_total - i.custo_total), 0);
-  if(itensOrdemAtual.length) document.querySelector('#formOrdem [name="valor"]').value = r2(totalValor);
+  { const campoV = document.getElementById('osValorTotal');
+    const comPreco = itensOrdemAtual.some(i => i.valor_total !== null && i.valor_total !== undefined);
+    if(comPreco){ campoV.value = r2(totalValor); campoV.readOnly = true; } else { campoV.readOnly = false; }
+    document.getElementById('osValorDica').textContent = comPreco ? 'Total calculado pela soma dos itens abaixo.' : 'Digite só o valor total. Quando você lançar peças/serviços com preço, o total passa a ser a soma deles.'; }
   document.getElementById('subtotalPecas').textContent = moeda(totalBucket(itensOrdemAtual, 'pecas'));
   document.getElementById('subtotalServicos').textContent = moeda(totalBucket(itensOrdemAtual, 'servico'));
   const pendentes = itensOrdemAtual.filter(i => i.valor_total === null).length;
@@ -3005,6 +3025,7 @@ async function removerFotoOS(caminho){
 
 async function mudarStatusOrdem(id, status){
   const antes = stateOrdens.find(x => x.id === id);
+  if(antes && antes.status === 'rascunho' && status !== 'rascunho' && (!antes.cliente_id || !antes.veiculo_id)){ alert('Abra o rascunho (lápis) e escolha o cliente e o veículo antes de mudar o status.'); render(); return; }
   const vaiConcluir = status === 'concluida' && antes && antes.status !== 'concluida';
   const ok = await DB.atualizarOrdem(id, { status });
   if(ok && vaiConcluir){
@@ -3045,7 +3066,7 @@ async function agendarRevisaoAutomatica(ordem){
 }
 
 // Recebimento: marca a OS como paga, com forma de pagamento e data
-const statusLabel = { orcamento:'Orçamento', aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
+const statusLabel = { rascunho:'Rascunho', orcamento:'Orçamento', aberta:'Aberta', andamento:'Em andamento', concluida:'Concluída' };
 const moeda = v => v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 const dataBR = iso => { if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
 
@@ -3962,6 +3983,7 @@ const linhaOrdem = o => `
       <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td class="cel-servico"><div class="servico-texto">${escImp(o.servico)}</div><button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido')">ver mais / ver menos</button></td>
       <td>
         <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
+          <option value="rascunho" ${o.status==='rascunho'?'selected':''}>Rascunho</option>
           <option value="orcamento" ${o.status==='orcamento'?'selected':''}>Orçamento</option>
           <option value="aberta" ${o.status==='aberta'?'selected':''}>Aberta</option>
           <option value="andamento" ${o.status==='andamento'?'selected':''}>Em andamento</option>
@@ -4732,11 +4754,11 @@ function renderDespesas(){
   const lista = [...stateDespesas].sort((a, b) => (b.data || '').localeCompare(a.data || '') || b.id - a.id);
   tbody.innerHTML = lista.map(d => `
     <tr>
-      <td>${d.data ? dataBR(d.data) : '—'}</td>
-      <td>${escImp(d.descricao)}</td>
-      <td>${escImp(d.forma_pagamento || '—')}</td>
+      <td><input type="date" value="${d.data || ''}" onchange="editarDespesaCampo(${d.id}, 'data', this.value)" style="width:150px;"></td>
+      <td><input type="text" value="${escImp(d.descricao).replace(/"/g, '&quot;')}" onchange="editarDespesaCampo(${d.id}, 'descricao', this.value)" style="min-width:200px;"></td>
+      <td><select onchange="editarDespesaCampo(${d.id}, 'forma_pagamento', this.value)">${['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Outros'].map(f => `<option${f === d.forma_pagamento ? ' selected' : ''}>${f}</option>`).join('')}${d.forma_pagamento && !['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Outros'].includes(d.forma_pagamento) ? `<option selected>${escImp(d.forma_pagamento)}</option>` : ''}</select></td>
       <td>${d.ordem_id ? '#' + d.ordem_id : '—'}</td>
-      <td>${moeda(d.valor)}</td>
+      <td><input type="number" step="0.01" min="0" value="${d.valor}" onchange="editarDespesaCampo(${d.id}, 'valor', this.value)" style="width:100px;"></td>
       <td><button type="button" class="btn-icon danger" onclick="excluirDespesa(${d.id})">${ICON_DELETE}</button></td>
     </tr>`).join('');
   const empty = document.getElementById('despesasEmpty');
@@ -4782,12 +4804,129 @@ document.getElementById('btnLoteDespesas').addEventListener('click', async () =>
   mostrarAviso(`${ok} despesa(s) lançada(s).`);
   render();
 });
+async function editarDespesaCampo(id, campo, valor){
+  const d = stateDespesas.find(x => x.id === id); if(!d) return;
+  if(campo === 'valor') valor = Number(String(valor).replace(',', '.')) || 0;
+  if(campo === 'data' && !valor){ alert('Escolha uma data.'); renderDespesas(); return; }
+  if(campo === 'descricao' && !String(valor).trim()){ alert('A descrição não pode ficar vazia.'); renderDespesas(); return; }
+  const ok = await DB.despesas.atualizar(id, { [campo]: valor });
+  if(!ok){ renderDespesas(); return; }
+  d[campo] = valor;
+  mostrarAviso('Despesa atualizada.');
+  if(campo === 'data') renderDespesas();
+}
 async function excluirDespesa(id){
   if(!confirm('Excluir esta despesa?')) return;
   await DB.despesas.excluir(id);
   render();
 }
 document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
+
+/* ==========================================================
+   RASCUNHOS — o que você digita num cadastro NOVO não se perde ao clicar fora
+   ========================================================== */
+const RASCUNHOS = {
+  formOrdem:       { rotulo:'ordem de serviço', modal:'modalOrdem',      editando: () => editingOrdemId },
+  formCliente:     { rotulo:'cliente',          modal:null,              editando: () => editingClienteId },
+  formVeiculo:     { rotulo:'veículo',          modal:null,              editando: () => editingVeiculoId },
+  formFornecedor:  { rotulo:'fornecedor',       modal:null,              editando: () => editingFornecedorId },
+  formContaPagar:  { rotulo:'conta a pagar',    modal:null,              editando: () => editingContaPagarId },
+  formContaReceber:{ rotulo:'conta a receber',  modal:null,              editando: () => editingContaReceberId },
+  formEstoque:     { rotulo:'item de estoque',  modal:null,              editando: () => editingEstoqueId },
+  formAgendamento: { rotulo:'agendamento',      modal:null,              editando: () => editingAgendamentoId },
+  formServico:     { rotulo:'serviço',          modal:null,              editando: () => editingServicoId },
+};
+const _rascEnviado = {};
+function _rascCampos(form){
+  return [...form.elements].filter(el => el.name || el.id).filter(el => !['button','submit','file','reset'].includes(el.type) && !el.readOnly);
+}
+function _rascTemDados(form, id){
+  const txt = _rascCampos(form).some(el => ['text','number','textarea','date','email','tel','time','datetime-local'].includes(el.type) && !['', '•'].includes(String(el.value).trim()));
+  return txt || (id === 'formOrdem' && itensOrdemAtual.length > 0);
+}
+function _rascSalvar(id){
+  const form = document.getElementById(id), cfg = RASCUNHOS[id];
+  if(!form || cfg.editando()) return false;
+  const chave = 'rascunho:' + id;
+  if(!_rascTemDados(form, id)){ localStorage.removeItem(chave); return false; }
+  const campos = {};
+  _rascCampos(form).forEach(el => { campos[el.name || el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+  try { localStorage.setItem(chave, JSON.stringify({ campos, itens: id === 'formOrdem' ? itensOrdemAtual : null, ts: Date.now() })); } catch(e){ console.error(e); return false; }
+  return true;
+}
+function _rascRestaurar(id){
+  const form = document.getElementById(id), cfg = RASCUNHOS[id];
+  if(!form || cfg.editando() || _rascTemDados(form, id)) return;
+  let d; try { d = JSON.parse(localStorage.getItem('rascunho:' + id) || 'null'); } catch(e){ d = null; }
+  if(!d) return;
+  _rascCampos(form).forEach(el => {
+    const k = el.name || el.id; if(!(k in d.campos)) return;
+    if(el.type === 'checkbox'){ el.checked = !!d.campos[k]; el.dispatchEvent(new Event('change')); }
+    else { el.value = d.campos[k]; el.dispatchEvent(new Event('change')); }
+  });
+  if(id === 'formOrdem'){
+    itensOrdemAtual = d.itens || [];
+    if(typeof preencherSelectVeiculoOrdem === 'function') preencherSelectVeiculoOrdem(Number(d.campos.veiculoId) || null);
+    renderItensOrdem();
+  }
+  const aviso = document.createElement('div');
+  aviso.className = 'rascunho-aviso';
+  aviso.style.cssText = 'background:#fff3cd;color:#664d03;border:1px solid #ffe69c;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px;';
+  aviso.innerHTML = '<span>📝 Rascunho recuperado — continue de onde parou.</span><button type="button" class="btn-ghost" style="padding:4px 10px;">Descartar rascunho</button>';
+  aviso.querySelector('button').onclick = () => {
+    localStorage.removeItem('rascunho:' + id);
+    form.reset(); if(id === 'formOrdem'){ itensOrdemAtual = []; document.getElementById('servicoTextarea').value = '• '; renderItensOrdem(); }
+    aviso.remove();
+  };
+  form.querySelectorAll('.rascunho-aviso').forEach(x => x.remove());
+  form.prepend(aviso);
+}
+async function salvarRascunhoOSNoBanco(){
+  const form = document.getElementById('formOrdem');
+  const editando = editingOrdemId ? stateOrdens.find(x => x.id === editingOrdemId) : null;
+  if(editando && editando.status !== 'rascunho') return false;
+  if(!_rascTemDados(form, 'formOrdem')) return false;
+  const f = new FormData(form);
+  const cliente = stateClientes.find(c => c.id === Number(f.get('clienteId')));
+  const veic = stateVeiculos.find(v => v.id === Number(f.get('veiculoId')));
+  const txt = String(f.get('servico') || '').trim();
+  const dados = {
+    cliente_id: cliente ? cliente.id : null, cliente_nome: cliente ? cliente.nome : '(sem cliente)',
+    veiculo: veic ? veic.modelo : '—', veiculo_id: veic ? veic.id : null,
+    servico: (txt === '•' ? '' : txt) || '—', valor: Number(f.get('valor')) || 0, status: 'rascunho',
+    garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
+    km: f.get('km') ? Number(f.get('km')) : null, comentarios: f.get('comentarios') || null,
+    brindes: (f.get('brindes') || '').trim() || null,
+    pecas_cliente_obs: document.getElementById('chkPecasCliente').checked ? (document.getElementById('pecasClienteObs').value.trim() || null) : null,
+  };
+  const ok = editando ? await DB.atualizarOrdem(editando.id, dados) : await DB.criarOrdem(dados);
+  if(!ok) return false;
+  await DB.ordemItens.substituir(ok.id, itensOrdemAtual);
+  localStorage.removeItem('rascunho:formOrdem');
+  await render();
+  mostrarAviso('Rascunho da O.S. salvo na lista (status Rascunho). Use o lápis para continuar ou a lixeira para excluir.');
+  return true;
+}
+Object.keys(RASCUNHOS).forEach(id => {
+  const form = document.getElementById(id); if(!form) return;
+  const modal = form.closest('.modal'); if(!modal) return;
+  form.addEventListener('submit', () => { _rascEnviado[id] = Date.now(); }, true);
+  let t = null;
+  const agendar = () => { clearTimeout(t); t = setTimeout(() => { if(modal.classList.contains('active') && !(_rascEnviado[id] && Date.now() - _rascEnviado[id] < 15000)) _rascSalvar(id); }, 600); };
+  form.addEventListener('input', agendar); form.addEventListener('change', agendar);
+  let estavaAberto = modal.classList.contains('active');
+  new MutationObserver(() => {
+    const aberto = modal.classList.contains('active');
+    if(aberto === estavaAberto) return;
+    estavaAberto = aberto;
+    clearTimeout(t);
+    if(aberto){ setTimeout(() => _rascRestaurar(id), 0); return; }
+    form.querySelectorAll('.rascunho-aviso').forEach(x => x.remove());
+    if(_rascEnviado[id] && Date.now() - _rascEnviado[id] < 15000){ localStorage.removeItem('rascunho:' + id); return; }
+    if(id === 'formOrdem'){ salvarRascunhoOSNoBanco(); return; }
+    if(_rascSalvar(id)) mostrarAviso(`Rascunho de ${RASCUNHOS[id].rotulo} salvo. Abra "Novo" de novo para continuar ou descartar.`);
+  }).observe(modal, { attributes:true, attributeFilter:['class'] });
+});
 
 /* ==========================================================
    AUDITORIA — histórico de criação/edição/exclusão em cada tabela
