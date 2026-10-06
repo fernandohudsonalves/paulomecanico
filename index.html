@@ -208,7 +208,8 @@ tr:last-child td{border-bottom:none;}
 .receb-badge.pendente{background:rgba(180,83,9,.15);color:var(--amber,#b45309);}
 .receb-badge.recebido{background:rgba(47,184,114,.15);color:var(--ok);}
 .receb-badge.terceiro{background:rgba(100,116,139,.18);color:var(--text-dim);}
-#modalOrdem .os-topo{display:grid;grid-template-columns:2fr 1fr;gap:8px;}
+#modalOrdem .os-topo{display:grid;grid-template-columns:1.6fr 1.3fr 1fr;gap:8px;}
+@media(max-width:600px){#modalOrdem .os-topo{grid-template-columns:1fr 1fr;}}
 #modalOrdem .os-blocos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 4px;}
 #modalOrdem .os-bloco{border:1px solid var(--border);border-radius:10px;padding:10px;min-width:0;}
 #modalOrdem .os-bloco h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;}
@@ -1127,28 +1128,56 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <input type="text" name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
         </label>
       </div>
-      <span style="font-size:13px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:6px;">Tipo de veículo</span>
-      <div class="tipo-veic" id="tipoVeiculoChips" role="radiogroup" aria-label="Tipo de veículo"></div>
-      <div class="grid2">
-        <label>Veículo (modelo)
-          <input type="text" name="veiculo" placeholder="Ex: Gol 1.6" required>
-        </label>
-        <label>Placa
-          <input type="text" name="placa" placeholder="ABC-1234" required>
-        </label>
+      <div id="blocoVeiculoNovoCliente">
+        <span style="font-size:13px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:6px;">Tipo de veículo</span>
+        <div class="tipo-veic" id="tipoVeiculoChips" role="radiogroup" aria-label="Tipo de veículo"></div>
+        <div class="grid2">
+          <label>Veículo (modelo)
+            <input type="text" name="veiculo" placeholder="Ex: Gol 1.6" required>
+          </label>
+          <label>Placa
+            <input type="text" name="placa" placeholder="ABC-1234" required>
+          </label>
+        </div>
+        <p class="hint" style="margin:2px 0 6px;">Revisão periódica automática (opcional) — ao concluir uma OS deste veículo, um lembrete é agendado sozinho.</p>
+        <div class="grid2">
+          <label>Revisar a cada (meses)
+            <input type="number" name="revisao_intervalo_meses" min="1" step="1" placeholder="Ex: 6">
+          </label>
+          <label>Revisar a cada (km)
+            <input type="number" name="revisao_intervalo_km" min="1" step="1" placeholder="Ex: 10000">
+          </label>
+        </div>
+        <p class="hint" style="margin:-4px 0 10px;">Depois de salvar, dá pra cadastrar mais veículos deste cliente.</p>
       </div>
-      <p style="font-size:12px; color:var(--text-dim); margin:2px 0 6px;">Revisão periódica automática (opcional) — ao concluir uma OS deste cliente, um lembrete é agendado sozinho.</p>
-      <div class="grid2">
-        <label>Revisar a cada (meses)
-          <input type="number" name="revisao_intervalo_meses" min="1" step="1" placeholder="Ex: 6">
-        </label>
-        <label>Revisar a cada (km)
-          <input type="number" name="revisao_intervalo_km" min="1" step="1" placeholder="Ex: 10000">
-        </label>
-      </div>
+      <div id="painelVeiculosCliente" style="display:none;"></div>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-close>Cancelar</button>
         <button type="submit" class="btn-primary">Salvar cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL VEÍCULO (adicionar/editar um veículo do cliente) -->
+<div class="modal" id="modalVeiculo">
+  <div class="modal-box" style="width:480px;">
+    <h3 id="tituloModalVeiculo">Novo veículo</h3>
+    <form id="formVeiculo">
+      <span style="font-size:13px; color:var(--text-dim); font-weight:600; display:block; margin-bottom:6px;">Tipo de veículo</span>
+      <div class="tipo-veic" id="tipoVeiculoChips2" role="radiogroup" aria-label="Tipo de veículo"></div>
+      <div class="grid2">
+        <label>Veículo (modelo)<input type="text" name="modelo" placeholder="Ex: Gol 1.6" required></label>
+        <label>Placa<input type="text" name="placa" placeholder="ABC-1234"></label>
+      </div>
+      <p class="hint" style="margin:2px 0 6px;">Revisão periódica automática (opcional) — ao concluir uma OS deste veículo, um lembrete é agendado sozinho.</p>
+      <div class="grid2">
+        <label>Revisar a cada (meses)<input type="number" name="revisao_intervalo_meses" min="1" step="1" placeholder="Ex: 6"></label>
+        <label>Revisar a cada (km)<input type="number" name="revisao_intervalo_km" min="1" step="1" placeholder="Ex: 10000"></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar veículo</button>
       </div>
     </form>
   </div>
@@ -1162,6 +1191,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="os-topo">
         <label>Cliente
           <select name="clienteId" id="selectCliente" required></select>
+        </label>
+        <label>Veículo
+          <select name="veiculoId" id="selectVeiculoOrdem" required></select>
         </label>
         <label>Status
           <select name="status" required>
@@ -1939,6 +1971,7 @@ DB.agendamentos = crud('agendamentos');
 DB.caixa = crud('caixa_sessoes');
 DB.despesas = crud('despesas');
 DB.ordemPagamentos = crud('ordem_pagamentos');
+DB.veiculos = crud('veiculos');
 DB.servicos = crud('servicos');
 
 DB.interacoes = {
@@ -2094,8 +2127,11 @@ const VEICULOS_TIPOS = {
   outros:{label:'Outros', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'},
 };
 function iconeVeiculo(tipo){ const t = VEICULOS_TIPOS[tipo]; return t ? `<span class="veic-ico" title="${t.label}">${t.svg}</span>` : ''; }
-document.getElementById('tipoVeiculoChips').innerHTML = Object.entries(VEICULOS_TIPOS).map(([k,t]) =>
-  `<label class="tipo-chip"><input type="radio" name="tipo_veiculo" value="${k}"${k==='carro'?' checked':''}><span>${t.svg}${t.label}</span></label>`).join('');
+function chipsVeiculoHTML(nomeRadio, selecionado){
+  return Object.entries(VEICULOS_TIPOS).map(([k,t]) =>
+    `<label class="tipo-chip"><input type="radio" name="${nomeRadio}" value="${k}"${k === (selecionado || 'carro') ? ' checked' : ''}><span>${t.svg}${t.label}</span></label>`).join('');
+}
+document.getElementById('tipoVeiculoChips').innerHTML = chipsVeiculoHTML('tipo_veiculo');
 function formatarCpf(v){
   const d = String(v||'').replace(/\D/g,'').slice(0,11);
   return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
@@ -2263,6 +2299,10 @@ const paraCampoLocalSP = iso => { if(!iso) return ''; const d = new Date(iso); c
   return `${sp.getFullYear()}-${p(sp.getMonth()+1)}-${p(sp.getDate())}T${p(sp.getHours())}:${p(sp.getMinutes())}`; };
 const dataLocal = v => { if(!v) return ''; const t = String(v); return t.length > 10 ? new Date(t).toLocaleDateString('sv-SE', { timeZone:'America/Sao_Paulo' }) : t; };
 let stateOrdemPagamentos = [];
+let stateVeiculos = [];
+let veiculoClienteAtualId = null, editingVeiculoId = null;
+const veiculosDoCliente = clienteId => stateVeiculos.filter(v => v.cliente_id === clienteId).sort((a, b) => a.id - b.id);
+const veiculoPrincipal = clienteId => veiculosDoCliente(clienteId)[0] || null;
 const pagamentosDaOrdem = id => stateOrdemPagamentos.filter(p => p.ordem_id === id);
 const recebidoOrdem = o => r2(pagamentosDaOrdem(o.id).reduce((t, p) => t + (Number(p.valor) || 0), 0));
 const faltaOrdem = o => Math.max(0, r2((Number(o.valor) || 0) - recebidoOrdem(o)));
@@ -2300,6 +2340,9 @@ document.getElementById('btnNovoCliente').addEventListener('click', () => {
   editingClienteId = null;
   document.getElementById('formCliente').reset();
   document.getElementById('clienteVeiculoResumo').style.display = 'none';
+  document.getElementById('blocoVeiculoNovoCliente').style.display = '';
+  document.getElementById('painelVeiculosCliente').style.display = 'none';
+  document.querySelectorAll('#formCliente [name="veiculo"], #formCliente [name="placa"]').forEach(el => el.required = true);
   document.getElementById('tituloModalCliente').textContent = 'Novo cliente';
   abrirModal('modalCliente');
 });
@@ -2365,21 +2408,23 @@ document.getElementById('btnNovoServico').addEventListener('click', () => {
 document.getElementById('formCliente').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
-  const dados = {
-    nome: f.get('nome'),
-    telefone: f.get('telefone'),
-    veiculo: f.get('veiculo'),
-    placa: f.get('placa').toUpperCase(),
-    cpf: (f.get('cpf') || '').trim() || null,
-    tipo_veiculo: f.get('tipo_veiculo') || null,
-    revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
-    revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
-  };
+  const dados = { nome: f.get('nome'), telefone: f.get('telefone'), cpf: (f.get('cpf') || '').trim() || null };
   if(dados.cpf && !cpfValido(dados.cpf)){ alert('CPF inválido — confira os 11 números.'); return; }
+  if(!editingClienteId){ // cliente novo: o veículo do formulário vira o primeiro veículo dele
+    Object.assign(dados, {
+      veiculo: f.get('veiculo'), placa: f.get('placa').toUpperCase(), tipo_veiculo: f.get('tipo_veiculo') || null,
+      revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
+      revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
+    });
+  }
   const ok = editingClienteId
     ? await DB.atualizarCliente(editingClienteId, dados)
     : await DB.criarCliente(dados);
   if(!ok) return;
+  if(!editingClienteId){
+    await DB.veiculos.criar({ cliente_id: ok.id, modelo: dados.veiculo, placa: dados.placa || null, tipo_veiculo: dados.tipo_veiculo,
+      revisao_intervalo_meses: dados.revisao_intervalo_meses, revisao_intervalo_km: dados.revisao_intervalo_km });
+  }
   e.target.reset();
   editingClienteId = null;
   fecharModal('modalCliente');
@@ -2393,17 +2438,76 @@ function abrirEdicaoCliente(id){
   const f = document.getElementById('formCliente');
   f.nome.value = c.nome;
   f.telefone.value = c.telefone;
-  f.veiculo.value = c.veiculo;
-  f.placa.value = c.placa;
   f.cpf.value = c.cpf || '';
-  f.querySelectorAll('[name="tipo_veiculo"]').forEach(r => r.checked = (r.value === c.tipo_veiculo));
-  const resumoVeicCliente = document.getElementById('clienteVeiculoResumo');
-  resumoVeicCliente.innerHTML = iconeVeiculo(c.tipo_veiculo) + escImp(c.veiculo || 'Sem veículo cadastrado') + (c.placa ? ' · ' + escImp(c.placa) : '');
-  resumoVeicCliente.style.display = '';
-  f.revisao_intervalo_meses.value = c.revisao_intervalo_meses || '';
-  f.revisao_intervalo_km.value = c.revisao_intervalo_km || '';
+  document.querySelectorAll('#formCliente [name="veiculo"], #formCliente [name="placa"]').forEach(el => el.required = false);
+  document.getElementById('blocoVeiculoNovoCliente').style.display = 'none';
+  document.getElementById('clienteVeiculoResumo').style.display = 'none';
+  document.getElementById('painelVeiculosCliente').style.display = '';
+  renderVeiculosClientePainel(id);
   document.getElementById('tituloModalCliente').textContent = 'Editar cliente';
   abrirModal('modalCliente');
+}
+function renderVeiculosClientePainel(clienteId){
+  const painel = document.getElementById('painelVeiculosCliente');
+  const veics = veiculosDoCliente(clienteId);
+  const linha = v => `<div class="pag-linha"><span>${iconeVeiculo(v.tipo_veiculo)}${escImp(v.modelo)}${v.placa ? ' · ' + escImp(v.placa) : ''}${v.revisao_intervalo_meses || v.revisao_intervalo_km ? ' · revisão a cada ' + [v.revisao_intervalo_meses && v.revisao_intervalo_meses + ' meses', v.revisao_intervalo_km && v.revisao_intervalo_km + ' km'].filter(Boolean).join(' / ') : ''}</span>
+    <span><button type="button" class="btn-icon" title="Editar" onclick="abrirEditarVeiculo(${v.id})">${ICON_EDIT}</button><button type="button" class="btn-icon danger" title="Excluir" onclick="excluirVeiculo(${v.id})">${ICON_DELETE}</button></span></div>`;
+  painel.innerHTML = `<h4 style="margin:4px 0 6px;">🚗 Veículos</h4>${veics.map(linha).join('') || '<p class="hint" style="margin:0;">Nenhum veículo cadastrado.</p>'}
+    <button type="button" class="btn-ghost" style="margin-top:8px;" onclick="abrirNovoVeiculo(${clienteId})">+ Adicionar veículo</button>`;
+}
+function abrirNovoVeiculo(clienteId){
+  editingVeiculoId = null; veiculoClienteAtualId = clienteId;
+  document.getElementById('tituloModalVeiculo').textContent = 'Novo veículo';
+  const f = document.getElementById('formVeiculo'); f.reset();
+  document.getElementById('tipoVeiculoChips2').innerHTML = chipsVeiculoHTML('tipo_veiculo2');
+  abrirModal('modalVeiculo');
+}
+function abrirEditarVeiculo(id){
+  const v = stateVeiculos.find(x => x.id === id); if(!v) return;
+  editingVeiculoId = id; veiculoClienteAtualId = v.cliente_id;
+  document.getElementById('tituloModalVeiculo').textContent = 'Editar veículo';
+  const f = document.getElementById('formVeiculo');
+  f.modelo.value = v.modelo; f.placa.value = v.placa || '';
+  f.revisao_intervalo_meses.value = v.revisao_intervalo_meses || '';
+  f.revisao_intervalo_km.value = v.revisao_intervalo_km || '';
+  document.getElementById('tipoVeiculoChips2').innerHTML = chipsVeiculoHTML('tipo_veiculo2', v.tipo_veiculo);
+  abrirModal('modalVeiculo');
+}
+// Mantém clientes.veiculo/placa/tipo_veiculo (campos antigos, lidos em vários lugares) sincronizados
+// com o "veículo principal" (o primeiro cadastrado) — assim nada mais precisa mudar pra continuar certo.
+async function sincronizarVeiculoPrincipalCliente(clienteId){
+  const p = veiculoPrincipal(clienteId);
+  const dados = p
+    ? { veiculo: p.modelo, placa: p.placa || '', tipo_veiculo: p.tipo_veiculo || null, revisao_intervalo_meses: p.revisao_intervalo_meses || null, revisao_intervalo_km: p.revisao_intervalo_km || null }
+    : { veiculo: '', placa: '', tipo_veiculo: null, revisao_intervalo_meses: null, revisao_intervalo_km: null };
+  await DB.atualizarCliente(clienteId, dados);
+  const c = stateClientes.find(x => x.id === clienteId);
+  if(c) Object.assign(c, dados);
+}
+document.getElementById('formVeiculo').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const dados = {
+    cliente_id: veiculoClienteAtualId, modelo: f.get('modelo'), placa: (f.get('placa') || '').toUpperCase() || null,
+    tipo_veiculo: f.get('tipo_veiculo2') || null,
+    revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
+    revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
+  };
+  const ok = editingVeiculoId ? await DB.veiculos.atualizar(editingVeiculoId, dados) : await DB.veiculos.criar(dados);
+  if(!ok) return;
+  await sincronizarVeiculoPrincipalCliente(veiculoClienteAtualId);
+  fecharModal('modalVeiculo');
+  await render();
+  renderVeiculosClientePainel(veiculoClienteAtualId);
+});
+async function excluirVeiculo(id){
+  const v = stateVeiculos.find(x => x.id === id); if(!v) return;
+  if(veiculosDoCliente(v.cliente_id).length <= 1){ alert('Esse é o único veículo do cliente — cadastre outro antes de excluir este, ou exclua o cliente inteiro.'); return; }
+  if(!confirm('Excluir este veículo?')) return;
+  if(!(await DB.veiculos.excluir(id))) return;
+  await sincronizarVeiculoPrincipalCliente(v.cliente_id);
+  await render();
+  renderVeiculosClientePainel(v.cliente_id);
 }
 
 async function excluirCliente(id){
@@ -2421,7 +2525,18 @@ async function preencherSelectClientes(){
   sel.innerHTML = clientes.length
     ? '<option value="" disabled selected hidden>Escolha o cliente</option>' + clientes.map(c => `<option value="${c.id}">${c.nome} — ${c.veiculo}</option>`).join('')
     : '<option value="">Cadastre um cliente primeiro</option>';
+  preencherSelectVeiculoOrdem();
 }
+function preencherSelectVeiculoOrdem(veiculoIdSelecionado){
+  const sel = document.getElementById('selectVeiculoOrdem');
+  const clienteId = Number(document.getElementById('selectCliente').value) || null;
+  const veics = clienteId ? veiculosDoCliente(clienteId) : [];
+  sel.innerHTML = veics.length
+    ? veics.map(v => `<option value="${v.id}">${v.modelo}${v.placa ? ' — ' + v.placa : ''}</option>`).join('')
+    : '<option value="">Cadastre um veículo pra esse cliente</option>';
+  if(veiculoIdSelecionado && veics.some(v => v.id === veiculoIdSelecionado)) sel.value = veiculoIdSelecionado;
+}
+document.getElementById('selectCliente').addEventListener('change', () => preencherSelectVeiculoOrdem());
 
 document.getElementById('formOrdem').addEventListener('submit', async e => {
   e.preventDefault();
@@ -2429,6 +2544,9 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   const clienteId = Number(f.get('clienteId'));
   const cliente = stateClientes.find(c => c.id === clienteId);
   if(!cliente) return;
+  const veiculoId = Number(f.get('veiculoId')) || null;
+  const veic = veiculoId ? stateVeiculos.find(v => v.id === veiculoId) : null;
+  if(!veic){ alert('Escolha o veículo dessa OS (ou cadastre um veículo pra esse cliente antes).'); return; }
   const statusAnterior = editingOrdemId ? (stateOrdens.find(x => x.id === editingOrdemId) || {}).status : null;
   const querConcluir = f.get('status') === 'concluida' && statusAnterior !== 'concluida';
   if(f.get('status') === 'concluida' && itensOrdemAtual.some(i => i.valor_total === null)){
@@ -2439,7 +2557,8 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
   const dados = {
     cliente_id: clienteId,
     cliente_nome: cliente.nome,
-    veiculo: cliente.veiculo,
+    veiculo: veic.modelo,
+    veiculo_id: veic.id,
     servico: f.get('servico'),
     valor: Number(f.get('valor')) || 0,
     status: f.get('status'),
@@ -2486,6 +2605,7 @@ async function abrirEdicaoOrdem(id){
   preencherSelectItemRef();
   const f = document.getElementById('formOrdem');
   f.clienteId.value = o.cliente_id;
+  preencherSelectVeiculoOrdem(o.veiculo_id);
   f.servico.value = o.servico;
   f.valor.value = o.valor;
   f.status.value = o.status;
@@ -2841,10 +2961,11 @@ async function mudarStatusOrdem(id, status){
 // Se o cliente da OS tiver um intervalo de revisão configurado (meses e/ou km),
 // cria sozinho o próximo lembrete de revisão periódica assim que a OS é concluída.
 async function agendarRevisaoAutomatica(ordem){
+  const veic = veiculoDaOrdemObj(ordem);
   const cliente = stateClientes.find(c => c.id === ordem.cliente_id);
   if(!cliente) return;
-  const meses = Number(cliente.revisao_intervalo_meses) || 0;
-  const km = Number(cliente.revisao_intervalo_km) || 0;
+  const meses = Number(veic ? veic.revisao_intervalo_meses : cliente.revisao_intervalo_meses) || 0;
+  const km = Number(veic ? veic.revisao_intervalo_km : cliente.revisao_intervalo_km) || 0;
   if(!meses && !km) return; // cliente sem intervalo configurado — nada a fazer automaticamente
 
   const data = new Date();
@@ -3745,8 +3866,9 @@ function renderTabelaClientes(){
 document.getElementById('buscaClientes').addEventListener('input', () => { clientesPaginaAtual = 1; renderTabelaClientes(); });
 
 // Linha de uma OS — reaproveitada pela tabela paginada e por qualquer outro lugar que precise renderizar uma OS
-const tipoVeiculoDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id) || {}).tipo_veiculo) || '';
-const placaDaOrdem = o => ((stateClientes.find(c => c.id === o.cliente_id) || {}).placa) || '';
+const veiculoDaOrdemObj = o => (o.veiculo_id && stateVeiculos.find(v => v.id === o.veiculo_id)) || null;
+const tipoVeiculoDaOrdem = o => { const v = veiculoDaOrdemObj(o); return v ? (v.tipo_veiculo || '') : ((stateClientes.find(c => c.id === o.cliente_id) || {}).tipo_veiculo) || ''; };
+const placaDaOrdem = o => { const v = veiculoDaOrdemObj(o); return v ? (v.placa || '') : ((stateClientes.find(c => c.id === o.cliente_id) || {}).placa) || ''; };
 const linhaOrdem = o => `
     <tr>
       <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td class="cel-servico"><div class="servico-texto">${escImp(o.servico)}</div><button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido')">ver mais / ver menos</button></td>
@@ -3881,7 +4003,7 @@ function irLembrete(view, campoId, termo){
 }
 
 async function render(){
-  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa, despesas, ordemPagamentos] = await Promise.all([
+  const [clientes, ordens, fornecedores, contasPagar, contasReceber, estoque, agendamentos, servicos, caixa, despesas, ordemPagamentos, veiculos] = await Promise.all([
     DB.getClientes(),
     DB.getOrdens(),
     DB.fornecedores.listar(),
@@ -3893,6 +4015,7 @@ async function render(){
     DB.caixa.listar(),
     DB.despesas.listar(),
     DB.ordemPagamentos.listar(),
+    DB.veiculos.listar(),
   ]);
   stateClientes = clientes;
   stateOrdens = ordens;
@@ -3905,6 +4028,7 @@ async function render(){
   stateCaixa = caixa;
   stateDespesas = despesas;
   stateOrdemPagamentos = ordemPagamentos;
+  stateVeiculos = veiculos;
   renderCaixa();
   renderDespesas();
   renderLembretes();
