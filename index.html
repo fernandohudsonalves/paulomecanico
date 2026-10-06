@@ -1206,7 +1206,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
       </div>
       <label>O que vai ser feito
-        <textarea name="servico" id="servicoTextarea" rows="2" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
+        <textarea name="servico" id="servicoTextarea" rows="8" placeholder="Ex: Troca de óleo e correia dentada" required></textarea>
       </label>
       <input type="hidden" name="valor">
 
@@ -4452,7 +4452,7 @@ document.getElementById('formFecharCaixa').addEventListener('submit', async e =>
 function mostrarApp(email){
   document.getElementById('telaLogin').style.display = 'none';
   document.getElementById('telaApp').style.display = '';
-  document.getElementById('btnSair').textContent = '🚪 Sair (' + email + ')';
+  document.getElementById('btnSair').innerHTML = '🚪 Sair (<span style="font-size:11px;">' + escImp(email) + '</span>)';
 }
 function mostrarLogin(){
   document.getElementById('telaApp').style.display = 'none';
