@@ -153,6 +153,11 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .gal-item .gal-info input[type=date]{width:100%; font-size:12px; padding:3px;}
 .gal-cliente{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:left; cursor:pointer; color:var(--text); display:flex; flex-direction:column; gap:4px;}
 .gal-cliente:hover{border-color:var(--accent);}
+.ico{display:inline-flex; color:var(--accent); vertical-align:middle; margin-right:8px;}
+.nav-sub .nav-item .ico{margin-right:8px;}
+.nav-sub .nav-item .ico svg{width:16px; height:16px;}
+.view-head h1 .ico{margin-right:12px;}
+.view-head h1 .ico svg{width:30px; height:30px;}
 .nav-item.nav-principal{font-size:16px; font-weight:800; color:var(--text);}
 .tag{font-size:10px; background:var(--surface-2); padding:2px 6px; border-radius:20px; margin-left:6px;}
 
@@ -609,6 +614,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button class="nav-group-toggle" data-toggle="financeiro"><span>💰 Financeiro</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-financeiro">
           <button class="nav-item" data-view="caixa">Caixa</button>
+          <button class="nav-item" data-view="resultado">Resultado do dia</button>
           <button class="nav-item" data-view="despesas">Despesas do dia</button>
           <button class="nav-item" data-view="pagar">Contas a pagar</button>
           <button class="nav-item" data-view="receber">Contas a receber</button>
@@ -855,6 +861,19 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     </section>
 
     <!-- CAIXA -->
+    <section class="view" id="view-resultado">
+      <header class="view-head"><h1>Resultado do dia</h1><p>O que entrou, o que saiu e se o saldo do dia foi positivo ou negativo</p></header>
+      <div class="panel" style="margin-bottom:14px;">
+        <label style="margin:0;max-width:260px;">Período
+          <select id="resPeriodo">
+            <option value="7">Últimos 7 dias</option><option value="15" selected>Últimos 15 dias</option><option value="30">Últimos 30 dias</option>
+            <option value="mes">Este mês</option><option value="mesant">Mês passado</option><option value="tudo">Tudo</option>
+          </select>
+        </label>
+      </div>
+      <div id="resultadoConteudo"></div>
+    </section>
+
     <section class="view" id="view-caixa">
       <header class="view-head"><h1>Caixa</h1><p>Abertura e fechamento do caixa do dia</p></header>
       <div class="panel" id="caixaFechadoPanel" style="display:none;">
@@ -956,6 +975,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </header>
 
       <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="margin:0;flex-direction:row;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="chkOcultarZeradas" checked> Ocultar contas zeradas já recebidas</label>
+          <span class="hint" id="infoReceberOcultas"></span>
+        </div>
         <div class="table-wrap">
           <table id="tabelaContasReceber">
             <thead><tr><th>Descrição</th><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
@@ -1724,6 +1747,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <label>Categoria
         <input type="text" name="categoria" placeholder="Ex: Manutenção, Elétrica...">
       </label>
+      <label>Descrição (explica o que é o serviço)
+        <textarea name="descricao" rows="3" placeholder="Ex: Limpeza minuciosa com produtos de pH neutro e espuma densa..."></textarea>
+      </label>
       <div class="grid2">
         <label>Preço padrão (R$)
           <input type="number" name="preco_padrao" step="0.01" required min="0">
@@ -1831,8 +1857,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL NOTA FISCAL / RECIBO -->
 <div class="modal" id="modalNotaFiscal">
-  <div class="modal-box" style="width:620px; max-height:90vh; display:flex; flex-direction:column;">
+  <div class="modal-box" style="width:760px; max-width:96vw; max-height:92vh; display:flex; flex-direction:column;">
     <h3 id="tituloModalNota">Nota fiscal / Recibo</h3>
+    <details id="orcOpcoes" open style="display:none;margin-bottom:8px;max-height:38vh;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:8px 10px;"></details>
     <div style="overflow-y:auto; border:1px solid var(--border); border-radius:8px; background:#fff;">
       <div id="notaFiscalPreview"></div>
     </div>
@@ -2146,6 +2173,7 @@ DB.ordemItens = {
           ordem_id: ordemId, tipo: i.tipo, referencia_id: i.referencia_id,
           descricao: i.descricao, quantidade: i.quantidade, valor_unitario: i.valor_unitario, valor_total: i.valor_total,
           custo_unitario: i.custo_unitario ?? null, custo_total: i.custo_total ?? null,
+          origem: i.origem ?? null, loja: i.loja ?? null,
         }));
         const { error } = await supabaseClient.from('ordem_itens').insert(linhas);
         if(error){ alert('Erro ao salvar itens da OS: ' + mensagemErro(error)); }
@@ -2198,6 +2226,52 @@ DB.backups = {
    ÍCONES E HELPERS
    ========================================================== */
 const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
+/* ICONES POR SEGMENTO / PRODUTO (vermelho do site) */
+const ICO_PATHS = {
+  wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  oil:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M9.5 14a2.5 2.5 0 0 0 2.5 2.5"/>',
+  filter:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
+  brake:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>',
+  wheel:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  engine:'<path d="M4 9h3l2-2h6l2 2h3v8h-3l-2 2H9l-2-2H4z"/><path d="M2 12v3M22 12v3M11 4h2"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+  sparkle:'<path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  battery:'<rect x="2" y="8" width="18" height="9" rx="2"/><path d="M22 11v3M6 11v3M10 11v3"/>',
+  lamp:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/>',
+  spring:'<path d="M12 2v3l-5 2 10 2-10 2 10 2-10 2 5 2v3"/>',
+  spray:'<path d="M8 3h5v4H8zM10 7v3M6 10h10v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M17 5h3M17 8h3"/>',
+  snow:'<path d="M12 2v20M4 7l16 10M20 7L4 17"/>',
+  box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 14v6h14v-6M10 20v-4h4v4"/>',
+  truck:'<rect x="2" y="6" width="12" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  gas:'<path d="M9 3h6v3a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9a4 4 0 0 1 4-4z"/><path d="M5 12h14"/>',
+};
+const svgIco = (k, tam = 18) => `<svg viewBox="0 0 24 24" width="${tam}" height="${tam}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICO_PATHS[k] || ICO_PATHS.wrench}</svg>`;
+function icoChave(texto, padrao){
+  const t = String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const regras = [
+    [/ar condicionado|ar-condicionado|gas do ar|climatiz/, 'snow'],
+    [/filtro/, 'filter'],
+    [/freio|pastilha|disco|lona|sangria|cilindro mestre|burrinho|pinca/, 'brake'],
+    [/pneu|roda|rodizio|balanc|alinhament|calota|rolamento|cubo/, 'wheel'],
+    [/amortecedor|suspens|mola|bandeja|pivo|batente|coxim|terminal|barra/, 'spring'],
+    [/oleo|lubrific|fluido|aditivo|arrefec|radiador|hidraulic|graxa|agua|liquido/, 'oil'],
+    [/bateria/, 'battery'],
+    [/farol|lanterna|lampada|vidro|retrovisor/, 'lamp'],
+    [/eletric|sensor|plug|alternador|motor de partida|chicote|fusivel|vela/, 'bolt'],
+    [/correia|tensor|semieixo|cambio|embreagem|marcha|polia|engrenagem|corrente/, 'gear'],
+    [/motor|cabecote|junta|carter|bomba|escapamento|injet|bico|turbo|cebolinha/, 'engine'],
+    [/lavagem|lavar|limpeza|higieniz|polimento|cera|estetica|jet|pretinho|vitrific|cristaliz|detalhad|chassi/, 'sparkle'],
+    [/pintura|verniz|spray|tinta|cola|tek bond|massa/, 'spray'],
+    [/gas|botijao|glp/, 'gas'],
+    [/transport|frete|logistic|distribuid/, 'truck'],
+  ];
+  const r = regras.find(([re]) => re.test(t));
+  return r ? r[1] : padrao;
+}
+const icoNome = (nome, categoria, padrao) => `<span class="ico">${svgIco(icoChave((nome || '') + ' ' + (categoria || ''), padrao))}</span>`;
 const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
 const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l4 2"/></svg>';
@@ -2307,6 +2381,10 @@ document.querySelectorAll('.nav-group-toggle').forEach(btn => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 document.getElementById('btnAdminTop').addEventListener('click', () => irPara('administracao'));
+[['servicos','wrench'],['estoque','box'],['fornecedores','store']].forEach(([v, k]) => {
+  document.querySelector(`.nav-item[data-view="${v}"]`).insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 16)}</span>`);
+  const h1 = document.querySelector(`#view-${v} .view-head h1`); if(h1) h1.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 30)}</span>`);
+});
 (function(){
   const dock = document.getElementById('dock');
   document.getElementById('dockToggle').addEventListener('click', e => { e.stopPropagation(); dock.classList.toggle('open'); });
@@ -2357,6 +2435,7 @@ async function renderRelatoriosVendas(){
 }
 
 function irPara(view){
+  if(view === 'resultado') setTimeout(renderResultado, 0);
   if(view === 'galeria'){ galeriaClienteId = null; setTimeout(renderGaleria, 0); }
   if(view === 'oficina') setTimeout(renderOficina, 0);
   if(view === 'relatorios') setTimeout(renderRelatoriosVendas, 0);
@@ -3707,6 +3786,7 @@ document.getElementById('formServico').addEventListener('submit', async e => {
   const dados = {
     nome: f.get('nome'),
     categoria: f.get('categoria'),
+    descricao: (f.get('descricao') || '').trim() || null,
     preco_padrao: Number(f.get('preco_padrao')),
     tempo_estimado_horas: Number(f.get('tempo_estimado_horas') || 0),
   };
@@ -3724,7 +3804,7 @@ function abrirEdicaoServico(id){
   if(!x) return;
   editingServicoId = id;
   const f = document.getElementById('formServico');
-  f.nome.value = x.nome; f.categoria.value = x.categoria || '';
+  f.nome.value = x.nome; f.categoria.value = x.categoria || ''; f.descricao.value = x.descricao || '';
   f.preco_padrao.value = x.preco_padrao; f.tempo_estimado_horas.value = x.tempo_estimado_horas || '';
   document.getElementById('tituloModalServico').textContent = 'Editar serviço';
   abrirModal('modalServico');
@@ -4048,7 +4128,7 @@ const tipoVeiculoDaOrdem = o => { const v = veiculoDaOrdemObj(o); return v ? (v.
 const placaDaOrdem = o => { const v = veiculoDaOrdemObj(o); return v ? (v.placa || '') : ((stateClientes.find(c => c.id === o.cliente_id) || {}).placa) || ''; };
 const linhaOrdem = o => `
     <tr>
-      <td>${o.cliente_nome}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td class="cel-servico"><div class="servico-texto">${escImp(o.servico)}</div><button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido')">ver mais / ver menos</button></td>
+      <td>${o.cliente_nome}${o.aprovado_em ? `<div class="hint" style="color:var(--ok);font-weight:700;" title="${escImp(o.aprovado_resumo || '').replace(/"/g, '&quot;')}">✅ aprovado por ${escImp(o.aprovado_nome || 'cliente')} em ${new Date(o.aprovado_em).toLocaleString('pt-BR', { timeZone:'America/Sao_Paulo', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</div>` : (o.status === 'orcamento' ? '<div class="hint" style="color:var(--wait);">⏳ aguardando aprovação</div>' : '')}</td><td>${iconeVeiculo(tipoVeiculoDaOrdem(o))}${o.veiculo}${placaDaOrdem(o) ? ` <span class="placa-chip">${placaDaOrdem(o)}</span>` : ''}</td><td class="cel-servico"><div class="servico-texto">${escImp(o.servico)}</div><button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido')">ver mais / ver menos</button></td>
       <td>
         <select class="status-select ${o.status}" onchange="mudarStatusOrdem(${o.id}, this.value)">
           <option value="rascunho" ${o.status==='rascunho'?'selected':''}>Rascunho</option>
@@ -4243,7 +4323,7 @@ async function render(){
   // tabela fornecedores
   document.querySelector('#tabelaFornecedores tbody').innerHTML = fornecedores.map(x => `
     <tr>
-      <td>${x.nome}</td><td>${x.categoria || '—'}</td><td>${x.whatsapp || x.telefone || '—'}</td><td>${x.cidade_uf || '—'}</td>
+      <td>${icoNome(x.nome, x.categoria, 'store')}${x.nome}</td><td>${x.categoria || '—'}</td><td>${x.whatsapp || x.telefone || '—'}</td><td>${x.cidade_uf || '—'}</td>
       <td class="icon-row">
         ${(x.whatsapp || x.telefone) ? `<button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(x.whatsapp || x.telefone)}','_blank')">${ICON_WHATS}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoFornecedor(${x.id})">${ICON_EDIT}</button>
@@ -4271,28 +4351,14 @@ async function render(){
   document.getElementById('pagarEmpty').style.display = contasPagar.length ? 'none' : 'block';
 
   // tabela contas a receber
-  document.querySelector('#tabelaContasReceber tbody').innerHTML = contasReceber.map(x => `
-    <tr>
-      <td>${x.descricao}</td><td>${x.cliente_nome || '—'}</td><td>${dataBR(x.vencimento)}</td><td>${moeda(x.valor)}</td>
-      <td>
-        <select class="status-select ${x.status}" onchange="mudarStatusContaReceber(${x.id}, this.value)">
-          <option value="pendente" ${x.status==='pendente'?'selected':''}>Pendente</option>
-          <option value="recebido" ${x.status==='recebido'?'selected':''}>Recebido</option>
-        </select>
-      </td>
-      <td class="icon-row">
-        <button class="btn-icon" title="Editar" onclick="abrirEdicaoContaReceber(${x.id})">${ICON_EDIT}</button>
-        <button class="btn-icon danger" title="Excluir" onclick="excluirContaReceber(${x.id})">${ICON_DELETE}</button>
-      </td>
-    </tr>`).join('');
-  document.getElementById('receberEmpty').style.display = contasReceber.length ? 'none' : 'block';
+  desenharContasReceber();
 
   // tabela estoque
   document.querySelector('#tabelaEstoque tbody').innerHTML = estoque.map(x => {
     const baixo = Number(x.quantidade) <= Number(x.quantidade_minima);
     return `
     <tr>
-      <td${x.observacoes ? ` title="${escImp(x.observacoes)}"` : ''}>${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
+      <td${x.observacoes ? ` title="${escImp(x.observacoes)}"` : ''}>${icoNome(x.nome, x.categoria, 'box')}${x.nome}${baixo ? ' <span class="pago-chip" style="background:rgba(255,59,23,.15); color:var(--accent);">Estoque baixo</span>' : ''}</td>
       <td>${x.categoria || '—'}</td>
       <td>${x.quantidade} ${x.unidade && x.unidade !== 'un' ? x.unidade : ''}</td>
       <td>${moeda(x.preco_custo || 0)}</td>
@@ -4310,7 +4376,7 @@ async function render(){
   // tabela serviços (catálogo)
   document.querySelector('#tabelaServicos tbody').innerHTML = servicos.map(s => `
     <tr>
-      <td>${s.nome}</td><td>${s.categoria || '—'}</td><td>${moeda(s.preco_padrao)}</td>
+      <td style="white-space:nowrap;"><div style="display:flex;align-items:flex-start;">${icoNome(s.nome, s.categoria, 'wrench')}<div style="white-space:normal;">${s.nome}${s.descricao ? `<div class="hint" style="max-width:520px;white-space:normal;font-weight:400;">${escImp(s.descricao)}</div>` : ''}</div></div></td><td>${s.categoria || '—'}</td><td>${moeda(s.preco_padrao)}</td>
       <td>${s.tempo_estimado_horas ? s.tempo_estimado_horas + 'h' : '—'}</td>
       <td class="icon-row">
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoServico(${s.id})">${ICON_EDIT}</button>
@@ -4755,10 +4821,28 @@ async function abrirPortalCliente(token){
     el.innerHTML = '<p class="hint">Não encontrei nenhuma ordem de serviço com esse link. Confira se copiou o endereço certinho, ou fale com a oficina.</p>';
     return;
   }
+  const quando = iso => new Date(iso).toLocaleString('pt-BR', { timeZone:'America/Sao_Paulo', dateStyle:'short', timeStyle:'short' }).replace(',', ' às');
   const passoAtual = PASSOS_PORTAL.findIndex(p => p.chave === os.status);
   const passos = PASSOS_PORTAL.map((p, i) => `<li class="${i < passoAtual ? 'feito' : i === passoAtual ? 'atual' : ''}">${p.rotulo}</li>`).join('');
-  const itens = (os.itens || []).map(i => `<div class="portal-item"><span>${escImp(i.descricao)} ${i.quantidade > 1 ? '× ' + i.quantidade : ''}</span></div>`).join('')
+  const itensLista = os.itens || [];
+  const itens = itensLista.map(i => `<div class="portal-item"><span>${escImp(i.descricao)} ${i.quantidade > 1 ? '× ' + i.quantidade : ''}${i.loja ? ` <small class="hint">(${escImp(i.loja)})</small>` : ''}</span><b>${i.valor_total === null || i.valor_total === undefined ? '<span class="hint">a definir</span>' : moeda(i.valor_total)}</b></div>`).join('')
     || '<p class="hint" style="margin:4px 0;">Nenhum item lançado ainda.</p>';
+  const temADefinir = itensLista.some(i => i.valor_total === null || i.valor_total === undefined);
+  let bloco = '';
+  if(os.aprovado_em){
+    const mudou = Number(os.aprovado_valor) !== Number(os.valor);
+    bloco = `<div style="margin-top:16px;padding:12px 14px;border:2px solid #2fb872;border-radius:12px;background:rgba(47,184,114,.1);">
+      <b>✅ Orçamento aprovado</b><br><span class="hint">por ${escImp(os.aprovado_nome)} em ${quando(os.aprovado_em)} · valor aprovado ${moeda(Number(os.aprovado_valor) || 0)}</span>
+      ${mudou ? `<br><span class="hint" style="color:#e8b93b;">⚠ O valor atual (${moeda(Number(os.valor) || 0)}) é diferente do aprovado — a oficina vai combinar com você.</span>` : ''}</div>`;
+  } else if(os.status === 'orcamento'){
+    bloco = `<div style="margin-top:16px;padding:14px;border:2px solid var(--accent);border-radius:12px;">
+      <b>Aprovar este orçamento</b>
+      <p class="hint" style="margin:6px 0 10px;">Ao aprovar, você autoriza a oficina a executar os serviços e peças acima, no valor total de ${moeda(Number(os.valor) || 0)}. Ficam registrados o seu nome, a data e a hora.${temADefinir ? ' Alguns itens estão com valor "a definir": a oficina avisa você antes de cobrar.' : ''}</p>
+      <input type="text" id="portalNomeAprov" placeholder="Digite seu nome completo" style="width:100%;margin-bottom:8px;">
+      <label style="flex-direction:row;align-items:flex-start;gap:8px;margin-bottom:10px;"><input type="checkbox" id="portalChkAprov"> <span>Li o orçamento e autorizo a realização do serviço.</span></label>
+      <button type="button" class="btn-primary" id="portalBtnAprovar" style="width:100%;">✅ Aprovar orçamento</button>
+      <p class="hint" id="portalMsgAprov" style="margin:8px 0 0;color:var(--accent);"></p></div>`;
+  }
   el.innerHTML = `
     <p style="margin-bottom:2px;"><strong>${escImp(os.cliente_nome)}</strong> · ${escImp(os.veiculo || '')}</p>
     <p class="hint" style="margin-top:0;">Aberta em ${dataBR((os.created_at || '').slice(0,10))}${os.servico ? ' — ' + escImp(os.servico) : ''}</p>
@@ -4767,8 +4851,20 @@ async function abrirPortalCliente(token){
     <p style="font-weight:600;margin:14px 0 4px;">Itens</p>
     ${itens}
     <p style="font-weight:700;font-size:18px;margin-top:14px;">Total: ${moeda(Number(os.valor) || 0)}</p>
+    ${os.brindes ? `<p class="hint">🎁 Brindes: ${escImp(os.brindes).replace(/\n/g, ' · ')}</p>` : ''}
     <p class="hint">💰 Pago: ${moeda(Number(os.recebido) || 0)} · Falta: ${moeda(Math.max(0, (Number(os.valor) || 0) - (Number(os.recebido) || 0)))}${os.garantia_meses ? ' · Garantia de ' + os.garantia_meses + ' mês(es)' : ''}${os.numero_nf ? ' · NF nº ' + escImp(os.numero_nf) : ''}</p>
+    ${bloco}
   `;
+  const btn = document.getElementById('portalBtnAprovar');
+  if(btn) btn.addEventListener('click', async () => {
+    const nome = document.getElementById('portalNomeAprov').value.trim(), msg = document.getElementById('portalMsgAprov');
+    if(nome.length < 3){ msg.textContent = 'Digite seu nome completo para aprovar.'; return; }
+    if(!document.getElementById('portalChkAprov').checked){ msg.textContent = 'Marque a caixinha confirmando que leu e autoriza.'; return; }
+    btn.disabled = true; btn.textContent = 'Enviando…';
+    const { data: r, error: err } = await supabaseClient.rpc('aprovar_os_publico', { p_token: token, p_nome: nome });
+    if(err || !r || !r.ok){ btn.disabled = false; btn.textContent = '✅ Aprovar orçamento'; msg.textContent = 'Não foi possível aprovar agora. Fale com a oficina.'; return; }
+    abrirPortalCliente(token);
+  });
 }
 
 
@@ -4814,8 +4910,43 @@ document.querySelectorAll('.view').forEach(v => {
    separados das Contas a Pagar (que ficam pra contas fixas/recorrentes e
    fornecedores a prazo)
    ========================================================== */
-function renderAcertoTom(){
+function desenharContasReceber(){
+  const todas = stateContasReceber;
+  const ocultar = document.getElementById('chkOcultarZeradas').checked;
+  const zeradas = c => Number(c.valor) === 0 && c.status === 'recebido';
+  const lista = ocultar ? todas.filter(c => !zeradas(c)) : todas;
+  const nOcultas = todas.length - lista.length;
+  document.getElementById('infoReceberOcultas').textContent = nOcultas ? `${nOcultas} conta(s) zerada(s) já recebida(s) escondida(s)` : '';
+  const partes = d => { const m = String(d || '').match(/^(OS #\d+(?: \([^)]*\))?)\s*[—-]\s*([\s\S]*)$/); return m ? { titulo: m[1], texto: m[2].trim() } : { titulo: '', texto: String(d || '').trim() }; };
+  document.querySelector('#tabelaContasReceber tbody').innerHTML = lista.map(x => {
+    const { titulo, texto } = partes(x.descricao), longo = texto.length > 90 || texto.includes('\n');
+    return `
+    <tr>
+      <td class="cel-servico" style="max-width:480px;">
+        ${titulo ? `<b>${escImp(titulo)}</b>` : ''}
+        <div class="servico-texto">${escImp(texto)}</div>
+        ${longo ? `<button type="button" class="ver-mais" onclick="this.closest('.cel-servico').classList.toggle('expandido'); this.textContent = this.closest('.cel-servico').classList.contains('expandido') ? 'ver menos' : 'ver mais'">ver mais</button>` : ''}
+      </td>
+      <td>${escImp(x.cliente_nome || '—')}</td><td>${dataBR(x.vencimento)}</td>
+      <td>${Number(x.valor) === 0 ? `<span class="hint" title="Conta sem valor a cobrar">R$ 0,00</span>` : `<b>${moeda(x.valor)}</b>`}</td>
+      <td>
+        <select class="status-select ${x.status}" onchange="mudarStatusContaReceber(${x.id}, this.value)">
+          <option value="pendente" ${x.status==='pendente'?'selected':''}>Pendente</option>
+          <option value="recebido" ${x.status==='recebido'?'selected':''}>Recebido</option>
+        </select>
+      </td>
+      <td class="icon-row">
+        <button class="btn-icon" title="Editar" onclick="abrirEdicaoContaReceber(${x.id})">${ICON_EDIT}</button>
+        <button class="btn-icon danger" title="Excluir" onclick="excluirContaReceber(${x.id})">${ICON_DELETE}</button>
+      </td>
+    </tr>`; }).join('');
+  document.getElementById('receberEmpty').style.display = lista.length ? 'none' : 'block';
+}
+document.getElementById('chkOcultarZeradas').addEventListener('change', desenharContasReceber);
+async function renderAcertoTom(){
   const el = document.getElementById('acertoTom'); if(!el) return;
+  const { data: repasses } = await supabaseClient.from('repasses').select('*').order('data', { ascending:false }).order('id', { ascending:false });
+  const dataSel = (document.getElementById('acertoData') || {}).value || hojeLocal();
   const n = v => Number(v) || 0;
   const entrou = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro').reduce((t, p) => t + n(p.valor), 0);
   const soma = f => stateDespesas.filter(f).reduce((t, d) => t + n(d.valor), 0);
@@ -4845,9 +4976,43 @@ function renderAcertoTom(){
     </div>
     ${semQuem > 0 ? `<p class="hint" style="margin:8px 0 0;color:var(--wait);">⚠ ${moeda(semQuem)} em gastos sem "quem pagou" — escolha na tabela abaixo para entrar na conta.</p>` : ''}
     ${jaDevolvido > 0 ? `<p class="hint" style="margin:6px 0 0;">Já devolvido (marcado na tabela): ${moeda(jaDevolvido)}</p>` : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding:10px;border:1px dashed var(--border);border-radius:10px;">
+      <b>💸 Pagar a partir da conta do Paulo mecânico</b>
+      <label style="margin:0;flex-direction:row;align-items:center;gap:6px;">Data <input type="date" id="acertoData" value="${dataSel}"></label>
+      <button type="button" class="btn-primary" ${tomAberto > 0 ? '' : 'disabled'} onclick="pagarAcerto('Tom Gás')">Pagar Tom Gás — ${moeda(tomAberto)}</button>
+      <button type="button" class="btn-primary" ${ferAberto > 0 ? '' : 'disabled'} onclick="pagarAcerto('Fernando')">Pagar Fernando — ${moeda(ferAberto)}</button>
+      ${pauloAberto > 0 ? `<button type="button" class="btn-ghost" onclick="pagarAcerto('Paulo mecânico')">Devolver ao Paulo — ${moeda(pauloAberto)}</button>` : ''}
+      <span class="hint" style="flex-basis:100%;">Cada botão quita tudo o que está pendente daquele pagador: registra a transferência e marca os gastos como "Devolvido". Para quitar só alguns gastos, use a caixinha "Devolvido" direto na tabela.</span>
+    </div>
+    ${(repasses || []).length ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:700;">Pagamentos já feitos (${repasses.length}) — total ${moeda(repasses.reduce((t, r) => t + Number(r.valor), 0))}</summary>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>De</th><th>Para</th><th>Valor</th><th></th></tr></thead><tbody>
+      ${repasses.map(r => `<tr><td>${dataBR(r.data)}</td><td>${escImp(r.de)}</td><td>${escImp(r.para)}</td><td><b>${moeda(r.valor)}</b></td><td><button type="button" class="btn-ghost" onclick="desfazerRepasse(${r.id})">Desfazer</button></td></tr>`).join('')}
+      </tbody></table></div></details>` : ''}
     <div class="table-wrap" style="margin-top:10px;"><table><thead><tr><th>O.S.</th><th>Cliente</th><th>Entrou</th><th>Gastos</th><th>Sobra</th></tr></thead><tbody>
       ${linhasOS.map(x => `<tr><td>#${x.o.id}</td><td>${escImp(x.o.cliente_nome || '')}</td><td>${moeda(x.ent)}</td><td>${moeda(x.gas)}</td><td><b>${moeda(x.ent - x.gas)}</b></td></tr>`).join('')}
     </tbody></table></div>`;
+}
+async function pagarAcerto(para){
+  const itens = stateDespesas.filter(d => d.pago_por === para && !d.reembolsado);
+  if(!itens.length) return;
+  const total = r2(itens.reduce((t, d) => t + (Number(d.valor) || 0), 0));
+  const data = document.getElementById('acertoData').value || hojeLocal();
+  const de = para === 'Paulo mecânico' ? 'Tom Gás' : 'Paulo mecânico';
+  if(!confirm(`Registrar a transferência de ${moeda(total)}\nde ${de} para ${para}, em ${dataBR(data)}?\n\nIsso marca ${itens.length} gasto(s) como devolvido(s).`)) return;
+  const ins = await supabaseClient.from('repasses').insert([{ data, de, para, valor: total, despesa_ids: itens.map(d => d.id) }]);
+  if(ins.error){ alert('Erro ao registrar o pagamento: ' + ins.error.message); return; }
+  const up = await supabaseClient.from('despesas').update({ reembolsado: true }).in('id', itens.map(d => d.id));
+  if(up.error){ alert('Pagamento registrado, mas falhou ao marcar os gastos: ' + up.error.message); }
+  await render();
+  mostrarAviso(`Pagamento de ${moeda(total)} para ${para} registrado.`);
+}
+async function desfazerRepasse(id){
+  if(!confirm('Desfazer este pagamento? Os gastos voltam a aparecer como não devolvidos.')) return;
+  const { data } = await supabaseClient.from('repasses').select('despesa_ids').eq('id', id).single();
+  if(data && data.despesa_ids && data.despesa_ids.length) await supabaseClient.from('despesas').update({ reembolsado: false }).in('id', data.despesa_ids);
+  const del = await supabaseClient.from('repasses').delete().eq('id', id);
+  if(del.error){ alert('Erro: ' + del.error.message); return; }
+  await render();
 }
 function renderDespesas(){
   const sel = document.getElementById('selectOrdemDespesa');
@@ -4930,6 +5095,76 @@ async function excluirDespesa(id){
   render();
 }
 document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
+
+/* ==========================================================
+   RESULTADO DO DIA — entrou x saiu x saldo (gráfico)
+   ========================================================== */
+function renderResultado(){
+  const el = document.getElementById('resultadoConteudo'); if(!el) return;
+  const n = v => Number(v) || 0;
+  const hoje = hojeLocal();
+  const iso = d => d.toLocaleDateString('sv-SE');
+  const somaDias = (dstr, k) => { const d = new Date(dstr + 'T12:00:00'); d.setDate(d.getDate() + k); return iso(d); };
+  const entra = {}, sai = {};
+  const add = (m, d, v) => { if(!d) return; d = String(d).slice(0, 10); m[d] = (m[d] || 0) + n(v); };
+  stateOrdemPagamentos.filter(p => p.destino !== 'terceiro').forEach(p => add(entra, p.data, p.valor));
+  stateDespesas.forEach(d => add(sai, d.data, d.valor));
+  stateContasPagar.filter(c => c.status === 'pago' && c.data_pagamento).forEach(c => add(sai, c.data_pagamento, c.valor));
+  const per = document.getElementById('resPeriodo').value;
+  const todasDatas = [...Object.keys(entra), ...Object.keys(sai)].sort();
+  let ini, fim = hoje;
+  if(per === 'mes'){ ini = hoje.slice(0, 8) + '01'; }
+  else if(per === 'mesant'){ const d = new Date(hoje.slice(0, 8) + '01T12:00:00'); d.setMonth(d.getMonth() - 1); ini = iso(d); const f = new Date(d); f.setMonth(f.getMonth() + 1); f.setDate(0); fim = iso(f); }
+  else if(per === 'tudo'){ ini = todasDatas[0] || hoje; }
+  else { ini = somaDias(hoje, -(Number(per) - 1)); }
+  const dias = []; for(let d = ini; d <= fim; d = somaDias(d, 1)) dias.push(d);
+  const linhas = dias.map(d => ({ d, e: n(entra[d]), g: n(sai[d]), s: n(entra[d]) - n(sai[d]) }));
+  const totE = linhas.reduce((t, x) => t + x.e, 0), totG = linhas.reduce((t, x) => t + x.g, 0), saldo = totE - totG;
+  const comMov = linhas.filter(x => x.e || x.g);
+  const melhor = comMov.length ? comMov.reduce((a, b) => b.s > a.s ? b : a) : null, pior = comMov.length ? comMov.reduce((a, b) => b.s < a.s ? b : a) : null;
+  const diasPos = comMov.filter(x => x.s > 0).length, diasNeg = comMov.filter(x => x.s < 0).length;
+  const VERDE = '#2fb872', VERM = '#ff3b17';
+  const cartao = (t, v, cor, sub) => `<div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:160px;"><div style="font-size:12px;color:var(--text-dim);">${t}</div><div style="font-size:22px;font-weight:800;color:${cor};">${v}</div>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${sub}</div>` : ''}</div>`;
+  // gráfico SVG
+  const W = Math.max(680, linhas.length * 44 + 80), H = 300, mL = 64, mR = 16, mT = 24, mB = 46;
+  const maxV = Math.max(1, ...linhas.map(x => Math.max(x.e, x.g, x.s))), minV = Math.min(0, ...linhas.map(x => x.s));
+  const faixa = maxV - minV || 1, y = v => mT + (maxV - v) * (H - mT - mB) / faixa;
+  const passo = (W - mL - mR) / Math.max(1, linhas.length), bw = Math.min(16, passo / 3);
+  const ticks = [0, 1, 2, 3, 4].map(i => minV + faixa * i / 4);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:none;font-family:inherit;">`;
+  ticks.forEach(t => { svg += `<line x1="${mL}" x2="${W - mR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border)" stroke-width="1"/><text x="${mL - 8}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="var(--text-dim)">${Math.round(t).toLocaleString('pt-BR')}</text>`; });
+  svg += `<line x1="${mL}" x2="${W - mR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--text-dim)" stroke-width="1.5"/>`;
+  linhas.forEach((x, i) => {
+    const cx = mL + passo * i + passo / 2, lab = x.d.slice(8) + '/' + x.d.slice(5, 7);
+    svg += `<rect x="${cx - bw - 1}" y="${Math.min(y(x.e), y(0))}" width="${bw}" height="${Math.abs(y(0) - y(x.e))}" fill="${VERDE}" rx="2"><title>${lab} · Entrou ${moeda(x.e)}</title></rect>`;
+    svg += `<rect x="${cx + 1}" y="${Math.min(y(x.g), y(0))}" width="${bw}" height="${Math.abs(y(0) - y(x.g))}" fill="${VERM}" rx="2"><title>${lab} · Gastou ${moeda(x.g)}</title></rect>`;
+    if(x.e || x.g) svg += `<circle cx="${cx}" cy="${y(x.s)}" r="5" fill="${x.s >= 0 ? '#fff' : '#111'}" stroke="${x.s >= 0 ? VERDE : VERM}" stroke-width="3"><title>${lab} · Saldo ${moeda(x.s)}</title></circle>`;
+    if(linhas.length <= 20 && (x.e || x.g)) svg += `<text x="${cx}" y="${y(x.s) - 10}" text-anchor="middle" font-size="10" font-weight="700" fill="${x.s >= 0 ? VERDE : VERM}">${Math.round(x.s)}</text>`;
+    if(linhas.length <= 31 || i % 3 === 0) svg += `<text x="${cx}" y="${H - mB + 16}" text-anchor="middle" font-size="10" fill="var(--text-dim)">${lab}</text>`;
+  });
+  const pts = linhas.map((x, i) => (x.e || x.g) ? `${mL + passo * i + passo / 2},${y(x.s)}` : null).filter(Boolean);
+  if(pts.length > 1) svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  svg += '</svg>';
+  el.innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      ${cartao('💵 Entrou', moeda(totE), VERDE, 'pagamentos recebidos de O.S.')}
+      ${cartao('💸 Gastou', moeda(totG), VERM, 'despesas + contas pagas')}
+      ${cartao(saldo >= 0 ? '✅ Saldo do período (lucro)' : '⚠ Saldo do período (negativo)', moeda(saldo), saldo >= 0 ? VERDE : VERM, 'entrou − gastou')}
+      ${cartao('📅 Dias no verde / no vermelho', `${diasPos} / ${diasNeg}`, 'var(--text)', melhor ? `melhor dia ${dataBR(melhor.d)}: ${moeda(melhor.s)}` : '')}
+    </div>
+    <div class="panel" style="margin-bottom:14px;">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-bottom:8px;">
+        <span><i style="display:inline-block;width:12px;height:12px;background:${VERDE};border-radius:3px;"></i> Entrou</span>
+        <span><i style="display:inline-block;width:12px;height:12px;background:${VERM};border-radius:3px;"></i> Gastou</span>
+        <span>● Saldo do dia (verde = positivo, vermelho = negativo)</span>
+      </div>
+      <div style="overflow-x:auto;">${comMov.length ? svg : '<p class="empty">Nenhuma movimentação neste período.</p>'}</div>
+    </div>
+    <div class="panel"><div class="table-wrap"><table><thead><tr><th>Dia</th><th>Entrou</th><th>Gastou</th><th>Saldo do dia</th><th>Resultado</th></tr></thead><tbody>
+      ${comMov.slice().reverse().map(x => `<tr><td>${dataBR(x.d)}</td><td style="color:${VERDE};font-weight:700;">${moeda(x.e)}</td><td style="color:${VERM};font-weight:700;">${moeda(x.g)}</td><td><b style="color:${x.s >= 0 ? VERDE : VERM}">${moeda(x.s)}</b></td><td>${x.s > 0 ? '✅ Positivo' : (x.s < 0 ? '⚠ Negativo' : 'Empatou')}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sem movimentação.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+document.getElementById('resPeriodo').addEventListener('change', renderResultado);
 
 /* ==========================================================
    GALERIA DE CLIENTES + EVOLUÇÃO DA OFICINA (fotos e vídeos no Supabase Storage)
@@ -5384,7 +5619,7 @@ function montarNotaFiscalHTML(o, itens){
     </div>`;
 }
 
-function montarOrcamentoClienteHTML(o, itens){
+function montarOrcamentoClienteHTML(o, itens, imgsAnexo = []){
   const R = '#e11d1d', K = '#111';
   const cli = stateClientes.find(c => c.id === o.cliente_id) || {};
   const placa = (typeof placaDaOrdem === 'function' && placaDaOrdem(o)) || '';
@@ -5394,7 +5629,9 @@ function montarOrcamentoClienteHTML(o, itens){
   const linhasServ = servs.length ? servs : String(o.servico || '').split('\n').map(l => l.replace(/^[\s•\-–*·]+/, '').trim()).filter(Boolean).map(l => ({ descricao: l, valor_total: null, _txt: true }));
   const val = i => i.valor_total === null || i.valor_total === undefined ? `<span style="color:#777;font-weight:400;">${i._txt ? '—' : '(valor a definir)'}</span>` : moeda(i.valor_total);
   const th = t => `<div style="background:${R};color:#fff;font-weight:800;padding:8px 12px;font-size:15px;letter-spacing:.5px;border-radius:6px 6px 0 0;">${t}</div>`;
-  const linha = (a, b) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 12px;border-bottom:1px solid #e3e3e3;font-size:13px;"><span style="white-space:pre-line;">${escImp(a)}</span><b style="white-space:nowrap;">${b}</b></div>`;
+  const mostrarDesc = !document.getElementById('orcDescServ') || document.getElementById('orcDescServ').checked;
+  const descServ = i => { if(!mostrarDesc || !i.referencia_id) return ''; const sv = stateServicos.find(x => x.id === i.referencia_id); return sv && sv.descricao ? sv.descricao : ''; };
+  const linha = (a, b, sub) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 12px;border-bottom:1px solid #e3e3e3;font-size:13px;"><span style="white-space:pre-line;">${escImp(a)}${sub ? `<br><small style="color:#666;font-weight:400;">${escImp(sub)}</small>` : ''}</span><b style="white-space:nowrap;">${b}</b></div>`;
   const totServ = servs.reduce((t, i) => t + (Number(i.valor_total) || 0), 0), totPecas = pecas.reduce((t, i) => t + (Number(i.valor_total) || 0), 0);
   const barra = (t, v) => `<div style="background:${K};color:#fff;display:flex;justify-content:space-between;padding:9px 12px;font-weight:800;border-radius:0 0 6px 6px;"><span>${t}</span><span>${v}</span></div>`;
   let garantia = '';
@@ -5413,10 +5650,19 @@ function montarOrcamentoClienteHTML(o, itens){
       <div style="flex:1;"><b style="font-size:11px;color:#555;">DATA DO ORÇAMENTO</b><br><b>${dataOS}</b></div>
     </div>
     <div style="padding:12px 16px;">
-      <div>${th('🔧 SERVIÇOS')}${linhasServ.map(i => linha(i.descricao, val(i))).join('') || linha('—', '')}${barra('TOTAL DOS SERVIÇOS', moeda(totServ))}</div>
+      <div>${th('🔧 SERVIÇOS')}${linhasServ.map(i => linha(i.descricao, val(i), descServ(i))).join('') || linha('—', '')}${barra('TOTAL DOS SERVIÇOS', moeda(totServ))}</div>
       ${(pecas.length || o.pecas_cliente_obs) ? `<div style="margin-top:12px;">${th('⚙ PEÇAS')}
         ${o.pecas_cliente_obs ? `<div style="background:#f1f1f1;padding:8px 12px;font-size:13px;border-bottom:1px solid #e3e3e3;"><b style="font-size:11px;">PEÇAS COMPRADAS PELO CLIENTE</b><br>✔ ${escImp(o.pecas_cliente_obs).replace(/\n/g, '<br>✔ ')}</div>` : ''}
-        ${pecas.map(i => linha(Number(i.quantidade) !== 1 ? i.descricao + ' × ' + i.quantidade : i.descricao, val(i))).join('')}
+        ${(() => {
+          const subt = t => `<div style="background:#f1f1f1;padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;">${escImp(t)}</div>`;
+          const nm = i => Number(i.quantidade) !== 1 ? i.descricao + ' × ' + i.quantidade : i.descricao;
+          const dasLojas = pecas.filter(i => i.origem === 'loja'), daOficina = pecas.filter(i => i.origem !== 'loja');
+          const lojas = [...new Set(dasLojas.map(i => i.loja || 'Loja parceira'))];
+          let h = '';
+          if(daOficina.length){ h += (dasLojas.length ? subt('PEÇAS DA OFICINA') : '') + daOficina.map(i => linha(nm(i), val(i))).join(''); }
+          lojas.forEach(l => { h += subt('PEÇAS DA LOJA ' + l.toUpperCase() + (imgsAnexo.length ? ' (COTAÇÃO EM ANEXO)' : '')) + dasLojas.filter(i => (i.loja || 'Loja parceira') === l).map(i => linha(nm(i), val(i))).join(''); });
+          return h;
+        })()}
         ${pecas.length ? barra('TOTAL DAS PEÇAS', moeda(totPecas)) : ''}</div>` : ''}
       ${o.brindes ? `<div style="margin-top:12px;">${th('🎁 BRINDES')}<div style="background:#f1f1f1;padding:10px 12px;font-size:13px;line-height:1.7;">✔ ${escImp(o.brindes).split('\n').filter(x => x.trim()).join('<br>✔ ')}</div></div>` : ''}
       ${garantia}
@@ -5431,20 +5677,104 @@ function montarOrcamentoClienteHTML(o, itens){
       </div>
       <div style="margin-top:14px;background:${K};color:#fff;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;"><span>${escImp(o.veiculo || '')}${placa ? ' | Placa: ' + escImp(placa) : ''}</span><span>${escImp(statePerfil.telefone || '')}</span></div>
     </div>
+    ${imgsAnexo.length ? `<div style="page-break-before:always;padding:12px 16px;">${th('📎 ANEXO — COTAÇÃO DA LOJA')}${imgsAnexo.map(u => `<img src="${u}" crossorigin="anonymous" style="width:100%;margin-top:10px;border:1px solid #ddd;">`).join('')}</div>` : ''}
   </div>`;
 }
+let orcOrdemId = null, orcItens = [], orcAnexos = [];
 async function abrirOrcamentoCliente(id){
   const o = stateOrdens.find(x => x.id === id); if(!o) return;
-  ordemNotaFiscalAtual = o; docNotaModo = 'orcamento';
+  ordemNotaFiscalAtual = o; docNotaModo = 'orcamento'; orcOrdemId = id;
   document.getElementById('tituloModalNota').textContent = 'Orçamento para o cliente';
-  const itens = await DB.ordemItens.listar(id);
-  document.getElementById('notaFiscalPreview').innerHTML = montarOrcamentoClienteHTML(o, itens);
+  orcItens = await DB.ordemItens.listar(id);
+  orcAnexos = (await DB.fotosOS.listar(id, 'orcamento')).map(a => ({ ...a, tipo: tipoArquivo(a.nome) }));
   abrirModal('modalNotaFiscal');
+  renderOrcOpcoes(o);
+  redesenharOrcamento();
+}
+function redesenharOrcamento(){
+  const o = stateOrdens.find(x => x.id === orcOrdemId); if(!o) return;
+  ordemNotaFiscalAtual = o;
+  const chk = document.getElementById('orcAnexar');
+  const imgs = (chk ? chk.checked : true) ? orcAnexos.filter(a => a.tipo === 'imagem').map(a => a.url) : [];
+  document.getElementById('notaFiscalPreview').innerHTML = montarOrcamentoClienteHTML(o, orcItens, imgs);
+}
+function renderOrcOpcoes(o){
+  const box = document.getElementById('orcOpcoes'); box.style.display = 'block'; box.open = true;
+  const nImg = orcAnexos.filter(a => a.tipo === 'imagem').length, nPdf = orcAnexos.filter(a => a.tipo === 'pdf').length;
+  const inp = 'padding:6px 8px;font-size:13px;';
+  box.innerHTML = `<summary style="cursor:pointer;font-weight:700;">⚙ Opções do orçamento: brindes, peças e anexos</summary>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;font-size:13px;">
+    <div><b>🎁 Brindes</b> <span class="hint">(um por linha)</span>
+      <textarea id="orcBrindes" rows="3" style="width:100%;${inp}" placeholder="Ex: Lavagem no motor">${escImp(o.brindes || '')}</textarea>
+      <button type="button" class="btn-ghost" onclick="orcAplicarBrindes()">Aplicar brindes</button></div>
+    <div><b>🔧 Peça da oficina (do estoque)</b>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+        <select id="orcEstSel" style="${inp}flex:1;min-width:180px;"><option value="">— escolha a peça —</option>${stateEstoque.map(e => `<option value="${e.id}">${escImp(e.nome)} — ${moeda(e.preco_venda)}</option>`).join('')}</select>
+        <input type="number" id="orcEstQtd" value="1" min="1" step="1" style="${inp}width:70px;" title="Quantidade">
+        <button type="button" class="btn-ghost" onclick="orcAddPecaOficina()">+ Adicionar</button></div></div>
+    <div><b>🏪 Peça de loja terceirizada</b>
+      <datalist id="orcLojasList">${stateFornecedores.map(f => `<option value="${escImp(f.nome)}">`).join('')}</datalist>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+        <input type="text" id="orcLoja" list="orcLojasList" placeholder="Loja (ex: Marcio Auto Peças)" style="${inp}flex:1;min-width:150px;">
+        <input type="text" id="orcLojaDesc" placeholder="Peça (ex: Óleo de freio DOT-4)" style="${inp}flex:2;min-width:170px;">
+        <input type="number" id="orcLojaQtd" value="1" min="1" step="1" style="${inp}width:60px;" title="Quantidade">
+        <input type="number" id="orcLojaValor" step="0.01" min="0" placeholder="valor total" style="${inp}width:100px;" title="Deixe vazio para 'valor a definir'">
+        <button type="button" class="btn-ghost" onclick="orcAddPecaLoja()">+ Adicionar</button></div></div>
+    <div><b>✅ Aprovação do cliente</b>
+      <div class="hint" style="margin:4px 0;">${o.aprovado_em ? `Aprovado por <b>${escImp(o.aprovado_nome)}</b> em ${new Date(o.aprovado_em).toLocaleString('pt-BR', { timeZone:'America/Sao_Paulo', dateStyle:'short', timeStyle:'short' })} (valor ${moeda(o.aprovado_valor)}).` : (o.status === 'orcamento' ? '⏳ Ainda não aprovado. Envie o link: o cliente vê o orçamento e aprova com nome, data e hora.' : 'Esta O.S. não está mais em orçamento.')}</div>
+      ${o.aprovado_em ? '' : '<button type="button" class="btn-primary" onclick="orcEnviarAprovacao()">📲 Enviar link de aprovação no WhatsApp</button>'}</div>
+    <div><label style="display:flex;flex-direction:row;gap:8px;align-items:center;margin:0 0 6px;"><input type="checkbox" id="orcDescServ" checked onchange="redesenharOrcamento()"> <b>📝 Mostrar a descrição de cada serviço</b> <span class="hint">(do catálogo de serviços)</span></label>
+      <label style="display:flex;flex-direction:row;gap:8px;align-items:center;margin:0;"><input type="checkbox" id="orcAnexar" checked onchange="redesenharOrcamento()"> <b>📎 Anexar cotação da loja ao orçamento</b> <span class="hint">(${nImg} foto(s) em "Orçamento da autopeça")</span></label>
+      ${nPdf ? `<div class="hint" style="color:var(--wait);">⚠ ${nPdf} PDF em anexo: PDF não entra dentro do PDF do orçamento — envie junto ou transforme em foto.</div>` : ''}
+      <button type="button" class="btn-ghost" style="margin-top:4px;" onclick="abrirFotosOS(${o.id})">Gerenciar anexos da O.S.</button></div>
+  </div>`;
+}
+function orcEnviarAprovacao(){
+  const o = stateOrdens.find(x => x.id === orcOrdemId); if(!o) return;
+  if(!o.portal_token){ alert('Essa O.S. ainda não tem link (abra-a no lápis e salve para gerar um).'); return; }
+  const cli = stateClientes.find(c => c.id === o.cliente_id) || {};
+  const link = location.origin + location.pathname + '?os=' + o.portal_token;
+  const msg = `Olá, ${(o.cliente_nome || '').split(' ')[0]}! Segue o orçamento do seu ${o.veiculo || 'veículo'} (total ${moeda(o.valor)}). Veja os detalhes e aprove por aqui: ${link}`;
+  const tel = cli.telefone ? linkWhats(cli.telefone) : 'https://wa.me/';
+  window.open(tel + (tel.includes('?') ? '&' : '?') + 'text=' + encodeURIComponent(msg), '_blank');
+}
+async function orcPersistir(){
+  await DB.ordemItens.substituir(orcOrdemId, orcItens);
+  if(orcItens.some(i => i.valor_total !== null && i.valor_total !== undefined)){
+    await DB.atualizarOrdem(orcOrdemId, { valor: r2(orcItens.reduce((t, i) => t + (Number(i.valor_total) || 0), 0)) });
+  }
+  await render();
+  orcItens = await DB.ordemItens.listar(orcOrdemId);
+  redesenharOrcamento();
+}
+async function orcAplicarBrindes(){
+  const txt = document.getElementById('orcBrindes').value.trim();
+  const ok = await DB.atualizarOrdem(orcOrdemId, { brindes: txt || null });
+  if(!ok) return;
+  await render(); redesenharOrcamento(); mostrarAviso('Brindes atualizados.');
+}
+async function orcAddPecaOficina(){
+  const est = stateEstoque.find(e => e.id === Number(document.getElementById('orcEstSel').value));
+  if(!est){ alert('Escolha a peça do estoque.'); return; }
+  const q = Number(document.getElementById('orcEstQtd').value) || 1, pv = est.preco_venda === null || est.preco_venda === undefined ? null : Number(est.preco_venda);
+  orcItens.push({ tipo:'peca', referencia_id: est.id, descricao: est.nome, quantidade: q, valor_unitario: pv, valor_total: pv === null ? null : r2(pv * q),
+    custo_unitario: est.preco_custo ?? null, custo_total: est.preco_custo != null ? r2(Number(est.preco_custo) * q) : null, origem:'oficina', loja:null });
+  await orcPersistir();
+}
+async function orcAddPecaLoja(){
+  const loja = document.getElementById('orcLoja').value.trim(), desc = document.getElementById('orcLojaDesc').value.trim();
+  if(!loja || !desc){ alert('Informe a loja e a peça.'); return; }
+  const q = Number(document.getElementById('orcLojaQtd').value) || 1, vt = document.getElementById('orcLojaValor').value;
+  const total = vt === '' ? null : Number(vt);
+  orcItens.push({ tipo:'peca_avulsa', referencia_id: null, descricao: desc, quantidade: q, valor_unitario: total === null ? null : r2(total / q), valor_total: total,
+    custo_unitario: null, custo_total: null, origem:'loja', loja });
+  await orcPersistir();
 }
 async function abrirNotaFiscal(id){
   const o = stateOrdens.find(x => x.id === id);
   if(!o) return;
   ordemNotaFiscalAtual = o; docNotaModo = 'nota-fiscal';
+  document.getElementById('orcOpcoes').style.display = 'none';
   document.getElementById('tituloModalNota').textContent = 'Nota fiscal / Recibo';
   if(!o.numero_nf){ // número sequencial gerado pelo banco na primeira emissão (nunca repete nem muda)
     try {
@@ -5474,7 +5804,8 @@ function gerarPdfNotaFiscal(){
     margin: 10,
     filename: `${docNotaModo === 'orcamento' ? 'orcamento' : 'nota-fiscal'}-${numero}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
+    html2canvas: { scale: 2, useCORS: true },
+    pagebreak: { mode: ['css', 'legacy'] },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
   }).from(el).save();
 }
