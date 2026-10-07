@@ -146,6 +146,13 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .nav-sub .nav-item{color:var(--text-dim); font-size:14px; font-weight:500; padding:8px 12px;}
 .nav-sub .nav-item.active{color:var(--text); font-weight:700;}
 .nav-sub .nav-item.active::before{left:-8px; top:6px; bottom:6px;}
+.gal-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px;}
+.gal-item{background:var(--surface-2); border-radius:10px; overflow:hidden; display:flex; flex-direction:column;}
+.gal-item img,.gal-item video{width:100%; height:150px; object-fit:cover; display:block; cursor:zoom-in; background:#000;}
+.gal-item .gal-info{padding:6px 8px; font-size:12px; display:flex; flex-direction:column; gap:4px;}
+.gal-item .gal-info input[type=date]{width:100%; font-size:12px; padding:3px;}
+.gal-cliente{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:left; cursor:pointer; color:var(--text); display:flex; flex-direction:column; gap:4px;}
+.gal-cliente:hover{border-color:var(--accent);}
 .nav-item.nav-principal{font-size:16px; font-weight:800; color:var(--text);}
 .tag{font-size:10px; background:var(--surface-2); padding:2px 6px; border-radius:20px; margin-left:6px;}
 
@@ -281,6 +288,9 @@ tr:last-child td{border-bottom:none;}
 }
 
 .icon-row{display:flex; gap:4px; align-items:center; white-space:nowrap;}
+td.icon-row{display:table-cell; vertical-align:middle; white-space:nowrap;}
+td.icon-row .btn-icon{margin-right:2px; vertical-align:middle;}
+td{vertical-align:middle;}
 
 .itens-lista{border:1px solid var(--border); border-radius:8px; margin-bottom:12px; max-height:160px; overflow-y:auto;}
 .item-linha{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border); font-size:13px;}
@@ -332,6 +342,16 @@ tr:last-child td{border-bottom:none;}
 }
 .whats-float svg{width:28px; height:28px;}
 .whats-float:hover{filter:brightness(1.08);}
+/* DOCK: todos os botões flutuantes num só lugar, recolhido por padrão */
+.dock{position:fixed; right:22px; bottom:22px; z-index:60; display:flex; flex-direction:column-reverse; align-items:flex-end; gap:10px;}
+.dock-itens{display:none; flex-direction:column; align-items:flex-end; gap:10px;}
+.dock.open .dock-itens{display:flex;}
+.dock-toggle{width:54px; height:54px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:26px; line-height:1; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.4); transition:transform .15s;}
+.dock.open .dock-toggle{transform:rotate(45deg);}
+.dock .admin-float,.dock .os-float,.dock .whats-float{position:static !important; right:auto !important; top:auto !important; bottom:auto !important; width:auto; height:44px; border-radius:22px; padding:0 18px 0 14px; gap:8px; font-size:14px; font-weight:700; white-space:nowrap;}
+.dock .whats-float svg{width:22px; height:22px;}
+.dock .dock-label{display:inline;}
+.floating-panel{right:92px !important; bottom:22px !important;}
 
 /* PAINEL FLUTUANTE ARRASTÁVEL (busca WhatsApp) */
 .floating-panel{
@@ -386,6 +406,12 @@ tr:last-child td{border-bottom:none;}
 .veic-ico svg{width:18px; height:18px;}
 
 /* Nova OS compacta: 2 colunas pra caber tudo na tela sem rolar */
+#modalFotosOS .modal-box{width:1200px; max-width:96vw; max-height:94vh; overflow-y:auto; padding:18px 24px;}
+#modalFotosOS .fotos-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:10px; margin:8px 0 14px;}
+#modalFotosOS .modal-actions{position:sticky; bottom:-18px; background:var(--surface); padding:10px 0 4px; margin-top:6px;}
+#modalFotosOS .modal-box::-webkit-scrollbar{width:12px;}
+#modalFotosOS .modal-box::-webkit-scrollbar-thumb{background:var(--accent); border-radius:6px;}
+#modalFotosOS .modal-box::-webkit-scrollbar-track{background:var(--surface-2);}
 #modalOrdem .modal-box{width:880px; max-width:96vw; max-height:96vh; overflow-y:auto; padding:14px 20px;}
 #modalOrdem h3{font-size:17px; margin:0;}
 #modalOrdem .os-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
@@ -412,6 +438,10 @@ tr:last-child td{border-bottom:none;}
 .modal-box{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:26px; width:420px; max-width:92vw;}
 .modal-box h3{font-size:20px; margin-bottom:18px;}
 form label{display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-dim); margin-bottom:14px; font-weight:600; min-width:0;}
+form.grid2[style*="align-items:end"] > label{margin-bottom:0;}
+form.grid2[style*="align-items:end"] > .btn-primary{height:40px;}
+#btnAgendaMesAnterior,#btnAgendaMesProximo{font-size:36px; line-height:1; font-weight:700; color:var(--accent); padding:2px 16px 6px;}
+#btnAgendaMesAnterior:hover,#btnAgendaMesProximo:hover{background:var(--surface-2); color:var(--accent);}
 input, select, textarea{
   background:var(--surface-2); border:1px solid var(--border); color:var(--text);
   padding:10px 12px; border-radius:8px; font-family:'Inter',sans-serif; font-size:14px;
@@ -560,6 +590,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="nav-sub" id="sub-operacao">
           <button class="nav-item" data-view="ordens">Ordens de serviço</button>
           <button class="nav-item" data-view="agenda">Agenda</button>
+          <button class="nav-item" data-view="galeria">Galeria de clientes</button>
+          <button class="nav-item" data-view="oficina">Oficina (evolução)</button>
         </div>
       </div>
 
@@ -713,6 +745,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     </section>
 
     <!-- AGENDA -->
+    <section class="view" id="view-galeria">
+      <header class="view-head"><h1>Galeria de clientes</h1><p>Fotos e vídeos de cada cliente e veículo</p></header>
+      <div id="galeriaConteudo"></div>
+    </section>
+
+    <section class="view" id="view-oficina">
+      <header class="view-head"><h1>Oficina</h1><p>Evolução da oficina por data: suba fotos e vídeos novos e veja como tudo mudou</p></header>
+      <div id="oficinaConteudo"></div>
+    </section>
+
     <section class="view" id="view-agenda">
       <header class="view-head">
         <h1>Agenda</h1>
@@ -842,6 +884,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <!-- DESPESAS DO DIA -->
     <section class="view" id="view-despesas">
       <header class="view-head"><h1>Despesas do dia</h1><p>Gastos variáveis, lançados na hora (ex: peça comprada na autopeça)</p></header>
+      <div class="panel" id="acertoTom" style="margin-bottom:14px;"></div>
       <div class="panel" style="margin-bottom:14px;">
         <form id="formDespesa" class="grid2" style="align-items:end;">
           <label>Descrição<input type="text" name="descricao" placeholder="Ex: Peça na Autopeças Brasil" required></label>
@@ -853,6 +896,12 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
             </select>
           </label>
           <label>Data<input type="date" name="data" required></label>
+          <label>Quem pagou
+            <select name="pago_por" required>
+              <option value="" disabled selected hidden>Escolha quem pagou</option>
+              <option>Tom Gás</option><option>Fernando</option><option>Paulo mecânico</option>
+            </select>
+          </label>
           <label>O.S. relacionada (opcional)<select name="ordem_id" id="selectOrdemDespesa"><option value="">— nenhuma —</option></select></label>
           <button type="submit" class="btn-primary">Lançar despesa</button>
         </form>
@@ -863,6 +912,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <textarea id="loteDespesasTxt" rows="9" style="width:100%;" placeholder="Shampoo automotivo | 35,00"></textarea>
         <div class="grid2" style="margin-top:8px;align-items:end;">
           <label>Forma de pagamento<select id="loteDespesasForma"><option>Outros</option><option>Pix</option><option>Dinheiro</option><option>Cartão de débito</option><option>Cartão de crédito</option></select></label>
+          <label>Quem pagou<select id="loteDespesasPagoPor"><option>Tom Gás</option><option>Fernando</option><option>Paulo mecânico</option></select></label>
           <label>Data<input type="date" id="loteDespesasData"></label>
         </div>
         <button type="button" class="btn-primary" id="btnLoteDespesas" style="margin-top:8px;">Lançar todas</button>
@@ -870,7 +920,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="panel">
         <div class="table-wrap">
           <table id="tabelaDespesas">
-            <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>O.S.</th><th>Valor</th><th></th></tr></thead>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Quem pagou</th><th>O.S.</th><th>Valor</th><th title="Marque quando o dinheiro já voltou para quem pagou">Devolvido</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -1093,27 +1143,36 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 </div>
 
 <!-- BOTÃO ADMINISTRAÇÃO (topo direito) -->
+<div class="dock" id="dock">
+<button type="button" class="dock-toggle" id="dockToggle" title="Atalhos">+</button>
+<div class="dock-itens">
 <button id="btnAdminTop" class="admin-float" title="Administração">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="3"/>
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
   </svg>
+<span class="dock-label">Administração</span>
 </button>
 
 <!-- BOTÃO BUSCA GLOBAL (topo direito, atalho Ctrl+K) -->
 <button id="btnBuscaGlobal" class="admin-float" style="right:74px;" title="Buscar em tudo (Ctrl+K)">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+<span class="dock-label">Buscar em tudo</span>
 </button>
 
 <!-- BOTÃO NOVA OS (atalho rápido, logo abaixo do botão Administração) -->
 <button id="btnNovaOSFloat" class="os-float" title="Abrir uma nova OS rapidinho">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+<span class="dock-label">Nova O.S.</span>
 </button>
 
 <!-- BOTÃO FLUTUANTE WHATSAPP -->
 <button id="btnWhatsFloat" class="whats-float" title="Buscar cliente no WhatsApp">
   <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>
+<span class="dock-label">WhatsApp</span>
 </button>
+</div>
+</div>
 
 <!-- PAINEL FLUTUANTE BUSCA WHATSAPP (arrastável) -->
 <div id="painelBuscaWhats" class="floating-panel">
@@ -1328,7 +1387,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
 <!-- MODAL RECEBIMENTO -->
 <div class="modal" id="modalFotosOS">
-  <div class="modal-box" style="max-width:640px;">
+  <div class="modal-box">
     <h3 id="tituloFotosOS">Anexos da OS</h3>
     <p class="hint" style="margin-top:-8px;">Fotos, vídeos e PDFs. Arraste um arquivo pra outra categoria pra reclassificar.</p>
     <div id="fotosBlocos"></div>
@@ -2248,6 +2307,13 @@ document.querySelectorAll('.nav-group-toggle').forEach(btn => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 document.getElementById('btnAdminTop').addEventListener('click', () => irPara('administracao'));
+(function(){
+  const dock = document.getElementById('dock');
+  document.getElementById('dockToggle').addEventListener('click', e => { e.stopPropagation(); dock.classList.toggle('open'); });
+  dock.querySelector('.dock-itens').addEventListener('click', () => dock.classList.remove('open'));
+  document.addEventListener('click', e => { if(!dock.contains(e.target)) dock.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') dock.classList.remove('open'); });
+})();
 // Relatórios de vendas: ticket médio, comparativo mensal e ranking de serviços (só OS concluídas)
 async function renderRelatoriosVendas(){
   const conc = stateOrdens.filter(o => o.status === 'concluida');
@@ -2291,6 +2357,8 @@ async function renderRelatoriosVendas(){
 }
 
 function irPara(view){
+  if(view === 'galeria'){ galeriaClienteId = null; setTimeout(renderGaleria, 0); }
+  if(view === 'oficina') setTimeout(renderOficina, 0);
   if(view === 'relatorios') setTimeout(renderRelatoriosVendas, 0);
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
@@ -4564,7 +4632,7 @@ document.getElementById('formFecharCaixa').addEventListener('submit', async e =>
 function mostrarApp(email){
   document.getElementById('telaLogin').style.display = 'none';
   document.getElementById('telaApp').style.display = '';
-  document.getElementById('btnSair').innerHTML = '🚪 Sair (<span style="font-size:11px;">' + escImp(email) + '</span>)';
+  document.getElementById('btnSair').innerHTML = '🚪 Sair';
 }
 function mostrarLogin(){
   document.getElementById('telaApp').style.display = 'none';
@@ -4746,9 +4814,45 @@ document.querySelectorAll('.view').forEach(v => {
    separados das Contas a Pagar (que ficam pra contas fixas/recorrentes e
    fornecedores a prazo)
    ========================================================== */
+function renderAcertoTom(){
+  const el = document.getElementById('acertoTom'); if(!el) return;
+  const n = v => Number(v) || 0;
+  const entrou = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro').reduce((t, p) => t + n(p.valor), 0);
+  const soma = f => stateDespesas.filter(f).reduce((t, d) => t + n(d.valor), 0);
+  const tomAberto = soma(d => d.pago_por === 'Tom Gás' && !d.reembolsado);
+  const ferAberto = soma(d => d.pago_por === 'Fernando' && !d.reembolsado);
+  const pauloAberto = soma(d => d.pago_por === 'Paulo mecânico' && !d.reembolsado);
+  const semQuem = soma(d => !d.pago_por);
+  const jaDevolvido = soma(d => d.reembolsado);
+  const pagaOutros = soma(d => d.pago_por === 'Tom Gás' || d.pago_por === 'Fernando');
+  const pagoPaulo = soma(d => d.pago_por === 'Paulo mecânico');
+  const sobra = entrou - pagaOutros + pagoPaulo;
+  const caixa = (t, v, cor, dica) => `<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;flex:1;min-width:150px;"><div style="font-size:12px;color:var(--text-dim);">${t}</div><div style="font-size:20px;font-weight:800;${cor ? 'color:' + cor : ''}">${moeda(v)}</div>${dica ? `<div style="font-size:11px;color:var(--text-dim);">${dica}</div>` : ''}</div>`;
+  const linhasOS = stateOrdens.map(o => {
+    const ent = stateOrdemPagamentos.filter(p => p.ordem_id === o.id && p.destino !== 'terceiro').reduce((t, p) => t + n(p.valor), 0);
+    const gas = stateDespesas.filter(d => d.ordem_id === o.id).reduce((t, d) => t + n(d.valor), 0);
+    return { o, ent, gas };
+  }).filter(x => x.ent > 0 || x.gas > 0).sort((a, b) => b.o.id - a.o.id);
+  el.innerHTML = `
+    <h3 style="margin:0 0 8px;">Panorama: quanto entrou e o que voltar para quem pagou</h3>
+    <p class="hint" style="margin:0 0 10px;">Tudo entra pelo Tom (cartão, Pix, financeira). Cada gasto tem "quem pagou" para o dinheiro voltar ao lugar certo.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      ${caixa('💵 Já entrou (O.S. recebidas)', entrou, 'var(--ok)')}
+      ${caixa('↩ Devolver ao Tom Gás', tomAberto, 'var(--accent)', 'gastos pagos pelo Tom, ainda não devolvidos')}
+      ${caixa('↩ Devolver ao Fernando', ferAberto, '', 'gastos pagos pelo Fernando')}
+      ${caixa('↩ Devolver ao Paulo mecânico', pauloAberto, '', 'gastos pagos pelo Paulo')}
+      ${caixa('🔧 Sobra pro Paulo mecânico', sobra, 'var(--ok)', 'entrou − gastos pagos por Tom e Fernando')}
+    </div>
+    ${semQuem > 0 ? `<p class="hint" style="margin:8px 0 0;color:var(--wait);">⚠ ${moeda(semQuem)} em gastos sem "quem pagou" — escolha na tabela abaixo para entrar na conta.</p>` : ''}
+    ${jaDevolvido > 0 ? `<p class="hint" style="margin:6px 0 0;">Já devolvido (marcado na tabela): ${moeda(jaDevolvido)}</p>` : ''}
+    <div class="table-wrap" style="margin-top:10px;"><table><thead><tr><th>O.S.</th><th>Cliente</th><th>Entrou</th><th>Gastos</th><th>Sobra</th></tr></thead><tbody>
+      ${linhasOS.map(x => `<tr><td>#${x.o.id}</td><td>${escImp(x.o.cliente_nome || '')}</td><td>${moeda(x.ent)}</td><td>${moeda(x.gas)}</td><td><b>${moeda(x.ent - x.gas)}</b></td></tr>`).join('')}
+    </tbody></table></div>`;
+}
 function renderDespesas(){
   const sel = document.getElementById('selectOrdemDespesa');
   if(sel) sel.innerHTML = '<option value="">— nenhuma —</option>' + stateOrdens.map(o => `<option value="${o.id}">#${o.id} — ${escImp(o.cliente_nome || '')} (${escImp(o.veiculo || '')})</option>`).join('');
+  renderAcertoTom();
   const tbody = document.querySelector('#tabelaDespesas tbody');
   if(!tbody) return;
   const lista = [...stateDespesas].sort((a, b) => (b.data || '').localeCompare(a.data || '') || b.id - a.id);
@@ -4757,8 +4861,10 @@ function renderDespesas(){
       <td><input type="date" value="${d.data || ''}" onchange="editarDespesaCampo(${d.id}, 'data', this.value)" style="width:150px;"></td>
       <td><input type="text" value="${escImp(d.descricao).replace(/"/g, '&quot;')}" onchange="editarDespesaCampo(${d.id}, 'descricao', this.value)" style="min-width:200px;"></td>
       <td><select onchange="editarDespesaCampo(${d.id}, 'forma_pagamento', this.value)">${['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Outros'].map(f => `<option${f === d.forma_pagamento ? ' selected' : ''}>${f}</option>`).join('')}${d.forma_pagamento && !['Pix','Dinheiro','Cartão de débito','Cartão de crédito','Outros'].includes(d.forma_pagamento) ? `<option selected>${escImp(d.forma_pagamento)}</option>` : ''}</select></td>
-      <td>${d.ordem_id ? '#' + d.ordem_id : '—'}</td>
+      <td><select onchange="editarDespesaCampo(${d.id}, 'pago_por', this.value)"><option value="">— definir —</option>${['Tom Gás','Fernando','Paulo mecânico'].map(n => `<option${n === d.pago_por ? ' selected' : ''}>${n}</option>`).join('')}</select></td>
+      <td><select onchange="editarDespesaCampo(${d.id}, 'ordem_id', this.value)" style="max-width:170px;"><option value="">— nenhuma —</option>${stateOrdens.map(o => `<option value="${o.id}"${o.id === d.ordem_id ? ' selected' : ''}>#${o.id} ${escImp((o.cliente_nome || '').split(' ')[0])}</option>`).join('')}</select></td>
       <td><input type="number" step="0.01" min="0" value="${d.valor}" onchange="editarDespesaCampo(${d.id}, 'valor', this.value)" style="width:100px;"></td>
+      <td style="text-align:center;"><input type="checkbox" ${d.reembolsado ? 'checked' : ''} onchange="editarDespesaCampo(${d.id}, 'reembolsado', this.checked)"></td>
       <td><button type="button" class="btn-icon danger" onclick="excluirDespesa(${d.id})">${ICON_DELETE}</button></td>
     </tr>`).join('');
   const empty = document.getElementById('despesasEmpty');
@@ -4769,7 +4875,7 @@ document.getElementById('formDespesa').addEventListener('submit', async e => {
   const f = new FormData(e.target);
   const ok = await DB.despesas.criar({
     descricao: f.get('descricao'), valor: Number(f.get('valor')), forma_pagamento: f.get('forma_pagamento'),
-    data: f.get('data'), ordem_id: f.get('ordem_id') ? Number(f.get('ordem_id')) : null,
+    data: f.get('data'), ordem_id: f.get('ordem_id') ? Number(f.get('ordem_id')) : null, pago_por: f.get('pago_por') || null,
   });
   if(!ok) return;
   e.target.reset();
@@ -4799,7 +4905,8 @@ document.getElementById('btnLoteDespesas').addEventListener('click', async () =>
   if(!confirm(`Lançar ${linhas.length} despesas, total ${moeda(total)}?`)) return;
   const forma = document.getElementById('loteDespesasForma').value, data = document.getElementById('loteDespesasData').value || hojeLocal();
   let ok = 0;
-  for(const x of linhas){ if(await DB.despesas.criar({ ...x, forma_pagamento: forma, data, ordem_id: null })) ok++; else break; }
+  const pagoPor = document.getElementById('loteDespesasPagoPor').value;
+  for(const x of linhas){ if(await DB.despesas.criar({ ...x, forma_pagamento: forma, data, ordem_id: null, pago_por: pagoPor })) ok++; else break; }
   if(ok === linhas.length) document.getElementById('loteDespesasTxt').value = '';
   mostrarAviso(`${ok} despesa(s) lançada(s).`);
   render();
@@ -4807,13 +4914,15 @@ document.getElementById('btnLoteDespesas').addEventListener('click', async () =>
 async function editarDespesaCampo(id, campo, valor){
   const d = stateDespesas.find(x => x.id === id); if(!d) return;
   if(campo === 'valor') valor = Number(String(valor).replace(',', '.')) || 0;
+  if(campo === 'ordem_id') valor = valor ? Number(valor) : null;
+  if(campo === 'pago_por') valor = valor || null;
   if(campo === 'data' && !valor){ alert('Escolha uma data.'); renderDespesas(); return; }
   if(campo === 'descricao' && !String(valor).trim()){ alert('A descrição não pode ficar vazia.'); renderDespesas(); return; }
   const ok = await DB.despesas.atualizar(id, { [campo]: valor });
   if(!ok){ renderDespesas(); return; }
   d[campo] = valor;
   mostrarAviso('Despesa atualizada.');
-  if(campo === 'data') renderDespesas();
+  if(['data','pago_por','ordem_id','reembolsado','valor'].includes(campo)) renderDespesas();
 }
 async function excluirDespesa(id){
   if(!confirm('Excluir esta despesa?')) return;
@@ -4821,6 +4930,142 @@ async function excluirDespesa(id){
   render();
 }
 document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
+
+/* ==========================================================
+   GALERIA DE CLIENTES + EVOLUÇÃO DA OFICINA (fotos e vídeos no Supabase Storage)
+   ========================================================== */
+const GAL_BUCKET = 'galeria';
+let galeriaClienteId = null, galOrdemAsc = false;
+window._galUrlPorId = {};
+function galTipo(f){ return f.type.startsWith('video/') ? 'video' : (f.type.startsWith('image/') ? 'imagem' : null); }
+async function galComprimir(file){
+  if(file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const esc = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * esc); c.height = Math.round(bmp.height * esc);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+    return blob && blob.size < file.size ? blob : file;
+  } catch(e){ return file; }
+}
+async function galUrls(lista){
+  const paths = lista.map(m => m.caminho); if(!paths.length) return {};
+  const { data } = await supabaseClient.storage.from(GAL_BUCKET).createSignedUrls(paths, 3600);
+  const mapa = {}; (data || []).forEach(x => { if(x.signedUrl) mapa[x.path] = x.signedUrl; });
+  lista.forEach(m => { if(mapa[m.caminho]) window._galUrlPorId[m.id] = mapa[m.caminho]; });
+  return mapa;
+}
+async function galEnviar(ctx){
+  const el = id => document.getElementById(`up-${ctx}-${id}`);
+  const files = [...el('files').files];
+  if(!files.length){ alert('Escolha ao menos uma foto ou vídeo.'); return; }
+  const data = el('data').value; if(!data){ alert('Escolha a data.'); return; }
+  const legenda = el('legenda').value.trim() || null;
+  const ordemId = ctx === 'cliente' && el('os') && el('os').value ? Number(el('os').value) : null;
+  const btn = el('btn'); btn.disabled = true; let ok = 0;
+  for(let i = 0; i < files.length; i++){
+    const f = files[i], tipo = galTipo(f);
+    btn.textContent = `Enviando ${i + 1}/${files.length}…`;
+    if(!tipo){ alert(`"${f.name}" não é foto nem vídeo — ignorado.`); continue; }
+    if(tipo === 'video' && f.size > 50 * 1024 * 1024){ alert(`"${f.name}" passa de 50 MB (limite do armazenamento) — ignorado.`); continue; }
+    const blob = tipo === 'imagem' ? await galComprimir(f) : f;
+    const ext = (tipo === 'imagem' && blob !== f) ? 'jpg' : ((f.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin');
+    const pasta = ctx === 'cliente' ? `clientes/${galeriaClienteId}` : 'oficina';
+    const caminho = `${pasta}/${data}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const up = await supabaseClient.storage.from(GAL_BUCKET).upload(caminho, blob, { contentType: blob.type || f.type || undefined });
+    if(up.error){ alert('Erro ao enviar "' + f.name + '": ' + up.error.message); continue; }
+    const ins = await supabaseClient.from('midias').insert([{ escopo: ctx, cliente_id: ctx === 'cliente' ? galeriaClienteId : null, ordem_id: ordemId, data, legenda, caminho, nome_arquivo: f.name, tipo, tamanho: blob.size }]);
+    if(ins.error){ alert('Erro ao registrar "' + f.name + '": ' + ins.error.message); await supabaseClient.storage.from(GAL_BUCKET).remove([caminho]); continue; }
+    ok++;
+  }
+  mostrarAviso(`${ok} arquivo(s) enviado(s).`);
+  ctx === 'cliente' ? renderGaleria() : renderOficina();
+}
+function galHtmlUpload(ctx, extra){
+  return `<div class="panel" style="margin-bottom:14px;"><h3 style="margin:0 0 8px;">Adicionar fotos e vídeos</h3>
+    <div class="grid2" style="align-items:end;">
+      <label>Fotos / vídeos (pode escolher vários)<input type="file" id="up-${ctx}-files" accept="image/*,video/*" multiple></label>
+      <label>Data das fotos<input type="date" id="up-${ctx}-data" value="${hojeLocal()}"></label>
+      ${extra || ''}
+      <label>Legenda (opcional)<input type="text" id="up-${ctx}-legenda" placeholder="${ctx === 'oficina' ? 'Ex: bancada nova instalada' : 'Ex: antes do reparo'}"></label>
+      <button type="button" class="btn-primary" id="up-${ctx}-btn" onclick="galEnviar('${ctx}')">Enviar</button>
+    </div></div>`;
+}
+function galHtmlItem(m, url){
+  const midia = !url ? '<div style="height:150px;display:flex;align-items:center;justify-content:center;color:var(--text-dim);">indisponível</div>'
+    : (m.tipo === 'video' ? `<video src="${url}" preload="metadata" controls playsinline></video>` : `<img src="${url}" loading="lazy" alt="" onclick="galAbrir(${m.id})">`);
+  return `<div class="gal-item">${midia}<div class="gal-info">
+    ${m.legenda ? `<span>${escImp(m.legenda)}</span>` : ''}${m.ordem_id ? `<span class="hint">O.S. #${m.ordem_id}</span>` : ''}
+    <input type="date" value="${m.data}" title="Mudar a data" onchange="galMudarData(${m.id}, this.value)">
+    <button type="button" class="btn-icon danger" title="Excluir" onclick="galExcluir(${m.id})" style="align-self:flex-end;">${ICON_DELETE}</button>
+  </div></div>`;
+}
+function galHtmlGrade(lista, urls){
+  if(!lista.length) return '<p class="empty">Nada por aqui ainda. Envie a primeira foto acima.</p>';
+  const grupos = {}; lista.forEach(m => (grupos[m.data] = grupos[m.data] || []).push(m));
+  const datas = Object.keys(grupos).sort(); if(!galOrdemAsc) datas.reverse();
+  return datas.map(d => `<div class="panel" style="margin-bottom:14px;"><h3 style="margin:0 0 10px;">📅 ${dataBR(d)} <span class="hint">· ${grupos[d].length} arquivo(s)</span></h3><div class="gal-grid">${grupos[d].map(m => galHtmlItem(m, urls[m.caminho])).join('')}</div></div>`).join('');
+}
+function galAbrir(id){
+  const url = window._galUrlPorId[id]; if(!url) return;
+  let o = document.getElementById('galLightbox');
+  if(!o){ o = document.createElement('div'); o.id = 'galLightbox'; o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:900;align-items:center;justify-content:center;cursor:zoom-out;padding:20px;'; o.onclick = () => { o.style.display = 'none'; }; document.body.appendChild(o); }
+  o.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;border-radius:8px;">`; o.style.display = 'flex';
+}
+async function galMudarData(id, data){
+  if(!data){ return; }
+  const { error } = await supabaseClient.from('midias').update({ data }).eq('id', id);
+  if(error){ alert('Erro ao mudar a data: ' + error.message); return; }
+  mostrarAviso('Data atualizada.');
+  document.getElementById('view-oficina').classList.contains('active') ? renderOficina() : renderGaleria();
+}
+async function galExcluir(id){
+  if(!confirm('Excluir esta foto/vídeo? Não dá para desfazer.')) return;
+  const { data } = await supabaseClient.from('midias').select('caminho').eq('id', id).single();
+  const del = await supabaseClient.from('midias').delete().eq('id', id);
+  if(del.error){ alert('Erro ao excluir: ' + del.error.message); return; }
+  if(data) await supabaseClient.storage.from(GAL_BUCKET).remove([data.caminho]);
+  document.getElementById('view-oficina').classList.contains('active') ? renderOficina() : renderGaleria();
+}
+function galFiltrar(txt){
+  const t = String(txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  document.querySelectorAll('#galeriaConteudo .gal-cliente').forEach(b => { b.style.display = b.dataset.nome.includes(t) ? '' : 'none'; });
+}
+function galAbrirCliente(id){ galeriaClienteId = id; renderGaleria(); }
+function galVoltar(){ galeriaClienteId = null; renderGaleria(); }
+async function renderGaleria(){
+  const el = document.getElementById('galeriaConteudo'); if(!el) return;
+  if(!galeriaClienteId){
+    const { data } = await supabaseClient.from('midias').select('cliente_id, data').eq('escopo', 'cliente');
+    const cont = {}, ult = {};
+    (data || []).forEach(m => { cont[m.cliente_id] = (cont[m.cliente_id] || 0) + 1; if(!ult[m.cliente_id] || m.data > ult[m.cliente_id]) ult[m.cliente_id] = m.data; });
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const clientes = [...stateClientes].sort((a, b) => (cont[b.id] || 0) - (cont[a.id] || 0) || String(a.nome).localeCompare(String(b.nome)));
+    el.innerHTML = `<input type="search" placeholder="Buscar cliente pelo nome…" oninput="galFiltrar(this.value)" style="margin-bottom:12px;width:100%;max-width:420px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+      ${clientes.map(c => `<button type="button" class="gal-cliente" data-nome="${norm(c.nome)}" onclick="galAbrirCliente(${c.id})"><b>${escImp(c.nome)}</b><span class="hint">${cont[c.id] ? '📷 ' + cont[c.id] + ' arquivo(s) · último em ' + dataBR(ult[c.id]) : 'sem fotos ainda'}</span></button>`).join('') || '<p class="empty">Nenhum cliente cadastrado.</p>'}
+      </div>`;
+    return;
+  }
+  const c = stateClientes.find(x => x.id === galeriaClienteId);
+  const { data } = await supabaseClient.from('midias').select('*').eq('escopo', 'cliente').eq('cliente_id', galeriaClienteId).order('data', { ascending:false }).order('id', { ascending:false });
+  const lista = data || [], urls = await galUrls(lista);
+  const ordens = stateOrdens.filter(o => o.cliente_id === galeriaClienteId);
+  const extra = `<label>O.S. (opcional)<select id="up-cliente-os"><option value="">— nenhuma —</option>${ordens.map(o => `<option value="${o.id}">#${o.id} — ${escImp(o.veiculo || '')}</option>`).join('')}</select></label>`;
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><button type="button" class="btn-ghost" onclick="galVoltar()">← Todos os clientes</button><h2 style="margin:0;">${escImp(c ? c.nome : 'Cliente')}</h2></div>`
+    + galHtmlUpload('cliente', extra) + galHtmlGrade(lista, urls);
+}
+async function renderOficina(){
+  const el = document.getElementById('oficinaConteudo'); if(!el) return;
+  const { data } = await supabaseClient.from('midias').select('*').eq('escopo', 'oficina').order('data', { ascending:false }).order('id', { ascending:false });
+  const lista = data || [], urls = await galUrls(lista);
+  const datas = [...new Set(lista.map(m => m.data))].sort();
+  const resumo = lista.length ? `${lista.length} arquivo(s) em ${datas.length} data(s) · de ${dataBR(datas[0])} até ${dataBR(datas[datas.length - 1])}` : '';
+  el.innerHTML = galHtmlUpload('oficina', '')
+    + `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;"><span class="hint">${resumo}</span>${lista.length ? `<button type="button" class="btn-ghost" onclick="galOrdemAsc = !galOrdemAsc; renderOficina();">${galOrdemAsc ? '↑ Mais antigas primeiro' : '↓ Mais recentes primeiro'} (trocar)</button>` : ''}</div>`
+    + galHtmlGrade(lista, urls);
+}
 
 /* ==========================================================
    RASCUNHOS — o que você digita num cadastro NOVO não se perde ao clicar fora
