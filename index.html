@@ -154,6 +154,8 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .gal-cliente{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:left; cursor:pointer; color:var(--text); display:flex; flex-direction:column; gap:4px;}
 .gal-cliente:hover{border-color:var(--accent);}
 .ico{display:inline-flex; color:var(--accent); vertical-align:middle; margin-right:8px;}
+.nav-item .ico svg,.nav-group-toggle .ico svg{flex-shrink:0;}
+.nav-item.nav-principal .ico{margin-right:10px;}
 .nav-sub .nav-item .ico{margin-right:8px;}
 .nav-sub .nav-item .ico svg{width:16px; height:16px;}
 .view-head h1 .ico{margin-right:12px;}
@@ -588,10 +590,10 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="version-tag">v2.0</div>
 
     <nav class="nav">
-      <button class="nav-item nav-principal active" data-view="dashboard">🏠 Painel</button>
+      <button class="nav-item nav-principal active" data-view="dashboard">Painel</button>
 
       <div class="nav-group open">
-        <button class="nav-group-toggle" data-toggle="operacao"><span>🔧 Operação</span><span class="chevron">▾</span></button>
+        <button class="nav-group-toggle" data-toggle="operacao"><span>Operação</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-operacao">
           <button class="nav-item" data-view="ordens">Ordens de serviço</button>
           <button class="nav-item" data-view="agenda">Agenda</button>
@@ -603,7 +605,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
 
       <div class="nav-group open">
-        <button class="nav-group-toggle" data-toggle="cadastros"><span>📇 Cadastros</span><span class="chevron">▾</span></button>
+        <button class="nav-group-toggle" data-toggle="cadastros"><span>Cadastros</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-cadastros">
           <button class="nav-item" data-view="clientes">Clientes</button>
           <button class="nav-item" data-view="servicos">Serviços (catálogo)</button>
@@ -613,7 +615,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </div>
 
       <div class="nav-group open">
-        <button class="nav-group-toggle" data-toggle="financeiro"><span>💰 Financeiro</span><span class="chevron">▾</span></button>
+        <button class="nav-group-toggle" data-toggle="financeiro"><span>Financeiro</span><span class="chevron">▾</span></button>
         <div class="nav-sub" id="sub-financeiro">
           <button class="nav-item" data-view="caixa">Caixa</button>
           <button class="nav-item" data-view="resultado">Resultado do dia</button>
@@ -683,9 +685,13 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div id="painelListaAReceber" style="margin-top:10px;"></div>
       </div>
 
-      <div class="panel" id="painelLembretes" style="margin-bottom:18px; display:none;">
-        <div class="panel-head"><h2>🔔 Lembretes <span id="lembretesTotal" style="color:var(--text-dim); font-size:13px;"></span></h2></div>
-        <div id="listaLembretes"></div>
+      <div class="panel" id="painelLembretes" style="margin-bottom:18px; display:none; padding-top:10px; padding-bottom:10px;">
+        <button type="button" id="lembretesToggle" aria-expanded="false" style="all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
+          <span style="font-weight:700;font-size:16px;">🔔 Lembretes <span id="lembretesTotal" style="color:var(--text-dim); font-size:13px;"></span></span>
+          <span id="lembretesChevron" style="color:var(--accent);font-size:18px;transition:transform .15s;">▾</span>
+        </button>
+        <div id="lembretesPreview" class="hint" style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="listaLembretes" style="display:none;max-height:320px;overflow-y:auto;margin-top:8px;"></div>
       </div>
 
       <div class="panel">
@@ -809,15 +815,12 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
       </header>
 
-      <div class="panel">
-        <div class="table-wrap">
-          <table id="tabelaFornecedores">
-            <thead><tr><th>Nome</th><th>Categoria</th><th>Telefone/WhatsApp</th><th>Cidade</th><th>Ações</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="empty" id="fornecedoresEmpty">Nenhum fornecedor cadastrado ainda.</p>
+      <div class="panel" style="margin-bottom:14px;">
+        <input type="search" id="buscaFornecedor" placeholder="Buscar fornecedor, especialidade ou endereço…" style="width:100%;max-width:440px;margin-bottom:10px;">
+        <div id="chipsSegmentos" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
+      <div id="fornecedoresGrupos"></div>
+      <p class="empty" id="fornecedoresEmpty">Nenhum fornecedor cadastrado ainda.</p>
     </section>
 
     <!-- ESTOQUE -->
@@ -1170,6 +1173,13 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <button type="button" class="btn-primary" id="btnBackupCompleto">⬇ Backup manual (JSON)</button>
           <button type="button" class="btn-ghost" id="btnExportarClientes">Exportar clientes (CSV)</button>
           <button type="button" class="btn-ghost" id="btnExportarOrdens">Exportar ordens (CSV)</button>
+          <button type="button" class="btn-ghost" id="btnRestaurarArquivo" style="color:var(--accent);">↩ Restaurar de um arquivo (.json)</button>
+          <input type="file" id="arquivoRestaurar" accept="application/json,.json" style="display:none;">
+        </div>
+
+        <div style="margin-top:24px;" id="painelUso">
+          <h3 style="margin:0 0 8px; font-size:14px;">💾 Espaço usado no plano</h3>
+          <div id="usoConteudo"><p class="hint">Calculando…</p></div>
         </div>
 
         <div style="margin-top:24px;">
@@ -1615,7 +1625,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       </label>
       <div class="grid2">
         <label>Categoria
-          <input type="text" name="categoria" placeholder="Ex: Autopeças, Elétrica...">
+          <input type="text" name="categoria" list="listaCategoriasForn" placeholder="Ex: Autopeças, Radiadores, Elétrica...">
+          <datalist id="listaCategoriasForn"></datalist>
         </label>
         <label>Especialidade
           <input type="text" name="especialidade" placeholder="O que fazem">
@@ -2143,6 +2154,7 @@ DB.interacoes = {
   },
   async enviarAnexo(file){
     try {
+      if(!(await espacoOk(file.size))) return null;
       const caminho = `${Date.now()}_${file.name}`;
       const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file);
       if(error){ alert('Erro ao enviar anexo: ' + mensagemErro(error)); return null; }
@@ -2166,6 +2178,7 @@ DB.fotosOS = {
   },
   async enviar(ordemId, fase, blob){
     const caminho = `os/${ordemId}/${fase}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`;
+    if(!(await espacoOk(blob.size))) return false;
     const { error } = await supabaseClient.storage.from('anexos').upload(caminho, blob, { contentType:'image/jpeg' });
     if(error){ alert('Erro ao enviar foto: ' + mensagemErro(error)); return false; }
     return true;
@@ -2174,6 +2187,7 @@ DB.fotosOS = {
   async enviarArquivo(ordemId, fase, file){
     const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
     const caminho = `os/${ordemId}/${fase}/${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${file.name.replace(/[^a-zA-Z0-9.\-]/g,'_')}`;
+    if(!(await espacoOk(file.size))) return false;
     const { error } = await supabaseClient.storage.from('anexos').upload(caminho, file, { contentType: file.type || undefined });
     if(error){ alert('Erro ao enviar arquivo: ' + mensagemErro(error)); return false; }
     return true;
@@ -2281,6 +2295,23 @@ const ICO_PATHS = {
   box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
   store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 14v6h14v-6M10 20v-4h4v4"/>',
   truck:'<rect x="2" y="6" width="12" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+  clipboard:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  car:'<path d="M5 16l1.5-5.5A2 2 0 0 1 8.4 9h7.2a2 2 0 0 1 1.9 1.5L19 16"/><rect x="3" y="16" width="18" height="4" rx="1.5"/><path d="M7 18h.01M17 18h.01"/>',
+  camera:'<path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="4"/>',
+  factory:'<path d="M3 21V10l6 4v-4l6 4V5h6v16z"/><path d="M8 21v-3M12 21v-3M16 21v-3"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c3 0 5 1.5 5 5"/>',
+  folder:'<path d="M3 6h6l2 2h10v11H3z"/>',
+  wallet:'<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="3"/><path d="M6 10h.01M18 15h.01"/>',
+  bars:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  trend:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  arrowdown:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M8 13l4 4 4-4"/>',
+  arrowup:'<circle cx="12" cy="12" r="9"/><path d="M12 17V7M8 11l4-4 4 4"/>',
+  inbox:'<path d="M4 13l2-8h12l2 8v6H4z"/><path d="M4 13h5l1 2h4l1-2h5"/>',
+  filetext:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
   gas:'<path d="M9 3h6v3a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9a4 4 0 0 1 4-4z"/><path d="M5 12h14"/>',
 };
 const svgIco = (k, tam = 18) => `<svg viewBox="0 0 24 24" width="${tam}" height="${tam}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICO_PATHS[k] || ICO_PATHS.wrench}</svg>`;
@@ -2288,6 +2319,8 @@ function icoChave(texto, padrao){
   const t = String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const regras = [
     [/ar condicionado|ar-condicionado|gas do ar|climatiz/, 'snow'],
+    [/retific/, 'engine'],
+    [/autopec/, 'box'],
     [/filtro/, 'filter'],
     [/freio|pastilha|disco|lona|sangria|cilindro mestre|burrinho|pinca/, 'brake'],
     [/pneu|roda|rodizio|balanc|alinhament|calota|rolamento|cubo/, 'wheel'],
@@ -2307,6 +2340,25 @@ function icoChave(texto, padrao){
   return r ? r[1] : padrao;
 }
 const icoNome = (nome, categoria, padrao) => `<span class="ico">${svgIco(icoChave((nome || '') + ' ' + (categoria || ''), padrao))}</span>`;
+
+/* USO DO PLANO (Supabase gratuito): 500 MB de banco · 1 GB de arquivos · 50 MB por arquivo */
+const LIMITE_DB = 500 * 1024 * 1024, LIMITE_STORAGE = 1024 * 1024 * 1024, LIMITE_ARQUIVO = 50 * 1024 * 1024;
+const fmtBytes = b => { b = Number(b) || 0; return b >= 1073741824 ? (b / 1073741824).toFixed(2).replace('.', ',') + ' GB' : (b / 1048576 >= 1 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'); };
+async function carregarUsoSistema(forcar){
+  if(!forcar && window._uso && Date.now() - window._usoEm < 120000) return window._uso;
+  const { data, error } = await supabaseClient.rpc('uso_do_sistema');
+  if(error || !data) return window._uso || null;
+  window._uso = data; window._usoEm = Date.now(); return data;
+}
+async function espacoOk(bytes){
+  if(bytes > LIMITE_ARQUIVO){ alert(`Esse arquivo tem ${fmtBytes(bytes)} e o limite por arquivo é ${fmtBytes(LIMITE_ARQUIVO)}.`); return false; }
+  const uso = await carregarUsoSistema(true); if(!uso) return true;
+  if(Number(uso.storage_bytes) + bytes > LIMITE_STORAGE * 0.97){
+    alert(`Sem espaço para esse arquivo: você já usa ${fmtBytes(uso.storage_bytes)} dos ${fmtBytes(LIMITE_STORAGE)} de fotos e vídeos do plano gratuito. Apague arquivos antigos (ou migre para o plano Pro) antes de subir mais.`);
+    return false;
+  }
+  return true;
+}
 const ICON_DELETE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
 const ICON_WHATS = '<svg viewBox="0 0 32 32" fill="currentColor"><path d="M16.04 3C9.37 3 3.98 8.39 3.98 15.06c0 2.23.61 4.32 1.68 6.12L3 29l7.99-2.6a12.03 12.03 0 0 0 5.05 1.11h.01c6.67 0 12.06-5.39 12.06-12.06C28.1 8.39 22.71 3 16.04 3Zm5.43 13.48c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.73-1.63-2.03-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.06 2.88 1.21 3.08c.15.2 2.09 3.19 5.06 4.47.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.41-.07-.13-.27-.2-.57-.35Z"/></svg>';
 const ICON_HISTORY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13a9 9 0 1 0 2.13-6.36L3 8"/><path d="M12 7v5l4 2"/></svg>';
@@ -2416,9 +2468,14 @@ document.querySelectorAll('.nav-group-toggle').forEach(btn => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 document.getElementById('btnAdminTop').addEventListener('click', () => irPara('administracao'));
-[['servicos','wrench'],['estoque','box'],['fornecedores','store']].forEach(([v, k]) => {
-  document.querySelector(`.nav-item[data-view="${v}"]`).insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 16)}</span>`);
+Object.entries({ dashboard:'home', ordens:'clipboard', agenda:'calendar', garantias:'shield', historico:'car', galeria:'camera', oficina:'factory', clientes:'users', servicos:'wrench', estoque:'box', fornecedores:'store', caixa:'wallet', resultado:'bars', metas:'target', lucro:'trend', despesas:'arrowdown', pagar:'arrowup', receber:'inbox', relatorios:'filetext' }).forEach(([v, k]) => {
+  const b = document.querySelector(`.nav-item[data-view="${v}"]`);
+  if(b) b.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, v === 'dashboard' ? 20 : 16)}</span>`);
   const h1 = document.querySelector(`#view-${v} .view-head h1`); if(h1) h1.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 30)}</span>`);
+});
+Object.entries({ operacao:'wrench', cadastros:'folder', financeiro:'wallet' }).forEach(([g, k]) => {
+  const sp = document.querySelector(`.nav-group-toggle[data-toggle="${g}"] > span:first-child`);
+  if(sp) sp.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 16)}</span>`);
 });
 (function(){
   const dock = document.getElementById('dock');
@@ -4287,12 +4344,23 @@ function renderLembretes(){
   lem.sort((a, b) => a.pri - b.pri);
   document.getElementById('painelLembretes').style.display = lem.length ? '' : 'none';
   document.getElementById('lembretesTotal').textContent = lem.length ? `(${lem.length})` : '';
+  const topo = lem[0], nivel = n => lem.filter(l => l.pri === n).length;
+  document.getElementById('lembretesPreview').innerHTML = topo ? `${nivel(1) ? '🔴 ' + nivel(1) + ' urgente(s) · ' : ''}${nivel(2) ? '🟠 ' + nivel(2) + ' · ' : ''}${nivel(3) ? '🟡 ' + nivel(3) + ' · ' : ''}Mais urgente: ${String(topo.txt).replace(/<[^>]*>/g, '')}` : '';
   document.getElementById('listaLembretes').innerHTML = lem.slice(0, 15).map(l => `
     <div class="busca-global-item" style="cursor:default;">
       <span>${l.pri === 1 ? '🔴' : l.pri === 2 ? '🟠' : l.pri === 3 ? '🟡' : '🔵'} ${l.txt}</span>
       <button class="btn-ghost" onclick="${l.acao.replace(/"/g, '&quot;')}">${l.rotulo}</button>
     </div>`).join('') + (lem.length > 15 ? `<p class="empty">+ ${lem.length - 15} lembretes</p>` : '');
 }
+function definirLembretesAberto(aberto){
+  document.getElementById('listaLembretes').style.display = aberto ? '' : 'none';
+  document.getElementById('lembretesPreview').style.display = aberto ? 'none' : '';
+  document.getElementById('lembretesChevron').style.transform = aberto ? 'rotate(180deg)' : '';
+  document.getElementById('lembretesToggle').setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  try { localStorage.setItem('lembretesAbertos', aberto ? '1' : '0'); } catch(e){}
+}
+document.getElementById('lembretesToggle').addEventListener('click', () => definirLembretesAberto(document.getElementById('listaLembretes').style.display === 'none'));
+definirLembretesAberto((() => { try { return localStorage.getItem('lembretesAbertos') === '1'; } catch(e){ return false; } })());
 function irLembrete(view, campoId, termo){
   irPara(view);
   const el = document.getElementById(campoId); el.value = termo; el.dispatchEvent(new Event('input'));
@@ -4333,6 +4401,7 @@ async function render(){
   // stats
   document.getElementById('statClientes').textContent = clientes.length;
   setTimeout(() => renderPainelHoje(), 0);
+  carregarUsoSistema().then(() => renderPainelHoje());
   document.getElementById('statOrcamentos').textContent = ordens.filter(o => o.status === 'orcamento').length;
   document.getElementById('statAbertas').textContent = ordens.filter(o => o.status === 'aberta').length;
   document.getElementById('statAndamento').textContent = ordens.filter(o => o.status === 'andamento').length;
@@ -4359,16 +4428,7 @@ async function render(){
     </tr>`).join('');
 
   // tabela fornecedores
-  document.querySelector('#tabelaFornecedores tbody').innerHTML = fornecedores.map(x => `
-    <tr>
-      <td>${icoNome(x.nome, x.categoria, 'store')}${x.nome}</td><td>${x.categoria || '—'}</td><td>${x.whatsapp || x.telefone || '—'}</td><td>${x.cidade_uf || '—'}</td>
-      <td class="icon-row">
-        ${(x.whatsapp || x.telefone) ? `<button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(x.whatsapp || x.telefone)}','_blank')">${ICON_WHATS}</button>` : ''}
-        <button class="btn-icon" title="Editar" onclick="abrirEdicaoFornecedor(${x.id})">${ICON_EDIT}</button>
-        <button class="btn-icon danger" title="Excluir" onclick="excluirFornecedor(${x.id})">${ICON_DELETE}</button>
-      </td>
-    </tr>`).join('');
-  document.getElementById('fornecedoresEmpty').style.display = fornecedores.length ? 'none' : 'block';
+  desenharFornecedores();
 
   // tabela contas a pagar
   document.querySelector('#tabelaContasPagar tbody').innerHTML = contasPagar.map(x => `
@@ -4984,6 +5044,40 @@ function desenharContasReceber(){
   document.getElementById('receberEmpty').style.display = lista.length ? 'none' : 'block';
 }
 document.getElementById('chkOcultarZeradas').addEventListener('change', desenharContasReceber);
+let segmentoForn = '';
+function desenharFornecedores(){
+  const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const busca = norm(document.getElementById('buscaFornecedor').value);
+  const todos = stateFornecedores;
+  const segs = [...new Set(todos.map(x => (x.categoria || '').trim() || 'Sem segmento'))].sort((a, b) => a === 'Sem segmento' ? 1 : b === 'Sem segmento' ? -1 : a.localeCompare(b));
+  if(segmentoForn && !segs.includes(segmentoForn)) segmentoForn = '';
+  document.getElementById('chipsSegmentos').innerHTML = [['', 'Todos', todos.length], ...segs.map(g => [g, g, todos.filter(x => ((x.categoria || '').trim() || 'Sem segmento') === g).length])].map(([v, nome, q]) =>
+    `<button type="button" class="btn-ghost" data-seg="${escImp(v)}" style="${segmentoForn === v ? 'border-color:var(--accent);color:var(--accent);font-weight:700;' : ''}">${v ? `<span class="ico" style="margin-right:6px;">${svgIco(icoChave(v, 'store'), 15)}</span>` : ''}${escImp(nome)} <span class="hint">(${q})</span></button>`).join('');
+  document.querySelectorAll('#chipsSegmentos button').forEach(b => b.addEventListener('click', () => { segmentoForn = b.dataset.seg; desenharFornecedores(); }));
+  const dl = document.getElementById('listaCategoriasForn'); if(dl) dl.innerHTML = segs.filter(g => g !== 'Sem segmento').map(g => `<option value="${escImp(g)}">`).join('');
+  const lista = todos.filter(x => !busca || norm([x.nome, x.categoria, x.especialidade, x.endereco, x.bairro, x.observacoes].join(' ')).includes(busca));
+  let html = '';
+  segs.filter(g => !segmentoForn || g === segmentoForn).forEach(g => {
+    const itens = lista.filter(x => ((x.categoria || '').trim() || 'Sem segmento') === g); if(!itens.length) return;
+    html += `<details open class="panel" style="margin-bottom:12px;"><summary style="cursor:pointer;font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px;"><span class="ico" style="margin-right:6px;">${svgIco(icoChave(g, 'store'), 22)}</span>${escImp(g)} <span class="hint" style="font-weight:400;">· ${itens.length} fornecedor(es)</span></summary>
+      <div class="table-wrap" style="margin-top:8px;"><table><thead><tr><th>Nome</th><th>Contato</th><th>Endereço</th><th>O que fazem</th><th>Ações</th></tr></thead><tbody>
+      ${itens.map(x => `<tr>
+        <td><b>${escImp(x.nome)}</b>${x.rede_social && x.rede_social !== '-' ? `<div class="hint">${escImp(x.rede_social)}</div>` : ''}</td>
+        <td style="white-space:nowrap;">${x.telefone ? '☎ ' + escImp(x.telefone) + '<br>' : ''}${x.whatsapp && x.whatsapp !== x.telefone ? '📱 ' + escImp(x.whatsapp) : ''}${!x.telefone && !x.whatsapp ? '<span class="hint">não informado</span>' : ''}</td>
+        <td>${escImp([x.endereco, x.bairro].filter(Boolean).join(' — ') || '—')}${x.observacoes ? `<div class="hint">${escImp(x.observacoes)}</div>` : ''}</td>
+        <td style="max-width:300px;white-space:normal;font-size:13px;">${escImp(x.especialidade || '—')}</td>
+        <td class="icon-row">
+          ${(x.whatsapp || x.telefone) && /9\d{4}-?\d{4}/.test(x.whatsapp || x.telefone) ? `<button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(x.whatsapp || x.telefone)}','_blank')">${ICON_WHATS}</button>` : ''}
+          <button class="btn-icon" title="Editar" onclick="abrirEdicaoFornecedor(${x.id})">${ICON_EDIT}</button>
+          <button class="btn-icon danger" title="Excluir" onclick="excluirFornecedor(${x.id})">${ICON_DELETE}</button>
+        </td></tr>`).join('')}
+      </tbody></table></div></details>`;
+  });
+  document.getElementById('fornecedoresGrupos').innerHTML = html || (todos.length ? '<p class="empty">Nenhum fornecedor encontrado.</p>' : '');
+  document.getElementById('fornecedoresEmpty').style.display = todos.length ? 'none' : 'block';
+}
+document.getElementById('buscaFornecedor').addEventListener('input', desenharFornecedores);
+
 async function renderAcertoTom(){
   const el = document.getElementById('acertoTom'); if(!el) return;
   const { data: repasses } = await supabaseClient.from('repasses').select('*').order('data', { ascending:false }).order('id', { ascending:false });
@@ -5492,6 +5586,7 @@ async function galEnviar(ctx){
     const ext = (tipo === 'imagem' && blob !== f) ? 'jpg' : ((f.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin');
     const pasta = ctx === 'cliente' ? `clientes/${galeriaClienteId}` : 'oficina';
     const caminho = `${pasta}/${data}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    if(!(await espacoOk(blob.size))){ break; }
     const up = await supabaseClient.storage.from(GAL_BUCKET).upload(caminho, blob, { contentType: blob.type || f.type || undefined });
     if(up.error){ alert('Erro ao enviar "' + f.name + '": ' + up.error.message); continue; }
     const ins = await supabaseClient.from('midias').insert([{ escopo: ctx, cliente_id: ctx === 'cliente' ? galeriaClienteId : null, ordem_id: ordemId, data, legenda, caminho, nome_arquivo: f.name, tipo, tamanho: blob.size }]);
@@ -6162,14 +6257,31 @@ function renderPainelHoje(){
   const saldo = entrou - gastou, limite = new Date(hoje + 'T12:00:00'); limite.setDate(limite.getDate() - 3);
   const semResposta = stateOrdens.filter(o => o.status === 'orcamento' && !o.aprovado_em && String(o.created_at).slice(0, 10) <= limite.toLocaleDateString('sv-SE')).length;
   const garVenc = stateOrdens.filter(o => o.status === 'concluida' && n(o.garantia_meses) > 0).filter(o => { const d = new Date(String(o.created_at).slice(0, 10) + 'T12:00:00'); d.setMonth(d.getMonth() + n(o.garantia_meses)); const dias = Math.round((d - new Date(hoje + 'T12:00:00')) / 86400000); return dias >= 0 && dias <= 30; }).length;
-  const bk = window._statusBackup;
+  const bk = window._statusBackup, uso = window._uso, pUso = uso ? Math.max(Number(uso.db_bytes) / LIMITE_DB, Number(uso.storage_bytes) / LIMITE_STORAGE) * 100 : null;
   const mini = (t, v, cor, onclick) => `<div class="card" style="${onclick ? 'cursor:pointer;' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="card-num" style="font-size:22px;color:${cor};">${v}</span><span class="card-label">${t}</span></div>`;
   el.innerHTML = `<div class="panel-head"><h2>📈 Hoje</h2></div><div class="cards" style="margin-bottom:0;">
     ${mini('Entrou hoje', moeda(entrou), 'var(--ok)', "irPara('resultado')")}${mini('Gastou hoje', moeda(gastou), 'var(--accent)', "irPara('despesas')")}
     ${mini('Saldo do dia', moeda(saldo), saldo >= 0 ? 'var(--ok)' : 'var(--accent)', "irPara('resultado')")}
     ${mini('Orçamentos sem resposta há 3+ dias', semResposta, semResposta ? 'var(--wait)' : 'var(--text)', "irPara('ordens')")}
     ${mini('Garantias vencendo em 30 dias', garVenc, garVenc ? 'var(--wait)' : 'var(--text)', "irPara('garantias')")}
+    ${mini('Espaço usado (plano)', pUso === null ? '…' : (pUso < 1 ? '<1%' : pUso.toFixed(0) + '%'), pUso === null ? 'var(--text-dim)' : (pUso >= 90 ? 'var(--accent)' : (pUso >= 70 ? 'var(--wait)' : 'var(--ok)')), "irPara('administracao')")}
     ${mini('Backup', bk ? (bk.ok ? '✅ em dia' : '⚠ atrasado') : '…', bk ? (bk.ok ? 'var(--ok)' : 'var(--accent)') : 'var(--text-dim)', "irPara('administracao')")}</div>`;
+}
+async function renderUsoSistema(){
+  const el = document.getElementById('usoConteudo'); if(!el) return;
+  const u = await carregarUsoSistema(true);
+  if(!u){ el.innerHTML = '<p class="hint">Não consegui medir agora.</p>'; return; }
+  const barra = (titulo, usado, limite, dica) => { const p = Math.min(100, usado / limite * 100), cor = p >= 90 ? '#ff3b17' : (p >= 70 ? '#e8b93b' : '#2fb872');
+    return `<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;"><b>${titulo}</b><span><b style="color:${cor}">${fmtBytes(usado)}</b> de ${fmtBytes(limite)} (${p < 1 ? '<1' : p.toFixed(0)}%)</span></div>
+      <div style="height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden;margin:6px 0 4px;"><div style="width:${Math.max(p, 1)}%;height:100%;background:${cor};"></div></div>
+      <div class="hint">${dica}${p >= 90 ? ' <b style="color:#ff3b17;">⚠ Quase cheio!</b>' : (p >= 70 ? ' <b style="color:#e8b93b;">Atenção: passou de 70%.</b>' : '')}</div></div>`; };
+  const livreStorage = Math.max(0, LIMITE_STORAGE - u.storage_bytes);
+  el.innerHTML = `${barra('🗄️ Banco de dados (clientes, O.S., financeiro…)', Number(u.db_bytes), LIMITE_DB, 'Texto e números: dura muito tempo.')}
+    ${barra('📷 Fotos e vídeos', Number(u.storage_bytes), LIMITE_STORAGE, `${u.arquivos} arquivo(s). Ainda cabem cerca de ${fmtBytes(livreStorage)} (≈ ${Math.floor(livreStorage / (0.4 * 1048576))} fotos de ~400 KB ou ${Math.floor(livreStorage / (30 * 1048576))} vídeos de 30 MB).`)}
+    <details><summary style="cursor:pointer;font-weight:700;">Onde o banco está sendo usado</summary>
+      <div class="hint" style="margin-top:6px;">Backups: ${fmtBytes(u.backups_bytes)} (${u.backups_qtd} cópias) · Histórico de alterações (auditoria): ${fmtBytes(u.auditoria_bytes)}<br>
+      Maiores tabelas: ${(u.maiores_tabelas || []).map(t => `${escImp(t.tabela)} ${fmtBytes(t.bytes)}`).join(' · ')}</div></details>
+    <p class="hint" style="margin-top:10px;">Plano atual: <b>Gratuito</b> — 500 MB de banco, 1 GB de fotos/vídeos e no máximo 50 MB por arquivo. O sistema bloqueia o envio de arquivos quando o espaço de fotos chega a 97%. Se mudar para o plano Pro, os limites sobem e esta tela precisa ser atualizada.</p>`;
 }
 function textoStatusBackup(lista){
   const auto = lista.find(b => b.tipo === 'automatico'); if(!auto) return { ok:false, txt:'Nenhum backup automático encontrado.' };
@@ -6177,6 +6289,7 @@ function textoStatusBackup(lista){
   return { ok: horas <= 30, txt: `Último backup automático: ${new Date(auto.created_at).toLocaleString('pt-BR')} (há ${horas < 1 ? 'menos de 1 hora' : Math.round(horas) + ' h'})${horas > 30 ? ' — está atrasado!' : ''}` };
 }
 async function carregarHistoricoBackups(){
+  renderUsoSistema();
   const lista = await DB.backups.listarRecentes(30);
   const st = textoStatusBackup(lista), tab = document.getElementById('tabelaBackups');
   if(tab){ let el = document.getElementById('statusBackup'); if(!el){ el = document.createElement('p'); el.id = 'statusBackup'; el.style.cssText = 'margin:0 0 10px;font-weight:700;'; tab.closest('.table-wrap').before(el); }
@@ -6190,11 +6303,35 @@ async function carregarHistoricoBackups(){
       <td>${new Date(b.created_at).toLocaleString('pt-BR')}</td>
       <td>${tipoBackupLabel[b.tipo] || b.tipo}</td>
       <td>${b.observacao || '—'}</td>
-      <td><button type="button" class="btn-ghost" onclick="DB.backups.baixar(${b.id})">⬇ Baixar</button></td>
+      <td><button type="button" class="btn-ghost" onclick="DB.backups.baixar(${b.id})">⬇ Baixar</button> <button type="button" class="btn-ghost" style="color:var(--accent);" onclick="restaurarBackup(${b.id})">↩ Restaurar</button></td>
     </tr>`).join('');
   const empty = document.getElementById('backupsEmpty');
   if(empty) empty.style.display = lista.length ? 'none' : 'block';
 }
+const NOMES_TABELAS = { clientes:'cliente(s)', veiculos:'veículo(s)', ordens:'O.S.', ordem_itens:'item(ns) de O.S.', ordem_pagamentos:'pagamento(s) de O.S.', despesas:'despesa(s)', contas_pagar:'conta(s) a pagar', contas_receber:'conta(s) a receber', estoque:'item(ns) de estoque', servicos:'serviço(s)', fornecedores:'fornecedor(es)', agendamentos:'agendamento(s)', midias:'foto(s)/vídeo(s)', repasses:'pagamento(s) entre Paulo/Tom/Fernando', metas_mensais:'meta(s)', caixa_sessoes:'sessão(ões) de caixa' };
+async function restaurarBackup(id){
+  const { data: b, error } = await supabaseClient.from('backups').select('id, created_at, observacao, dados').eq('id', id).single();
+  if(error || !b){ alert('Não consegui abrir esse backup.'); return; }
+  const resumo = Object.entries(b.dados || {}).filter(([k, v]) => Array.isArray(v) && NOMES_TABELAS[k] && v.length).map(([k, v]) => `• ${v.length} ${NOMES_TABELAS[k]}`).join('\n') || '• (sem dados)';
+  const resp = prompt(`RESTAURAR o backup de ${new Date(b.created_at).toLocaleString('pt-BR')}?\n\nIsso SUBSTITUI os dados de agora pelos que estavam neste backup:\n${resumo}\n\nTudo o que foi lançado DEPOIS dessa data será desfeito. O sistema guarda uma cópia do estado atual antes de restaurar (aparece na lista como "Segurança automática"), então dá para voltar atrás.\n\nPara confirmar, digite RESTAURAR:`);
+  if(resp === null) return;
+  if(String(resp).trim().toUpperCase() !== 'RESTAURAR'){ alert('Não digitou RESTAURAR — nada foi alterado.'); return; }
+  mostrarAviso('Restaurando… não feche a página.');
+  const { data: r, error: err } = await supabaseClient.rpc('restaurar_backup', { p_id: id });
+  if(err || !r || !r.ok){ alert('Não foi possível restaurar (nada foi alterado):\n\n' + (err ? err.message : 'erro desconhecido')); return; }
+  alert('Backup restaurado com sucesso!\n\nA cópia de segurança do estado anterior é o backup #' + r.seguranca_id + ' (se precisar voltar atrás, restaure-o). A página vai recarregar.');
+  location.reload();
+}
+document.getElementById('btnRestaurarArquivo').addEventListener('click', () => document.getElementById('arquivoRestaurar').click());
+document.getElementById('arquivoRestaurar').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  let json; try { json = JSON.parse(await f.text()); } catch(err){ alert('Esse arquivo não é um backup válido (JSON ilegível).'); return; }
+  if(!json || typeof json !== 'object' || !Object.values(json).some(v => Array.isArray(v))){ alert('Esse arquivo não parece um backup do sistema.'); return; }
+  const { data, error } = await supabaseClient.from('backups').insert([{ tipo:'manual', observacao:'Importado do arquivo ' + f.name, dados: json }]).select('id').single();
+  if(error || !data){ alert('Não consegui ler o arquivo: ' + (error ? error.message : '')); return; }
+  carregarHistoricoBackups();
+  restaurarBackup(data.id);
+});
 document.getElementById('btnBackupCompleto').addEventListener('click', exportarBackupCompleto);
 document.getElementById('btnExportarClientes').addEventListener('click', exportarClientesCSV);
 document.getElementById('btnExportarOrdens').addEventListener('click', exportarOrdensCSV);
