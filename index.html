@@ -160,6 +160,12 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .nav-sub .nav-item .ico svg{width:16px; height:16px;}
 .view-head h1 .ico{margin-right:12px;}
 .view-head h1 .ico svg{width:30px; height:30px;}
+.abas{display:flex; gap:4px; overflow-x:auto; border-bottom:1px solid var(--border); margin:18px 0 14px;}
+.aba{background:none; border:none; color:var(--text-dim); padding:10px 16px; cursor:pointer; font-weight:600; font-size:14px; white-space:nowrap; border-bottom:3px solid transparent; margin-bottom:-1px;}
+.aba:hover{color:var(--text);}
+.aba.active{color:var(--text); border-bottom-color:var(--accent);}
+.aba-badge{background:var(--accent); color:#fff; border-radius:10px; padding:0 7px; font-size:11px; font-weight:700; margin-left:4px;}
+.aba-badge:empty{display:none;}
 .nav-item.nav-principal{font-size:16px; font-weight:800; color:var(--text);}
 .tag{font-size:10px; background:var(--surface-2); padding:2px 6px; border-radius:20px; margin-left:6px;}
 
@@ -487,7 +493,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 }
 
 /* PAGINAÇÃO */
-.paginacao{display:flex; justify-content:center; align-items:center; gap:14px; margin-top:16px; font-size:13px; color:var(--text-dim);}
+.paginacao{display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:14px; margin-top:16px; font-size:13px; color:var(--text-dim);}
 .paginacao button{background:none; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px;}
 .paginacao button:hover:not(:disabled){background:var(--surface-2);}
 .paginacao button:disabled{opacity:.4; cursor:not-allowed;}
@@ -587,7 +593,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     <div class="brand">
       <img src="data:image/png;base64,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" alt="Paulo Mecânico">
     </div>
-    <div class="version-tag">v2.0</div>
+    <div class="version-tag">v1_10_10_2026</div>
 
     <nav class="nav">
       <button class="nav-item nav-principal active" data-view="dashboard">Painel</button>
@@ -694,12 +700,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div id="listaLembretes" style="display:none;max-height:320px;overflow-y:auto;margin-top:8px;"></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Últimas ordens de serviço</h2>
+      <div class="panel" id="painelRecentes" style="padding-top:10px;padding-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <button type="button" id="recentesToggle" aria-expanded="false" style="all:unset;box-sizing:border-box;flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
+            <span style="font-weight:700;font-size:16px;">Últimas ordens de serviço</span>
+            <span id="recentesChevron" style="color:var(--accent);font-size:18px;transition:transform .15s;">▾</span>
+          </button>
           <button class="btn-ghost" data-view="ordens">Ver todas</button>
         </div>
-        <div class="table-wrap">
+        <div id="recentesPreview" class="hint" style="margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div class="table-wrap" id="recentesCorpo" style="display:none;margin-top:8px;">
           <table id="tabelaRecentes">
             <thead><tr><th>Cliente</th><th>Veículo</th><th>Serviço</th><th>Status</th><th>Valor</th></tr></thead>
             <tbody></tbody>
@@ -764,12 +774,26 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
     <!-- AGENDA -->
     <section class="view" id="view-galeria">
-      <header class="view-head"><h1>Galeria de clientes</h1><p>Fotos e vídeos de cada cliente e veículo</p></header>
+      <header class="view-head"><h1>Galeria de clientes</h1><p>Álbum de fotos e vídeos de cada cliente, organizado por data — livre, não depende de uma O.S. (as fotos de antes/depois de um serviço específico ficam nos Anexos da O.S.)</p></header>
+      <details class="panel" style="margin-bottom:14px;"><summary style="cursor:pointer;font-weight:700;">ℹ️ Qual a diferença entre Histórico do veículo, Galeria, Anexos da O.S. e Oficina?</summary>
+        <div class="table-wrap" style="margin-top:8px;"><table><thead><tr><th>Onde</th><th>Para que serve</th><th>Guarda</th><th>Fica ligado a</th></tr></thead><tbody>
+          <tr><td><b>🚗 Histórico do veículo</b></td><td>Ver tudo o que aquele carro/moto já fez na oficina: serviços, peças, km e quanto gastou.</td><td>Só texto e valores (puxa das O.S.). Não tem fotos.</td><td>O veículo (placa)</td></tr>
+          <tr style="background:var(--surface-2);"><td><b>📷 Galeria de clientes</b></td><td>Álbum livre do cliente: fotos e vídeos do carro, da entrega, de peças, conversas importantes… do jeito que você quiser, por data.</td><td>Fotos e vídeos</td><td>O cliente (e, se quiser, uma O.S.)</td></tr>
+          <tr><td><b>📎 Anexos da O.S.</b> <span class="hint">(botão da câmera na lista de O.S.)</span></td><td>Provas daquele serviço: fotos de antes, cotação da autopeça (entra no orçamento) e fotos de depois.</td><td>Fotos, vídeos e PDFs, separados em Antes / Orçamento da autopeça / Depois</td><td>Uma O.S. específica</td></tr>
+          <tr><td><b>🏭 Oficina (evolução)</b></td><td>Registrar como a própria oficina vai mudando ao longo do tempo (reformas, bancadas, equipamentos).</td><td>Fotos e vídeos por data</td><td>A oficina — não tem cliente</td></tr>
+        </tbody></table></div></details>
       <div id="galeriaConteudo"></div>
     </section>
 
     <section class="view" id="view-oficina">
-      <header class="view-head"><h1>Oficina</h1><p>Evolução da oficina por data: suba fotos e vídeos novos e veja como tudo mudou</p></header>
+      <header class="view-head"><h1>Oficina</h1><p>Fotos e vídeos da própria oficina (não de clientes), por data, para você ver como ela era e como foi evoluindo</p></header>
+      <details class="panel" style="margin-bottom:14px;"><summary style="cursor:pointer;font-weight:700;">ℹ️ Qual a diferença entre Histórico do veículo, Galeria, Anexos da O.S. e Oficina?</summary>
+        <div class="table-wrap" style="margin-top:8px;"><table><thead><tr><th>Onde</th><th>Para que serve</th><th>Guarda</th><th>Fica ligado a</th></tr></thead><tbody>
+          <tr><td><b>🚗 Histórico do veículo</b></td><td>Ver tudo o que aquele carro/moto já fez na oficina: serviços, peças, km e quanto gastou.</td><td>Só texto e valores (puxa das O.S.). Não tem fotos.</td><td>O veículo (placa)</td></tr>
+          <tr><td><b>📷 Galeria de clientes</b></td><td>Álbum livre do cliente: fotos e vídeos do carro, da entrega, de peças, conversas importantes… do jeito que você quiser, por data.</td><td>Fotos e vídeos</td><td>O cliente (e, se quiser, uma O.S.)</td></tr>
+          <tr><td><b>📎 Anexos da O.S.</b> <span class="hint">(botão da câmera na lista de O.S.)</span></td><td>Provas daquele serviço: fotos de antes, cotação da autopeça (entra no orçamento) e fotos de depois.</td><td>Fotos, vídeos e PDFs, separados em Antes / Orçamento da autopeça / Depois</td><td>Uma O.S. específica</td></tr>
+          <tr style="background:var(--surface-2);"><td><b>🏭 Oficina (evolução)</b></td><td>Registrar como a própria oficina vai mudando ao longo do tempo (reformas, bancadas, equipamentos).</td><td>Fotos e vídeos por data</td><td>A oficina — não tem cliente</td></tr>
+        </tbody></table></div></details>
       <div id="oficinaConteudo"></div>
     </section>
 
@@ -901,7 +925,14 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
     </section>
 
     <section class="view" id="view-historico">
-      <header class="view-head"><h1>Histórico do veículo</h1><p>Tudo o que cada carro ou moto já fez na oficina</p></header>
+      <header class="view-head"><h1>Histórico do veículo</h1><p>Linha do tempo de serviços, peças, km e valores de cada carro ou moto — vem das O.S., sem fotos (as fotos ficam na Galeria e nos Anexos da O.S.)</p></header>
+      <details class="panel" style="margin-bottom:14px;"><summary style="cursor:pointer;font-weight:700;">ℹ️ Qual a diferença entre Histórico do veículo, Galeria, Anexos da O.S. e Oficina?</summary>
+        <div class="table-wrap" style="margin-top:8px;"><table><thead><tr><th>Onde</th><th>Para que serve</th><th>Guarda</th><th>Fica ligado a</th></tr></thead><tbody>
+          <tr style="background:var(--surface-2);"><td><b>🚗 Histórico do veículo</b></td><td>Ver tudo o que aquele carro/moto já fez na oficina: serviços, peças, km e quanto gastou.</td><td>Só texto e valores (puxa das O.S.). Não tem fotos.</td><td>O veículo (placa)</td></tr>
+          <tr><td><b>📷 Galeria de clientes</b></td><td>Álbum livre do cliente: fotos e vídeos do carro, da entrega, de peças, conversas importantes… do jeito que você quiser, por data.</td><td>Fotos e vídeos</td><td>O cliente (e, se quiser, uma O.S.)</td></tr>
+          <tr><td><b>📎 Anexos da O.S.</b> <span class="hint">(botão da câmera na lista de O.S.)</span></td><td>Provas daquele serviço: fotos de antes, cotação da autopeça (entra no orçamento) e fotos de depois.</td><td>Fotos, vídeos e PDFs, separados em Antes / Orçamento da autopeça / Depois</td><td>Uma O.S. específica</td></tr>
+          <tr><td><b>🏭 Oficina (evolução)</b></td><td>Registrar como a própria oficina vai mudando ao longo do tempo (reformas, bancadas, equipamentos).</td><td>Fotos e vídeos por data</td><td>A oficina — não tem cliente</td></tr>
+        </tbody></table></div></details>
       <div id="historicoConteudo"></div>
     </section>
 
@@ -1014,7 +1045,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-          <label style="margin:0;flex-direction:row;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="chkOcultarZeradas" checked> Ocultar contas zeradas já recebidas</label>
+          <label style="margin:0;flex-direction:row;align-items:center;gap:8px;">Mostrar
+            <select id="filtroReceber" style="width:auto;"><option value="pendente">A receber (pendentes)</option><option value="recebido">Já recebidas</option><option value="todas">Todas</option></select></label>
           <span class="hint" id="infoReceberOcultas"></span>
         </div>
         <div class="table-wrap">
@@ -1057,7 +1089,16 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
       </div>
 
-      <div class="panel">
+      <div class="abas" id="abasRelatorios" role="tablist">
+        <button type="button" class="aba" data-aba="vencidas">⚠ Contas vencidas <span class="aba-badge" id="badgeVencidas"></span></button>
+        <button type="button" class="aba" data-aba="clientes">Recebimentos por cliente</button>
+        <button type="button" class="aba" data-aba="fluxo">Fluxo de caixa (30 dias)</button>
+        <button type="button" class="aba" data-aba="ranking">Ranking de clientes</button>
+        <button type="button" class="aba" data-aba="mensal">Ticket médio e comparativo mensal</button>
+        <button type="button" class="aba" data-aba="servicos">Serviços mais vendidos</button>
+      </div>
+
+      <div class="rel-aba" data-aba="vencidas" style="display:none;"><div class="panel">
         <div class="panel-head"><h2>Contas vencidas</h2></div>
         <div class="table-wrap">
           <table id="tabelaVencidas">
@@ -1066,9 +1107,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="vencidasEmpty">Nenhuma conta vencida. 🎉</p>
-      </div>
+      </div></div>
 
-      <div class="panel" style="margin-top:20px;">
+      <div class="rel-aba" data-aba="clientes" style="display:none;"><div class="panel" style="margin-top:20px;">
         <div class="panel-head"><h2>Recebimentos por cliente</h2></div>
         <div class="table-wrap">
           <table id="tabelaRecebPorCliente">
@@ -1077,9 +1118,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="recebPorClienteEmpty">Nenhuma O.S. (fora orçamento) registrada ainda.</p>
-      </div>
+      </div></div>
 
-      <div class="panel" style="margin-top:20px;">
+      <div class="rel-aba" data-aba="fluxo" style="display:none;"><div class="panel" style="margin-top:20px;">
         <div class="panel-head"><h2>Fluxo de caixa projetado (30 dias)</h2></div>
         <div class="table-wrap">
           <table id="tabelaFluxoCaixa">
@@ -1088,9 +1129,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="fluxoCaixaEmpty">Nenhuma conta a pagar ou receber com vencimento nos próximos 30 dias.</p>
-      </div>
+      </div></div>
 
-      <div class="panel" style="margin-top:20px;">
+      <div class="rel-aba" data-aba="ranking" style="display:none;"><div class="panel" style="margin-top:20px;">
         <div class="panel-head"><h2>Ranking de clientes</h2></div>
         <div class="table-wrap">
           <table id="tabelaRankingClientes">
@@ -1099,9 +1140,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="rankingClientesEmpty">Nenhuma OS registrada ainda pra montar o ranking.</p>
-      </div>
+      </div></div>
 
-      <div class="cards" style="margin-top:20px;">
+      <div class="rel-aba" data-aba="mensal" style="display:none;"><div class="cards" style="margin-top:20px;">
         <div class="card accent"><span class="card-num" id="repTicketMedio">R$ 0</span><span class="card-label">Ticket médio (OS concluídas)</span></div>
         <div class="card"><span class="card-num" id="repTicketMes">R$ 0</span><span class="card-label">Ticket médio deste mês</span></div>
         <div class="card"><span class="card-num" id="repOsMes">0</span><span class="card-label">OS concluídas neste mês</span></div>
@@ -1115,9 +1156,9 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
             <tbody></tbody>
           </table>
         </div>
-      </div>
+      </div></div>
 
-      <div class="panel" style="margin-top:20px;">
+      <div class="rel-aba" data-aba="servicos" style="display:none;"><div class="panel" style="margin-top:20px;">
         <div class="panel-head"><h2>Serviços mais vendidos</h2></div>
         <div class="table-wrap">
           <table id="tabelaRankingServicos">
@@ -1126,7 +1167,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           </table>
         </div>
         <p class="empty" id="rankingServicosEmpty">Nenhum serviço em OS concluídas ainda.</p>
-      </div>
+      </div></div>
     </section>
 
     <!-- ADMINISTRAÇÃO -->
@@ -1162,8 +1203,13 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <p id="perfilSalvo" style="display:none; color:var(--ok); font-size:13px; margin-top:12px;">Perfil atualizado ✓</p>
       </div>
 
-      <div class="panel" style="max-width:560px; margin-top:20px;">
-        <div class="panel-head"><h2>Backup e exportação</h2></div>
+      <div class="panel" id="painelBackup" style="max-width:960px; margin-top:20px; padding-top:12px; padding-bottom:12px;">
+        <button type="button" id="backupToggle" aria-expanded="false" style="all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
+          <span style="font-weight:700;font-size:17px;">💾 Backup, restauração e espaço</span>
+          <span id="backupChevron" style="color:var(--accent);font-size:18px;transition:transform .15s;">▾</span>
+        </button>
+        <div id="backupPreview" class="hint" style="margin-top:4px;"></div>
+        <div id="backupCorpo" style="display:none;margin-top:12px;">
         <p style="color:var(--text-dim); font-size:13px; margin-bottom:4px;">Um backup automático completo é gerado todo dia à meia-noite (horário de São Paulo) e fica registrado no histórico abaixo.</p>
         <p style="color:var(--text-dim); font-size:13px; margin-bottom:14px;">Você também pode baixar uma cópia manual a qualquer momento — é sua garantia caso algo dê errado.</p>
         <label>Observação (motivo do backup manual, opcional)
@@ -1190,6 +1236,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
               <tbody></tbody>
             </table>
           </div>
+          <div class="paginacao" id="backupsPaginacao"></div>
           <p class="empty" id="backupsEmpty" style="display:none;">Nenhum backup registrado ainda.</p>
         </div>
 
@@ -1203,6 +1250,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
             </table>
           </div>
           <p class="empty" id="auditoriaEmpty" style="display:none;">Nenhum registro de auditoria ainda.</p>
+        </div>
         </div>
       </div>
     </section>
@@ -1457,7 +1505,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 <div class="modal" id="modalFotosOS">
   <div class="modal-box">
     <h3 id="tituloFotosOS">Anexos da OS</h3>
-    <p class="hint" style="margin-top:-8px;">Fotos, vídeos e PDFs. Arraste um arquivo pra outra categoria pra reclassificar.</p>
+    <p class="hint" style="margin-top:-8px;">Arquivos <b>desta O.S.</b>: fotos de antes, cotação da autopeça (entra no orçamento) e fotos de depois. Ficam presos a esta ordem de serviço. Para o álbum geral do cliente, use a Galeria de clientes. Arraste um arquivo para outra categoria para reclassificar.</p>
     <div id="fotosBlocos"></div>
     <div class="modal-actions"><button type="button" class="btn-ghost" data-close>Fechar</button></div>
   </div>
@@ -2295,6 +2343,7 @@ const ICO_PATHS = {
   box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
   store:'<path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 14v6h14v-6M10 20v-4h4v4"/>',
   truck:'<rect x="2" y="6" width="12" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  register:'<path d="M7 11V4h10v7"/><path d="M9 7h6"/><rect x="3" y="11" width="18" height="9" rx="2"/><path d="M7 15h2M12 15h2M17 15h.01"/>',
   home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   clipboard:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>',
   calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
@@ -2468,7 +2517,7 @@ document.querySelectorAll('.nav-group-toggle').forEach(btn => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 document.getElementById('btnAdminTop').addEventListener('click', () => irPara('administracao'));
-Object.entries({ dashboard:'home', ordens:'clipboard', agenda:'calendar', garantias:'shield', historico:'car', galeria:'camera', oficina:'factory', clientes:'users', servicos:'wrench', estoque:'box', fornecedores:'store', caixa:'wallet', resultado:'bars', metas:'target', lucro:'trend', despesas:'arrowdown', pagar:'arrowup', receber:'inbox', relatorios:'filetext' }).forEach(([v, k]) => {
+Object.entries({ dashboard:'home', ordens:'clipboard', agenda:'calendar', garantias:'shield', historico:'car', galeria:'camera', oficina:'factory', clientes:'users', servicos:'wrench', estoque:'box', fornecedores:'store', caixa:'register', resultado:'bars', metas:'target', lucro:'trend', despesas:'arrowdown', pagar:'arrowup', receber:'inbox', relatorios:'filetext' }).forEach(([v, k]) => {
   const b = document.querySelector(`.nav-item[data-view="${v}"]`);
   if(b) b.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, v === 'dashboard' ? 20 : 16)}</span>`);
   const h1 = document.querySelector(`#view-${v} .view-head h1`); if(h1) h1.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 30)}</span>`);
@@ -4171,22 +4220,25 @@ async function notificarStatusOrdem(ordemId){
 /* ==========================================================
    RENDERIZAÇÃO
    ========================================================== */
+const PAG_TAMANHOS = [30, 50, 100, 200];
+let TAM_PAGINA = (() => { try { const v = Number(localStorage.getItem('tamPagina')); return PAG_TAMANHOS.includes(v) ? v : 30; } catch(e){ return 30; } })();
 function renderPaginacao(containerId, totalItens, paginaAtual, porPagina, aoMudarPagina){
   const cont = document.getElementById(containerId);
   if(!cont) return;
+  if(totalItens <= PAG_TAMANHOS[0]){ cont.innerHTML = ''; return; }
   const totalPaginas = Math.max(1, Math.ceil(totalItens / porPagina));
-  if(totalItens <= porPagina){ cont.innerHTML = ''; return; }
   cont.innerHTML = `
     <button type="button" ${paginaAtual <= 1 ? 'disabled' : ''} data-pag="anterior">‹ Anterior</button>
     <span>Página ${paginaAtual} de ${totalPaginas} (${totalItens} ${totalItens === 1 ? 'registro' : 'registros'})</span>
-    <button type="button" ${paginaAtual >= totalPaginas ? 'disabled' : ''} data-pag="proxima">Próxima ›</button>`;
-  const btnAnt = cont.querySelector('[data-pag="anterior"]');
-  const btnProx = cont.querySelector('[data-pag="proxima"]');
+    <button type="button" ${paginaAtual >= totalPaginas ? 'disabled' : ''} data-pag="proxima">Próxima ›</button>
+    <label style="margin:0 0 0 12px;flex-direction:row;align-items:center;gap:6px;font-size:13px;">Mostrar
+      <select data-pag="tamanho" style="width:auto;padding:4px 8px;">${PAG_TAMANHOS.map(n => `<option value="${n}"${n === porPagina ? ' selected' : ''}>${n}</option>`).join('')}</select> por página</label>`;
+  const btnAnt = cont.querySelector('[data-pag="anterior"]'), btnProx = cont.querySelector('[data-pag="proxima"]');
   if(btnAnt) btnAnt.addEventListener('click', () => aoMudarPagina(paginaAtual - 1));
   if(btnProx) btnProx.addEventListener('click', () => aoMudarPagina(paginaAtual + 1));
+  cont.querySelector('[data-pag="tamanho"]').addEventListener('change', e => { TAM_PAGINA = Number(e.target.value); try { localStorage.setItem('tamPagina', TAM_PAGINA); } catch(err){} aoMudarPagina(1); });
 }
 
-const CLIENTES_POR_PAGINA = 20;
 let clientesPaginaAtual = 1;
 function renderTabelaClientes(){
   const inputBusca = document.getElementById('buscaClientes');
@@ -4195,10 +4247,10 @@ function renderTabelaClientes(){
     ? stateClientes.filter(c => `${c.nome} ${c.telefone} ${c.veiculo} ${c.placa} ${c.cpf||''}`.toLowerCase().includes(busca))
     : stateClientes;
 
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / CLIENTES_POR_PAGINA));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / TAM_PAGINA));
   if(clientesPaginaAtual > totalPaginas) clientesPaginaAtual = totalPaginas;
-  const inicio = (clientesPaginaAtual - 1) * CLIENTES_POR_PAGINA;
-  const pagina = filtrados.slice(inicio, inicio + CLIENTES_POR_PAGINA);
+  const inicio = (clientesPaginaAtual - 1) * TAM_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + TAM_PAGINA);
 
   document.querySelector('#tabelaClientes tbody').innerHTML = pagina.map(c => `
     <tr>
@@ -4214,7 +4266,7 @@ function renderTabelaClientes(){
   document.getElementById('clientesEmpty').textContent = busca && !filtrados.length
     ? 'Nenhum cliente encontrado para essa busca.' : 'Nenhum cliente cadastrado ainda.';
   document.getElementById('clientesEmpty').style.display = filtrados.length ? 'none' : 'block';
-  renderPaginacao('clientesPaginacao', filtrados.length, clientesPaginaAtual, CLIENTES_POR_PAGINA, p => { clientesPaginaAtual = p; renderTabelaClientes(); });
+  renderPaginacao('clientesPaginacao', filtrados.length, clientesPaginaAtual, TAM_PAGINA, p => { clientesPaginaAtual = p; renderTabelaClientes(); });
 }
 document.getElementById('buscaClientes').addEventListener('input', () => { clientesPaginaAtual = 1; renderTabelaClientes(); });
 
@@ -4247,7 +4299,6 @@ const linhaOrdem = o => `
       </td>
     </tr>`;
 
-const ORDENS_POR_PAGINA = 20;
 let ordensPaginaAtual = 1;
 function renderTabelaOrdens(){
   const busca = (document.getElementById('buscaOrdens').value || '').trim().toLowerCase();
@@ -4256,16 +4307,16 @@ function renderTabelaOrdens(){
   if(filtroStatus) filtrados = filtrados.filter(o => o.status === filtroStatus);
   if(busca) filtrados = filtrados.filter(o => `${o.cliente_nome} ${o.veiculo} ${placaDaOrdem(o)} ${o.servico}`.toLowerCase().includes(busca));
 
-  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / ORDENS_POR_PAGINA));
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / TAM_PAGINA));
   if(ordensPaginaAtual > totalPaginas) ordensPaginaAtual = totalPaginas;
-  const inicio = (ordensPaginaAtual - 1) * ORDENS_POR_PAGINA;
-  const pagina = filtrados.slice(inicio, inicio + ORDENS_POR_PAGINA);
+  const inicio = (ordensPaginaAtual - 1) * TAM_PAGINA;
+  const pagina = filtrados.slice(inicio, inicio + TAM_PAGINA);
 
   document.querySelector('#tabelaOrdens tbody').innerHTML = pagina.map(linhaOrdem).join('');
   document.getElementById('ordensEmpty').textContent = (busca || filtroStatus) && !filtrados.length
     ? 'Nenhuma ordem de serviço encontrada para esse filtro.' : 'Nenhuma ordem de serviço criada ainda.';
   document.getElementById('ordensEmpty').style.display = filtrados.length ? 'none' : 'block';
-  renderPaginacao('ordensPaginacao', filtrados.length, ordensPaginaAtual, ORDENS_POR_PAGINA, p => { ordensPaginaAtual = p; renderTabelaOrdens(); });
+  renderPaginacao('ordensPaginacao', filtrados.length, ordensPaginaAtual, TAM_PAGINA, p => { ordensPaginaAtual = p; renderTabelaOrdens(); });
 }
 document.getElementById('buscaOrdens').addEventListener('input', () => { ordensPaginaAtual = 1; renderTabelaOrdens(); });
 document.getElementById('filtroStatusOrdens').addEventListener('change', () => { ordensPaginaAtual = 1; renderTabelaOrdens(); });
@@ -4352,6 +4403,15 @@ function renderLembretes(){
       <button class="btn-ghost" onclick="${l.acao.replace(/"/g, '&quot;')}">${l.rotulo}</button>
     </div>`).join('') + (lem.length > 15 ? `<p class="empty">+ ${lem.length - 15} lembretes</p>` : '');
 }
+function definirRecentesAberto(aberto){
+  document.getElementById('recentesCorpo').style.display = aberto ? '' : 'none';
+  document.getElementById('recentesPreview').style.display = aberto ? 'none' : '';
+  document.getElementById('recentesChevron').style.transform = aberto ? 'rotate(180deg)' : '';
+  document.getElementById('recentesToggle').setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  try { localStorage.setItem('recentesAbertos', aberto ? '1' : '0'); } catch(e){}
+}
+document.getElementById('recentesToggle').addEventListener('click', () => definirRecentesAberto(document.getElementById('recentesCorpo').style.display === 'none'));
+definirRecentesAberto((() => { try { return localStorage.getItem('recentesAbertos') === '1'; } catch(e){ return false; } })());
 function definirLembretesAberto(aberto){
   document.getElementById('listaLembretes').style.display = aberto ? '' : 'none';
   document.getElementById('lembretesPreview').style.display = aberto ? 'none' : '';
@@ -4426,6 +4486,7 @@ async function render(){
       <td><span class="status ${o.status}">${statusLabel[o.status]}</span></td>
       <td>${moeda(o.valor)}</td>
     </tr>`).join('');
+  { const u = ordens[0]; document.getElementById('recentesPreview').textContent = u ? `${ordens.length} O.S. no total · última: ${u.cliente_nome} — ${u.veiculo || ''} (${statusLabel[u.status] || u.status})` : 'Nenhuma O.S. ainda.'; }
 
   // tabela fornecedores
   desenharFornecedores();
@@ -5013,11 +5074,10 @@ document.querySelectorAll('.view').forEach(v => {
    ========================================================== */
 function desenharContasReceber(){
   const todas = stateContasReceber;
-  const ocultar = document.getElementById('chkOcultarZeradas').checked;
-  const zeradas = c => Number(c.valor) === 0 && c.status === 'recebido';
-  const lista = ocultar ? todas.filter(c => !zeradas(c)) : todas;
-  const nOcultas = todas.length - lista.length;
-  document.getElementById('infoReceberOcultas').textContent = nOcultas ? `${nOcultas} conta(s) zerada(s) já recebida(s) escondida(s)` : '';
+  const filtro = document.getElementById('filtroReceber').value;
+  const lista = filtro === 'todas' ? todas : todas.filter(c => c.status === filtro);
+  const pend = todas.filter(c => c.status === 'pendente'), totPend = pend.reduce((t, c) => t + (Number(c.valor) || 0), 0);
+  document.getElementById('infoReceberOcultas').innerHTML = `<b>${pend.length}</b> pendente(s) · total a receber <b style="color:${totPend ? 'var(--accent)' : 'var(--ok)'}">${moeda(totPend)}</b> · ${todas.length - pend.length} já recebida(s)`;
   const partes = d => { const m = String(d || '').match(/^(OS #\d+(?: \([^)]*\))?)\s*[—-]\s*([\s\S]*)$/); return m ? { titulo: m[1], texto: m[2].trim() } : { titulo: '', texto: String(d || '').trim() }; };
   document.querySelector('#tabelaContasReceber tbody').innerHTML = lista.map(x => {
     const { titulo, texto } = partes(x.descricao), longo = texto.length > 90 || texto.includes('\n');
@@ -5041,9 +5101,11 @@ function desenharContasReceber(){
         <button class="btn-icon danger" title="Excluir" onclick="excluirContaReceber(${x.id})">${ICON_DELETE}</button>
       </td>
     </tr>`; }).join('');
-  document.getElementById('receberEmpty').style.display = lista.length ? 'none' : 'block';
+  const vazio = document.getElementById('receberEmpty');
+  vazio.textContent = filtro === 'pendente' ? '🎉 Nada a receber: todas as contas já foram recebidas.' : 'Nenhuma conta neste filtro.';
+  vazio.style.display = lista.length ? 'none' : 'block';
 }
-document.getElementById('chkOcultarZeradas').addEventListener('change', desenharContasReceber);
+document.getElementById('filtroReceber').addEventListener('change', desenharContasReceber);
 let segmentoForn = '';
 function desenharFornecedores(){
   const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -5387,6 +5449,19 @@ async function renderLucro(){
     <div class="panel"><h3 style="margin:0 0 8px;">🏆 Serviços que mais faturam</h3>${rank.length ? `<div class="table-wrap"><table><thead><tr><th>Serviço</th><th>Vezes</th><th>Faturado</th></tr></thead><tbody>${rank.map(r => `<tr><td>${escImp(r.nome)}</td><td>${r.q}</td><td>${moeda(r.v)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Lance serviços com preço nas O.S. para ver o ranking.</p>'}</div>`;
 }
 document.getElementById('lucroPeriodo').addEventListener('change', renderLucro);
+
+/* ABAS DOS RELATÓRIOS */
+function abrirAbaRelatorio(k){
+  const abas = [...document.querySelectorAll('#abasRelatorios .aba')].map(b => b.dataset.aba);
+  if(!abas.includes(k)) k = abas[0];
+  document.querySelectorAll('#abasRelatorios .aba').forEach(b => b.classList.toggle('active', b.dataset.aba === k));
+  document.querySelectorAll('#view-relatorios .rel-aba').forEach(d => { d.style.display = d.dataset.aba === k ? '' : 'none'; });
+  try { localStorage.setItem('abaRelatorio', k); } catch(e){}
+}
+document.querySelectorAll('#abasRelatorios .aba').forEach(b => b.addEventListener('click', () => abrirAbaRelatorio(b.dataset.aba)));
+abrirAbaRelatorio((() => { try { return localStorage.getItem('abaRelatorio') || 'vencidas'; } catch(e){ return 'vencidas'; } })());
+new MutationObserver(() => { const n = document.querySelectorAll('#tabelaVencidas tbody tr').length; document.getElementById('badgeVencidas').textContent = n || ''; })
+  .observe(document.querySelector('#tabelaVencidas tbody'), { childList:true });
 
 /* ==========================================================
    METAS E INDICADORES
@@ -6288,25 +6363,45 @@ function textoStatusBackup(lista){
   const horas = (Date.now() - new Date(auto.created_at).getTime()) / 3600000;
   return { ok: horas <= 30, txt: `Último backup automático: ${new Date(auto.created_at).toLocaleString('pt-BR')} (há ${horas < 1 ? 'menos de 1 hora' : Math.round(horas) + ' h'})${horas > 30 ? ' — está atrasado!' : ''}` };
 }
+let backupsPaginaAtual = 1;
+function definirBackupAberto(aberto){
+  document.getElementById('backupCorpo').style.display = aberto ? '' : 'none';
+  document.getElementById('backupChevron').style.transform = aberto ? 'rotate(180deg)' : '';
+  document.getElementById('backupToggle').setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  try { localStorage.setItem('backupAberto', aberto ? '1' : '0'); } catch(e){}
+}
+document.getElementById('backupToggle').addEventListener('click', () => definirBackupAberto(document.getElementById('backupCorpo').style.display === 'none'));
+definirBackupAberto((() => { try { return localStorage.getItem('backupAberto') === '1'; } catch(e){ return false; } })());
+function atualizarPreviewBackup(){
+  const el = document.getElementById('backupPreview'); if(!el) return;
+  const st = window._statusBackup, u = window._uso;
+  const pUso = u ? Math.max(Number(u.db_bytes) / LIMITE_DB, Number(u.storage_bytes) / LIMITE_STORAGE) * 100 : null;
+  el.innerHTML = `${st ? (st.ok ? '✅ ' : '<b style="color:var(--accent);">⚠ </b>') + escImp(st.txt) : 'Verificando backup…'}${pUso !== null ? ` · Espaço usado: <b>${pUso < 1 ? '<1' : pUso.toFixed(0)}%</b> do plano` : ''}`;
+}
 async function carregarHistoricoBackups(){
-  renderUsoSistema();
-  const lista = await DB.backups.listarRecentes(30);
-  const st = textoStatusBackup(lista), tab = document.getElementById('tabelaBackups');
+  renderUsoSistema().then(atualizarPreviewBackup);
+  const { data: ult } = await supabaseClient.from('backups').select('id, created_at, tipo').eq('tipo', 'automatico').order('created_at', { ascending:false }).limit(1);
+  const st = textoStatusBackup(ult || []), tab = document.getElementById('tabelaBackups');
   if(tab){ let el = document.getElementById('statusBackup'); if(!el){ el = document.createElement('p'); el.id = 'statusBackup'; el.style.cssText = 'margin:0 0 10px;font-weight:700;'; tab.closest('.table-wrap').before(el); }
     el.style.color = st.ok ? 'var(--ok)' : 'var(--accent)'; el.textContent = (st.ok ? '✅ ' : '⚠ ') + st.txt; }
-  window._statusBackup = st;
+  window._statusBackup = st; atualizarPreviewBackup();
   if(typeof renderPainelHoje === 'function') renderPainelHoje();
-  const tbody = document.querySelector('#tabelaBackups tbody');
+  const de = (backupsPaginaAtual - 1) * TAM_PAGINA;
+  const { data: lista, count, error } = await supabaseClient.from('backups').select('id, created_at, tipo, observacao', { count:'exact' }).order('created_at', { ascending:false }).range(de, de + TAM_PAGINA - 1);
+  if(error){ console.error(error); return; }
+  const total = count || 0, tbody = document.querySelector('#tabelaBackups tbody');
   if(!tbody) return;
-  tbody.innerHTML = lista.map(b => `
+  if(!(lista || []).length && backupsPaginaAtual > 1){ backupsPaginaAtual = 1; return carregarHistoricoBackups(); }
+  tbody.innerHTML = (lista || []).map(b => `
     <tr>
-      <td>${new Date(b.created_at).toLocaleString('pt-BR')}</td>
+      <td style="white-space:nowrap;">${new Date(b.created_at).toLocaleString('pt-BR')}</td>
       <td>${tipoBackupLabel[b.tipo] || b.tipo}</td>
-      <td>${b.observacao || '—'}</td>
-      <td><button type="button" class="btn-ghost" onclick="DB.backups.baixar(${b.id})">⬇ Baixar</button> <button type="button" class="btn-ghost" style="color:var(--accent);" onclick="restaurarBackup(${b.id})">↩ Restaurar</button></td>
+      <td>${escImp(b.observacao || '—')}</td>
+      <td style="white-space:nowrap;"><div style="display:flex;gap:6px;flex-wrap:nowrap;"><button type="button" class="btn-ghost" onclick="DB.backups.baixar(${b.id})">⬇ Baixar</button><button type="button" class="btn-ghost" style="color:var(--accent);" onclick="restaurarBackup(${b.id})">↩ Restaurar</button></div></td>
     </tr>`).join('');
   const empty = document.getElementById('backupsEmpty');
-  if(empty) empty.style.display = lista.length ? 'none' : 'block';
+  if(empty) empty.style.display = total ? 'none' : 'block';
+  renderPaginacao('backupsPaginacao', total, backupsPaginaAtual, TAM_PAGINA, p => { backupsPaginaAtual = p; carregarHistoricoBackups(); });
 }
 const NOMES_TABELAS = { clientes:'cliente(s)', veiculos:'veículo(s)', ordens:'O.S.', ordem_itens:'item(ns) de O.S.', ordem_pagamentos:'pagamento(s) de O.S.', despesas:'despesa(s)', contas_pagar:'conta(s) a pagar', contas_receber:'conta(s) a receber', estoque:'item(ns) de estoque', servicos:'serviço(s)', fornecedores:'fornecedor(es)', agendamentos:'agendamento(s)', midias:'foto(s)/vídeo(s)', repasses:'pagamento(s) entre Paulo/Tom/Fernando', metas_mensais:'meta(s)', caixa_sessoes:'sessão(ões) de caixa' };
 async function restaurarBackup(id){
