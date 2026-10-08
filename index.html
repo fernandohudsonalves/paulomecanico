@@ -123,7 +123,7 @@ h1,h2,h3{font-family:'Anton',sans-serif; letter-spacing:.5px; text-transform:upp
 .nav-group-toggle .chevron{font-size:10px; transition:transform .15s;}
 .nav-group.open .nav-group-toggle .chevron{transform:rotate(180deg);}
 .nav-sub{display:flex; flex-direction:column; gap:2px; max-height:0; overflow:hidden; transition:max-height .18s ease;}
-.nav-group.open .nav-sub{max-height:260px;}
+.nav-group.open .nav-sub{max-height:420px;}
 .nav-sub .nav-item{color:var(--accent);}
 .nav-sub .nav-item:hover{background:var(--surface-2); color:var(--text);}
 .nav-sub .nav-item.active{color:var(--text);}
@@ -595,6 +595,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="nav-sub" id="sub-operacao">
           <button class="nav-item" data-view="ordens">Ordens de serviço</button>
           <button class="nav-item" data-view="agenda">Agenda</button>
+          <button class="nav-item" data-view="garantias">Garantias</button>
+          <button class="nav-item" data-view="historico">Histórico do veículo</button>
           <button class="nav-item" data-view="galeria">Galeria de clientes</button>
           <button class="nav-item" data-view="oficina">Oficina (evolução)</button>
         </div>
@@ -615,6 +617,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <div class="nav-sub" id="sub-financeiro">
           <button class="nav-item" data-view="caixa">Caixa</button>
           <button class="nav-item" data-view="resultado">Resultado do dia</button>
+          <button class="nav-item" data-view="metas">Metas e indicadores</button>
+          <button class="nav-item" data-view="lucro">Lucro por O.S.</button>
           <button class="nav-item" data-view="despesas">Despesas do dia</button>
           <button class="nav-item" data-view="pagar">Contas a pagar</button>
           <button class="nav-item" data-view="receber">Contas a receber</button>
@@ -667,6 +671,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
           <span class="card-label">Agendamentos (7 dias)</span>
         </div>
       </div>
+
+      <div class="panel" id="painelHoje" style="margin-bottom:18px;"></div>
 
       <div class="panel" id="painelRecebido" style="margin-bottom:18px;">
         <div class="panel-head"><h2>💰 Recebido × A receber</h2></div>
@@ -872,6 +878,35 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </label>
       </div>
       <div id="resultadoConteudo"></div>
+    </section>
+
+    <section class="view" id="view-metas">
+      <header class="view-head"><h1>Metas e indicadores</h1><p>Meta de faturamento, ticket médio, clientes que voltaram e O.S. por semana</p></header>
+      <div class="panel" style="margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <label style="margin:0;">Mês<input type="month" id="metaMes"></label>
+        <label style="margin:0;">Meta de faturamento do mês (R$)<input type="number" id="metaValor" step="0.01" min="0" placeholder="Ex: 5000"></label>
+        <button type="button" class="btn-primary" id="btnSalvarMeta" style="height:40px;">Salvar meta</button>
+      </div>
+      <div id="metasConteudo"></div>
+    </section>
+
+    <section class="view" id="view-garantias">
+      <header class="view-head"><h1>Garantias</h1><p>O.S. concluídas com garantia: o que está valendo, vencendo e vencido</p></header>
+      <div class="panel" style="margin-bottom:14px;"><label style="margin:0;max-width:260px;">Mostrar
+        <select id="garFiltro"><option value="ativas">Em garantia</option><option value="vencendo">Vencendo em 30 dias</option><option value="vencidas">Vencidas</option><option value="todas">Todas</option></select></label></div>
+      <div id="garantiasConteudo"></div>
+    </section>
+
+    <section class="view" id="view-historico">
+      <header class="view-head"><h1>Histórico do veículo</h1><p>Tudo o que cada carro ou moto já fez na oficina</p></header>
+      <div id="historicoConteudo"></div>
+    </section>
+
+    <section class="view" id="view-lucro">
+      <header class="view-head"><h1>Lucro por O.S.</h1><p>Quanto sobrou em cada serviço, depois de peças e gastos</p></header>
+      <div class="panel" style="margin-bottom:14px;"><label style="margin:0;max-width:260px;">Período
+        <select id="lucroPeriodo"><option value="mes">Este mês</option><option value="tudo">Tudo</option></select></label></div>
+      <div id="lucroConteudo"></div>
     </section>
 
     <section class="view" id="view-caixa">
@@ -2435,6 +2470,10 @@ async function renderRelatoriosVendas(){
 }
 
 function irPara(view){
+  if(view === 'garantias') setTimeout(renderGarantias, 0);
+  if(view === 'historico'){ hvVeiculoId = null; setTimeout(renderHistoricoVeiculo, 0); }
+  if(view === 'lucro') setTimeout(renderLucro, 0);
+  if(view === 'metas'){ const m = document.getElementById('metaMes'); if(!m.value) m.value = hojeLocal().slice(0, 7); setTimeout(renderMetas, 0); }
   if(view === 'resultado') setTimeout(renderResultado, 0);
   if(view === 'galeria'){ galeriaClienteId = null; setTimeout(renderGaleria, 0); }
   if(view === 'oficina') setTimeout(renderOficina, 0);
@@ -4142,11 +4181,9 @@ const linhaOrdem = o => `
       <td>${chipPagamentoOrdem(o)}</td>
       <td class="icon-row">
         ${o.status === 'orcamento' ? `<button class="btn-icon" title="Aprovar orçamento" onclick="aprovarOrcamento(${o.id})">✅</button>` : ''}
-        <button class="btn-icon whats" title="Notificar cliente (WhatsApp)" onclick="notificarStatusOrdem(${o.id})">${ICON_WHATS}</button>
         <button class="btn-icon" title="Fotos (antes/depois)" onclick="abrirFotosOS(${o.id})">📷</button>
         <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
-        <button class="btn-icon" title="Orçamento p/ cliente (PDF/WhatsApp)" onclick="abrirOrcamentoCliente(${o.id})">📄</button>
-        <button class="btn-icon" title="Gerar nota fiscal" onclick="abrirNotaFiscal(${o.id})">${ICON_INVOICE}</button>
+        <button class="btn-icon" title="Enviar ao cliente (orçamento, link, nota, WhatsApp)" onclick="abrirEnviarCliente(${o.id})" style="color:var(--accent);font-size:18px;">📲</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
@@ -4295,6 +4332,7 @@ async function render(){
 
   // stats
   document.getElementById('statClientes').textContent = clientes.length;
+  setTimeout(() => renderPainelHoje(), 0);
   document.getElementById('statOrcamentos').textContent = ordens.filter(o => o.status === 'orcamento').length;
   document.getElementById('statAbertas').textContent = ordens.filter(o => o.status === 'aberta').length;
   document.getElementById('statAndamento').textContent = ordens.filter(o => o.status === 'andamento').length;
@@ -4854,6 +4892,8 @@ async function abrirPortalCliente(token){
     ${os.brindes ? `<p class="hint">🎁 Brindes: ${escImp(os.brindes).replace(/\n/g, ' · ')}</p>` : ''}
     <p class="hint">💰 Pago: ${moeda(Number(os.recebido) || 0)} · Falta: ${moeda(Math.max(0, (Number(os.valor) || 0) - (Number(os.recebido) || 0)))}${os.garantia_meses ? ' · Garantia de ' + os.garantia_meses + ' mês(es)' : ''}${os.numero_nf ? ' · NF nº ' + escImp(os.numero_nf) : ''}</p>
     ${bloco}
+    ${(() => { const d = String(os.oficina_telefone || '').replace(/\D/g, ''); if(!d) return ''; const num = d.length <= 11 ? '55' + d : d;
+      return `<a href="https://wa.me/${num}?text=${encodeURIComponent('Olá! Estou vendo a O.S. do meu ' + (os.veiculo || 'veículo') + ' e queria falar com vocês.')}" target="_blank" rel="noopener" class="btn-ghost" style="display:block;text-align:center;margin-top:14px;padding:12px;border-radius:10px;text-decoration:none;font-weight:700;">💬 Falar com ${escImp(os.oficina_nome || 'a oficina')} no WhatsApp</a>`; })()}
   `;
   const btn = document.getElementById('portalBtnAprovar');
   if(btn) btn.addEventListener('click', async () => {
@@ -4884,6 +4924,7 @@ const AJUDA_TEXTOS = {
   'view-pagar': 'Contas fixas e recorrentes da oficina (aluguel, internet, fornecedores a prazo). Marcar como paga entra na conta do Caixa do dia. Para gastos variáveis do dia a dia (ex: peça comprada na hora), use Despesas do dia.',
   'view-despesas': 'Gastos variáveis do dia a dia — ex: pagou uma peça na autopeça na hora, comprou algo pontual. Lance na hora, com a forma de pagamento; entra na conta do Caixa do dia. Pode vincular a uma O.S. pra saber de qual serviço veio o gasto.',
   'view-receber': 'Valores que ainda vão entrar (fiado, parcelamento). Marcar como recebido também entra na conta do Caixa do dia.',
+  'view-metas': 'Defina a meta de faturamento do mês e acompanhe o progresso, o ticket médio, quantos clientes voltaram e as O.S. por semana. Faturamento = valor das O.S. abertas no mês (rascunhos e orçamentos não contam).',
   'view-relatorios': 'Resumo de vendas, serviços mais pedidos e faturamento por período.',
   'view-administracao': 'Dados da oficina, backups (automático à meia-noite e manual) e a Auditoria — histórico de tudo que foi criado, editado ou apagado no sistema, com data, hora e quem fez.',
 };
@@ -5095,6 +5136,249 @@ async function excluirDespesa(id){
   render();
 }
 document.querySelector('#formDespesa [name="data"]').value = hojeLocal();
+
+/* ==========================================================
+   ENVIAR AO CLIENTE — um só lugar para link, orçamento, nota e WhatsApp
+   ========================================================== */
+document.body.insertAdjacentHTML('beforeend', `
+<div class="modal" id="modalEnviar"><div class="modal-box" style="width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;">
+  <h3 id="envTitulo" style="margin-top:0;">📲 Enviar ao cliente</h3>
+  <p class="hint" id="envInfo" style="margin:0 0 10px;"></p>
+  <label>O que você quer enviar?
+    <select id="envTipo">
+      <option value="orcamento">📋 Orçamento para aprovar</option>
+      <option value="andamento">🔧 Atualização: serviço em andamento</option>
+      <option value="pronto">✅ Veículo pronto para retirada</option>
+      <option value="cobranca">💰 Lembrete de pagamento</option>
+      <option value="posvenda">🙂 Pós-venda e garantia</option>
+      <option value="revisao">🔁 Convite para revisão</option>
+    </select>
+  </label>
+  <label>Mensagem (pode editar)<textarea id="envMsg" rows="7"></textarea></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <button type="button" class="btn-primary" id="envWhats" style="grid-column:1/-1;height:44px;">📲 Abrir no WhatsApp do cliente</button>
+    <button type="button" class="btn-ghost" id="envCopiaMsg">📋 Copiar mensagem</button>
+    <button type="button" class="btn-ghost" id="envCopiaLink">🔗 Copiar só o link</button>
+    <button type="button" class="btn-ghost" id="envOrc">📄 Orçamento em PDF / opções</button>
+    <button type="button" class="btn-ghost" id="envNota">🧾 Nota / Recibo</button>
+  </div>
+  <p class="hint" style="margin:10px 0 0;">O link abre a página de acompanhamento do cliente (itens, valores, etapas, pagamento, garantia e o botão de aprovar o orçamento). Para mandar o PDF, baixe-o no botão acima e anexe na conversa do WhatsApp.</p>
+  <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-ghost" onclick="fecharModal('modalEnviar')">Fechar</button></div>
+</div></div>`);
+let envOrdemId = null;
+const recebidoDaOS = id => stateOrdemPagamentos.filter(p => p.ordem_id === id).reduce((t, p) => t + (Number(p.valor) || 0), 0);
+function linkPortalOS(o){ return o && o.portal_token ? location.origin + location.pathname + '?os=' + o.portal_token : ''; }
+function msgModelo(tipo, o){
+  const nome = (o.cliente_nome || '').split(' ')[0] || 'tudo bem', veic = o.veiculo || 'veículo', link = linkPortalOS(o);
+  const falta = Math.max(0, (Number(o.valor) || 0) - recebidoDaOS(o.id));
+  const of = statePerfil.nome_oficina || 'Paulo Mecânico';
+  const M = {
+    orcamento: `Olá, ${nome}! Aqui é da ${of}. Segue o orçamento do seu ${veic}: total de ${moeda(o.valor)}. Veja os detalhes e aprove por este link:\n${link}`,
+    andamento: `Olá, ${nome}! Passando para avisar que o seu ${veic} está em andamento aqui na oficina. Você acompanha tudo por este link:\n${link}`,
+    pronto: `Olá, ${nome}! O seu ${veic} está pronto para retirada ✅\nTotal: ${moeda(o.valor)}${falta > 0 ? ` (falta ${moeda(falta)})` : ' — já está tudo pago'}.\nDetalhes${o.garantia_meses ? ' e garantia' : ''}: ${link}`,
+    cobranca: `Olá, ${nome}! Passando para lembrar do valor em aberto de ${moeda(falta)} referente ao serviço no seu ${veic}. Qualquer dúvida é só chamar. Detalhes: ${link}`,
+    posvenda: `Olá, ${nome}! Tudo certo com o seu ${veic} depois do serviço? Qualquer coisa estamos à disposição.${o.garantia_meses ? ` Lembrando que o serviço tem garantia de ${o.garantia_meses} mês(es).` : ''} Seus dados: ${link}`,
+    revisao: `Olá, ${nome}! Está chegando a hora da revisão do seu ${veic}. Quer que eu reserve um horário? É só responder aqui. 🔧`,
+  };
+  return M[tipo];
+}
+function abrirEnviarCliente(id, tipo){
+  const o = stateOrdens.find(x => x.id === id); if(!o) return;
+  envOrdemId = id;
+  const cli = stateClientes.find(c => c.id === o.cliente_id) || {};
+  document.getElementById('envTitulo').textContent = '📲 Enviar ao cliente — ' + (o.cliente_nome || '');
+  document.getElementById('envInfo').innerHTML = `${escImp(o.veiculo || '')} · ${moeda(o.valor)} · ${cli.telefone ? '📱 ' + escImp(cli.telefone) : '<span style="color:var(--wait);">⚠ cliente sem telefone cadastrado (o WhatsApp abre sem contato)</span>'}${o.aprovado_em ? ' · <span style="color:var(--ok);">✅ orçamento aprovado</span>' : ''}`;
+  const padrao = tipo || (o.status === 'orcamento' ? 'orcamento' : (o.status === 'concluida' ? 'pronto' : 'andamento'));
+  document.getElementById('envTipo').value = padrao;
+  document.getElementById('envMsg').value = msgModelo(padrao, o);
+  abrirModal('modalEnviar');
+}
+document.getElementById('envTipo').addEventListener('change', e => { const o = stateOrdens.find(x => x.id === envOrdemId); if(o) document.getElementById('envMsg').value = msgModelo(e.target.value, o); });
+document.getElementById('envWhats').addEventListener('click', () => {
+  const o = stateOrdens.find(x => x.id === envOrdemId); if(!o) return;
+  if(!o.portal_token && document.getElementById('envMsg').value.includes('?os=') === false && ['orcamento','andamento','pronto','cobranca','posvenda'].includes(document.getElementById('envTipo').value)) alert('Essa O.S. ainda não tem link. Abra-a no lápis e salve para gerar.');
+  const cli = stateClientes.find(c => c.id === o.cliente_id) || {};
+  const base = cli.telefone ? linkWhats(cli.telefone) : 'https://wa.me/';
+  window.open(base + '?text=' + encodeURIComponent(document.getElementById('envMsg').value), '_blank');
+});
+document.getElementById('envCopiaMsg').addEventListener('click', async () => { await navigator.clipboard.writeText(document.getElementById('envMsg').value); mostrarAviso('Mensagem copiada.'); });
+document.getElementById('envCopiaLink').addEventListener('click', async () => {
+  const o = stateOrdens.find(x => x.id === envOrdemId); const l = linkPortalOS(o);
+  if(!l){ alert('Essa O.S. ainda não tem link.'); return; }
+  await navigator.clipboard.writeText(l); mostrarAviso('Link copiado.');
+});
+document.getElementById('envOrc').addEventListener('click', () => { const id = envOrdemId; fecharModal('modalEnviar'); abrirOrcamentoCliente(id); });
+document.getElementById('envNota').addEventListener('click', () => { const id = envOrdemId; fecharModal('modalEnviar'); abrirNotaFiscal(id); });
+
+/* ==========================================================
+   GARANTIAS
+   ========================================================== */
+function renderGarantias(){
+  const el = document.getElementById('garantiasConteudo'); if(!el) return;
+  const hoje = hojeLocal(), filtro = document.getElementById('garFiltro').value;
+  const todas = stateOrdens.filter(o => o.status === 'concluida' && Number(o.garantia_meses) > 0).map(o => {
+    const ini = String(o.created_at).slice(0, 10), d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + Number(o.garantia_meses));
+    const fim = d.toLocaleDateString('sv-SE'), dias = Math.round((new Date(fim + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 86400000);
+    return { o, ini, fim, dias };
+  }).sort((a, b) => a.dias - b.dias);
+  const lista = todas.filter(x => filtro === 'todas' || (filtro === 'ativas' && x.dias >= 0) || (filtro === 'vencendo' && x.dias >= 0 && x.dias <= 30) || (filtro === 'vencidas' && x.dias < 0));
+  if(!lista.length){ el.innerHTML = `<div class="panel"><p class="hint">${todas.length ? 'Nenhuma O.S. neste filtro.' : 'Nenhuma O.S. concluída com garantia ainda. Preencha "Garantia (meses)" em <b>Mais detalhes</b> na O.S.'}</p></div>`; return; }
+  el.innerHTML = `<div class="panel"><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Veículo</th><th>Garantia</th><th>Vale até</th><th>Situação</th><th></th></tr></thead><tbody>
+    ${lista.map(x => { const cor = x.dias < 0 ? '#ff3b17' : (x.dias <= 30 ? '#e8b93b' : '#2fb872'); const txt = x.dias < 0 ? `venceu há ${-x.dias} dia(s)` : (x.dias === 0 ? 'vence hoje' : `faltam ${x.dias} dia(s)`);
+      return `<tr><td>${escImp(x.o.cliente_nome)}</td><td>${escImp(x.o.veiculo || '')}</td><td>${x.o.garantia_meses} mês(es)</td><td>${dataBR(x.fim)}</td><td><b style="color:${cor}">${x.dias < 0 ? '⛔' : (x.dias <= 30 ? '⚠' : '✅')} ${txt}</b></td><td><button type="button" class="btn-ghost" onclick="abrirEnviarCliente(${x.o.id}, 'posvenda')">📲 Pós-venda</button></td></tr>`; }).join('')}
+    </tbody></table></div><p class="hint" style="margin-top:8px;">A garantia conta a partir da data de abertura da O.S.</p></div>`;
+}
+document.getElementById('garFiltro').addEventListener('change', renderGarantias);
+
+/* ==========================================================
+   HISTÓRICO DO VEÍCULO
+   ========================================================== */
+let hvVeiculoId = null;
+async function renderHistoricoVeiculo(){
+  const el = document.getElementById('historicoConteudo'); if(!el) return;
+  const nome = id => (stateClientes.find(c => c.id === id) || {}).nome || '—';
+  if(!hvVeiculoId){
+    el.innerHTML = `<input type="search" id="hvBusca" placeholder="Buscar por placa, modelo ou cliente…" oninput="hvFiltrar(this.value)" style="width:100%;max-width:420px;margin-bottom:12px;">
+      <div id="hvLista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">
+      ${stateVeiculos.map(v => { const qtd = stateOrdens.filter(o => o.veiculo_id === v.id).length; const txt = `${v.placa || ''} ${v.modelo || ''} ${nome(v.cliente_id)}`.toLowerCase();
+        return `<button type="button" class="gal-cliente" data-txt="${escImp(txt)}" onclick="hvAbrir(${v.id})"><b>${escImp(v.modelo || 'Veículo')} ${v.placa ? `<span class="placa-chip">${escImp(v.placa)}</span>` : ''}</b><span class="hint">${escImp(nome(v.cliente_id))} · ${qtd} O.S.</span></button>`; }).join('') || '<p class="empty">Nenhum veículo cadastrado.</p>'}
+      </div>`;
+    return;
+  }
+  const v = stateVeiculos.find(x => x.id === hvVeiculoId); if(!v){ hvVeiculoId = null; return renderHistoricoVeiculo(); }
+  const oss = stateOrdens.filter(o => o.veiculo_id === v.id || (v.placa && placaDaOrdem(o) === v.placa)).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const ids = oss.map(o => o.id);
+  const { data: itens } = ids.length ? await supabaseClient.from('ordem_itens').select('ordem_id, tipo, descricao, quantidade').in('ordem_id', ids) : { data: [] };
+  const total = oss.reduce((t, o) => t + (Number(o.valor) || 0), 0), ultKm = oss.map(o => Number(o.km) || 0).reduce((a, b) => Math.max(a, b), 0);
+  el.innerHTML = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><button type="button" class="btn-ghost" onclick="hvVeiculoId=null;renderHistoricoVeiculo()">← Todos os veículos</button>
+      <h2 style="margin:0;">${escImp(v.modelo || 'Veículo')} ${v.placa ? `<span class="placa-chip">${escImp(v.placa)}</span>` : ''}</h2><span class="hint">${escImp(nome(v.cliente_id))}</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:160px;"><div class="hint">O.S. feitas</div><div style="font-size:22px;font-weight:800;">${oss.length}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:160px;"><div class="hint">Total gasto na oficina</div><div style="font-size:22px;font-weight:800;">${moeda(total)}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:160px;"><div class="hint">Última quilometragem</div><div style="font-size:22px;font-weight:800;">${ultKm ? ultKm.toLocaleString('pt-BR') + ' km' : '—'}</div></div>
+    </div>
+    ${oss.map(o => { const its = (itens || []).filter(i => i.ordem_id === o.id);
+      return `<div class="panel" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><b>📅 ${dataBR(String(o.created_at).slice(0, 10))} · O.S. #${o.id}</b><span><span class="status ${o.status}">${statusLabel[o.status] || o.status}</span> <b>${moeda(o.valor)}</b>${o.km ? ` · ${Number(o.km).toLocaleString('pt-BR')} km` : ''}</span></div>
+        <div style="white-space:pre-line;font-size:13px;margin-top:6px;">${escImp(o.servico || '')}</div>
+        ${its.length ? `<div class="hint" style="margin-top:6px;">Itens: ${its.map(i => escImp(i.descricao) + (i.quantidade > 1 ? ' ×' + i.quantidade : '')).join(' · ')}</div>` : ''}</div>`; }).join('') || '<p class="empty">Esse veículo ainda não tem O.S.</p>'}`;
+}
+function hvAbrir(id){ hvVeiculoId = id; renderHistoricoVeiculo(); }
+function hvFiltrar(t){ t = String(t || '').toLowerCase(); document.querySelectorAll('#hvLista .gal-cliente').forEach(b => { b.style.display = b.dataset.txt.includes(t) ? '' : 'none'; }); }
+
+/* ==========================================================
+   LUCRO POR O.S.
+   ========================================================== */
+async function renderLucro(){
+  const el = document.getElementById('lucroConteudo'); if(!el) return;
+  const n = v => Number(v) || 0, per = document.getElementById('lucroPeriodo').value, mes = hojeLocal().slice(0, 7);
+  const { data: itens } = await supabaseClient.from('ordem_itens').select('ordem_id, tipo, descricao, valor_total, custo_total');
+  const validas = stateOrdens.filter(o => !['rascunho', 'orcamento'].includes(o.status) && (per === 'tudo' || String(o.created_at).slice(0, 7) === mes)).sort((a, b) => b.id - a.id);
+  const linhas = validas.map(o => {
+    const custo = (itens || []).filter(i => i.ordem_id === o.id && i.tipo !== 'servico').reduce((t, i) => t + n(i.custo_total), 0);
+    const gastos = stateDespesas.filter(d => d.ordem_id === o.id).reduce((t, d) => t + n(d.valor), 0);
+    const lucro = n(o.valor) - custo - gastos;
+    return { o, custo, gastos, lucro, margem: n(o.valor) ? lucro / n(o.valor) * 100 : null };
+  });
+  const tot = k => linhas.reduce((t, x) => t + (k === 'valor' ? n(x.o.valor) : x[k]), 0);
+  const VERDE = '#2fb872', VERM = '#ff3b17';
+  const cartao = (t, v, cor) => `<div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:160px;"><div class="hint">${t}</div><div style="font-size:22px;font-weight:800;color:${cor || 'var(--text)'};">${v}</div></div>`;
+  const porServ = {}; (itens || []).filter(i => i.tipo === 'servico' && validas.some(o => o.id === i.ordem_id)).forEach(i => { const k = i.descricao.trim().toLowerCase(); (porServ[k] = porServ[k] || { nome: i.descricao, q: 0, v: 0 }).q++; porServ[k].v += n(i.valor_total); });
+  const rank = Object.values(porServ).sort((a, b) => b.v - a.v).slice(0, 8);
+  el.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      ${cartao('Faturado', moeda(tot('valor')))}${cartao('Custo das peças', moeda(tot('custo')), VERM)}${cartao('Gastos ligados às O.S.', moeda(tot('gastos')), VERM)}
+      ${cartao('Lucro', moeda(tot('lucro')), tot('lucro') >= 0 ? VERDE : VERM)}${cartao('Margem', tot('valor') ? (tot('lucro') / tot('valor') * 100).toFixed(0) + '%' : '—', tot('lucro') >= 0 ? VERDE : VERM)}</div>
+    <div class="panel" style="margin-bottom:14px;"><div class="table-wrap"><table><thead><tr><th>O.S.</th><th>Cliente</th><th>Veículo</th><th>Faturado</th><th>Peças (custo)</th><th>Gastos</th><th>Lucro</th><th>Margem</th></tr></thead><tbody>
+      ${linhas.map(x => `<tr><td>#${x.o.id}</td><td>${escImp(x.o.cliente_nome)}</td><td>${escImp(x.o.veiculo || '')}</td><td>${moeda(x.o.valor)}</td><td>${moeda(x.custo)}</td><td>${moeda(x.gastos)}</td><td><b style="color:${x.lucro >= 0 ? VERDE : VERM}">${moeda(x.lucro)}</b></td><td>${x.margem === null ? '—' : x.margem.toFixed(0) + '%'}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">Nenhuma O.S. neste período.</td></tr>'}
+    </tbody></table></div><p class="hint" style="margin-top:8px;">Lucro = valor da O.S. − custo das peças do estoque − gastos lançados em "Despesas do dia" ligados à O.S. Se a mesma peça estiver nos dois lugares, ela conta duas vezes. O que o Tom ou o Fernando pagaram entra aqui como gasto — o acerto entre vocês fica em Despesas do dia.</p></div>
+    <div class="panel"><h3 style="margin:0 0 8px;">🏆 Serviços que mais faturam</h3>${rank.length ? `<div class="table-wrap"><table><thead><tr><th>Serviço</th><th>Vezes</th><th>Faturado</th></tr></thead><tbody>${rank.map(r => `<tr><td>${escImp(r.nome)}</td><td>${r.q}</td><td>${moeda(r.v)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Lance serviços com preço nas O.S. para ver o ranking.</p>'}</div>`;
+}
+document.getElementById('lucroPeriodo').addEventListener('change', renderLucro);
+
+/* ==========================================================
+   METAS E INDICADORES
+   ========================================================== */
+async function renderMetas(){
+  const el = document.getElementById('metasConteudo'); if(!el) return;
+  const n = v => Number(v) || 0;
+  const mes = document.getElementById('metaMes').value || hojeLocal().slice(0, 7);
+  const { data: metas } = await supabaseClient.from('metas_mensais').select('*');
+  const meta = n(((metas || []).find(m => m.mes === mes) || {}).meta_faturamento);
+  const campo = document.getElementById('metaValor'); if(document.activeElement !== campo) campo.value = meta || '';
+  const hoje = hojeLocal(), mesHoje = hoje.slice(0, 7);
+  const antMes = m => { const d = new Date(m + '-01T12:00:00'); d.setMonth(d.getMonth() - 1); return d.toLocaleDateString('sv-SE').slice(0, 7); };
+  const dataOS = o => String(o.created_at || '').slice(0, 10);
+  const validas = stateOrdens.filter(o => !['rascunho', 'orcamento'].includes(o.status));
+  const doMes = m => validas.filter(o => dataOS(o).slice(0, 7) === m);
+  const fatur = lista => lista.reduce((t, o) => t + n(o.valor), 0);
+  const ticket = lista => { const pagas = lista.filter(o => n(o.valor) > 0); return pagas.length ? fatur(pagas) / pagas.length : 0; };
+  const os = doMes(mes), osAnt = doMes(antMes(mes));
+  const fat = fatur(os), fatAnt = fatur(osAnt), tk = ticket(os), tkAnt = ticket(osAnt);
+  const recebido = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro' && String(p.data || '').slice(0, 7) === mes).reduce((t, p) => t + n(p.valor), 0);
+  const [ano, mm] = mes.split('-').map(Number), diasMes = new Date(ano, mm, 0).getDate();
+  const noMesAtual = mes === mesHoje, diaHoje = Number(hoje.slice(8)), decorridos = noMesAtual ? diaHoje : (mes < mesHoje ? diasMes : 0);
+  const projecao = noMesAtual && decorridos ? fat / decorridos * diasMes : null;
+  const pct = meta ? fat / meta * 100 : 0, esperado = meta && decorridos ? meta * decorridos / diasMes : 0;
+  const VERDE = '#2fb872', VERM = '#ff3b17', AMA = '#e8b93b';
+  const corBarra = !meta ? 'var(--text-dim)' : (fat >= meta ? VERDE : (fat >= esperado ? AMA : VERM));
+  const variacao = (a, b) => b ? ` <span style="color:${a >= b ? VERDE : VERM};font-size:12px;">${a >= b ? '▲' : '▼'} ${Math.abs((a - b) / b * 100).toFixed(0)}% vs mês anterior</span>` : '';
+  const cartao = (t, v, sub, extra) => `<div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:190px;"><div style="font-size:12px;color:var(--text-dim);">${t}</div><div style="font-size:22px;font-weight:800;">${v}</div>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${sub}</div>` : ''}${extra || ''}</div>`;
+
+  // clientes que voltaram
+  const inicioMes = mes + '-01';
+  const clientesMes = [...new Set(os.filter(o => o.cliente_id).map(o => o.cliente_id))];
+  const voltaram = clientesMes.filter(id => validas.some(o => o.cliente_id === id && dataOS(o) < inicioMes));
+  const novos = clientesMes.length - voltaram.length;
+  const porCliente = {}; validas.filter(o => o.cliente_id).forEach(o => { (porCliente[o.cliente_id] = porCliente[o.cliente_id] || []).push(o); });
+  const fieis = Object.entries(porCliente).filter(([, l]) => l.length >= 2).map(([id, l]) => ({ id: Number(id), nome: l[0].cliente_nome, qtd: l.length, total: fatur(l) })).sort((a, b) => b.qtd - a.qtd || b.total - a.total);
+  const nomeCli = id => (stateClientes.find(c => c.id === id) || {}).nome || '—';
+
+  // O.S. por semana (últimas 8, segunda a domingo)
+  const segunda = d => { const x = new Date(d + 'T12:00:00'); const dow = (x.getDay() + 6) % 7; x.setDate(x.getDate() - dow); return x.toLocaleDateString('sv-SE'); };
+  const somaD = (d, k) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + k); return x.toLocaleDateString('sv-SE'); };
+  const semAtual = segunda(hoje), semanas = []; for(let i = 7; i >= 0; i--) semanas.push(somaD(semAtual, -7 * i));
+  const contSem = semanas.map(ini => ({ ini, q: validas.filter(o => { const d = dataOS(o); return d >= ini && d <= somaD(ini, 6); }).length }));
+  const maxQ = Math.max(1, ...contSem.map(x => x.q)), W = 560, H = 180, bw = 34, passo = W / contSem.length;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;font-family:inherit;">`;
+  contSem.forEach((x, i) => { const h = (H - 50) * x.q / maxQ, cx = passo * i + passo / 2, atual = x.ini === semAtual;
+    svg += `<rect x="${cx - bw / 2}" y="${H - 30 - h}" width="${bw}" height="${h}" rx="4" fill="${atual ? 'var(--accent)' : '#8a8a86'}"><title>Semana de ${dataBR(x.ini)}: ${x.q} O.S.</title></rect>`
+      + `<text x="${cx}" y="${H - 34 - h}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">${x.q}</text>`
+      + `<text x="${cx}" y="${H - 12}" text-anchor="middle" font-size="10" fill="var(--text-dim)">${x.ini.slice(8)}/${x.ini.slice(5, 7)}</text>`; });
+  svg += '</svg>';
+  const mediaSem = contSem.reduce((t, x) => t + x.q, 0) / contSem.length;
+
+  el.innerHTML = `
+    <div class="panel" style="margin-bottom:14px;">
+      <h3 style="margin:0 0 8px;">🎯 Meta de faturamento</h3>
+      ${meta ? `<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px;flex-wrap:wrap;gap:6px;"><span><b>${moeda(fat)}</b> de ${moeda(meta)}</span><b style="color:${corBarra};">${pct.toFixed(0)}%</b></div>
+        <div style="position:relative;height:18px;background:var(--surface-2);border-radius:9px;overflow:hidden;"><div style="width:${Math.min(100, pct)}%;height:100%;background:${corBarra};border-radius:9px;"></div>${esperado ? `<div title="Onde deveria estar hoje" style="position:absolute;top:0;bottom:0;left:${Math.min(100, esperado / meta * 100)}%;width:2px;background:var(--text);"></div>` : ''}</div>
+        <div class="hint" style="margin-top:8px;">${fat >= meta ? '✅ Meta batida!' : `Faltam <b>${moeda(meta - fat)}</b>${noMesAtual && diasMes - decorridos > 0 ? ` — ${moeda((meta - fat) / (diasMes - decorridos))} por dia nos ${diasMes - decorridos} dias que restam` : ''}.`}${projecao !== null ? ` Neste ritmo o mês fecha em <b>${moeda(projecao)}</b> ${projecao >= meta ? '(acima da meta)' : '(abaixo da meta)'}.` : ''}</div>`
+        : '<p class="hint">Defina uma meta acima e clique em <b>Salvar meta</b> para acompanhar o progresso do mês.</p>'}
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      ${cartao('💰 Faturamento do mês', moeda(fat), `${os.length} O.S. abertas no mês (sem rascunho/orçamento)`, variacao(fat, fatAnt))}
+      ${cartao('💵 Recebido no mês', moeda(recebido), 'pagamentos registrados nas O.S.')}
+      ${cartao('🧾 Ticket médio', moeda(tk), 'faturamento ÷ O.S. com valor (gratuitas ficam fora)', variacao(tk, tkAnt))}
+      ${cartao('🔁 Clientes que voltaram', `${voltaram.length} de ${clientesMes.length}`, clientesMes.length ? `${(voltaram.length / clientesMes.length * 100).toFixed(0)}% já tinham feito O.S. antes · ${novos} novo(s)` : 'sem clientes neste mês')}
+    </div>
+    <div class="panel" style="margin-bottom:14px;">
+      <h3 style="margin:0 0 4px;">📅 O.S. por semana</h3>
+      <p class="hint" style="margin:0 0 8px;">Últimas 8 semanas (segunda a domingo) · média de ${mediaSem.toFixed(1).replace('.', ',')} por semana · a barra vermelha é a semana atual</p>
+      ${svg}
+    </div>
+    <div class="panel">
+      <h3 style="margin:0 0 8px;">🤝 Clientes que mais voltam (todas as épocas)</h3>
+      ${fieis.length ? `<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>O.S.</th><th>Faturado</th></tr></thead><tbody>${fieis.slice(0, 10).map(c => `<tr><td>${escImp(nomeCli(c.id) !== '—' ? nomeCli(c.id) : c.nome)}</td><td>${c.qtd}</td><td>${moeda(c.total)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Ainda não há clientes com mais de uma O.S.</p>'}
+    </div>`;
+}
+document.getElementById('metaMes').addEventListener('change', () => { document.getElementById('metaValor').value = ''; renderMetas(); });
+document.getElementById('btnSalvarMeta').addEventListener('click', async () => {
+  const mes = document.getElementById('metaMes').value; if(!mes){ alert('Escolha o mês.'); return; }
+  const v = Number(document.getElementById('metaValor').value);
+  if(isNaN(v) || v < 0){ alert('Digite um valor válido.'); return; }
+  const { error } = await supabaseClient.from('metas_mensais').upsert({ mes, meta_faturamento: v, atualizado_em: new Date().toISOString() });
+  if(error){ alert('Erro ao salvar a meta: ' + error.message); return; }
+  mostrarAviso('Meta salva.'); renderMetas();
+});
 
 /* ==========================================================
    RESULTADO DO DIA — entrou x saiu x saldo (gráfico)
@@ -5837,12 +6121,19 @@ function paraCSV(linhas){
   return [colunas.map(escapar).join(','), ...linhas.map(l => colunas.map(c => escapar(l[c])).join(','))].join('\n');
 }
 async function exportarBackupCompleto(){
-  const tabelas = ['clientes','ordens','ordem_itens','fornecedores','contas_pagar','contas_receber','estoque','servicos','agendamentos','interacoes_cliente','perfil'];
+  const tabelas = ['agendamentos','caixa_sessoes','clientes','contas_pagar','contas_receber','despesas','estoque','estoque_movimentos','fornecedores','interacoes_cliente','metas_mensais','midias','ordem_itens','ordem_pagamentos','ordens','perfil','repasses','servicos','veiculos'];
   const backup = {};
   try {
     for(const t of tabelas){
-      const { data, error } = await supabaseClient.from(t).select('*');
-      backup[t] = error ? [] : (data || []);
+      let tudo = [], de = 0;
+      for(;;){
+        const { data, error } = await supabaseClient.from(t).select('*').range(de, de + 999);
+        if(error){ console.error(t, error); break; }
+        tudo = tudo.concat(data || []);
+        if(!data || data.length < 1000) break;
+        de += 1000;
+      }
+      backup[t] = tudo;
     }
     const observacaoEl = document.getElementById('backupObservacao');
     const observacao = observacaoEl ? observacaoEl.value.trim() : '';
@@ -5862,8 +6153,36 @@ function exportarOrdensCSV(){
   baixarArquivo('ordens.csv', paraCSV(stateOrdens), 'text/csv;charset=utf-8');
 }
 const tipoBackupLabel = { automatico: 'Automático (meia-noite)', manual: 'Manual' };
+function renderPainelHoje(){
+  const el = document.getElementById('painelHoje'); if(!el) return;
+  const n = v => Number(v) || 0, hoje = hojeLocal();
+  const entrou = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro' && String(p.data).slice(0, 10) === hoje).reduce((t, p) => t + n(p.valor), 0);
+  const gastou = stateDespesas.filter(d => String(d.data).slice(0, 10) === hoje).reduce((t, d) => t + n(d.valor), 0)
+    + stateContasPagar.filter(c => c.status === 'pago' && String(c.data_pagamento || '').slice(0, 10) === hoje).reduce((t, c) => t + n(c.valor), 0);
+  const saldo = entrou - gastou, limite = new Date(hoje + 'T12:00:00'); limite.setDate(limite.getDate() - 3);
+  const semResposta = stateOrdens.filter(o => o.status === 'orcamento' && !o.aprovado_em && String(o.created_at).slice(0, 10) <= limite.toLocaleDateString('sv-SE')).length;
+  const garVenc = stateOrdens.filter(o => o.status === 'concluida' && n(o.garantia_meses) > 0).filter(o => { const d = new Date(String(o.created_at).slice(0, 10) + 'T12:00:00'); d.setMonth(d.getMonth() + n(o.garantia_meses)); const dias = Math.round((d - new Date(hoje + 'T12:00:00')) / 86400000); return dias >= 0 && dias <= 30; }).length;
+  const bk = window._statusBackup;
+  const mini = (t, v, cor, onclick) => `<div class="card" style="${onclick ? 'cursor:pointer;' : ''}" ${onclick ? `onclick="${onclick}"` : ''}><span class="card-num" style="font-size:22px;color:${cor};">${v}</span><span class="card-label">${t}</span></div>`;
+  el.innerHTML = `<div class="panel-head"><h2>📈 Hoje</h2></div><div class="cards" style="margin-bottom:0;">
+    ${mini('Entrou hoje', moeda(entrou), 'var(--ok)', "irPara('resultado')")}${mini('Gastou hoje', moeda(gastou), 'var(--accent)', "irPara('despesas')")}
+    ${mini('Saldo do dia', moeda(saldo), saldo >= 0 ? 'var(--ok)' : 'var(--accent)', "irPara('resultado')")}
+    ${mini('Orçamentos sem resposta há 3+ dias', semResposta, semResposta ? 'var(--wait)' : 'var(--text)', "irPara('ordens')")}
+    ${mini('Garantias vencendo em 30 dias', garVenc, garVenc ? 'var(--wait)' : 'var(--text)', "irPara('garantias')")}
+    ${mini('Backup', bk ? (bk.ok ? '✅ em dia' : '⚠ atrasado') : '…', bk ? (bk.ok ? 'var(--ok)' : 'var(--accent)') : 'var(--text-dim)', "irPara('administracao')")}</div>`;
+}
+function textoStatusBackup(lista){
+  const auto = lista.find(b => b.tipo === 'automatico'); if(!auto) return { ok:false, txt:'Nenhum backup automático encontrado.' };
+  const horas = (Date.now() - new Date(auto.created_at).getTime()) / 3600000;
+  return { ok: horas <= 30, txt: `Último backup automático: ${new Date(auto.created_at).toLocaleString('pt-BR')} (há ${horas < 1 ? 'menos de 1 hora' : Math.round(horas) + ' h'})${horas > 30 ? ' — está atrasado!' : ''}` };
+}
 async function carregarHistoricoBackups(){
   const lista = await DB.backups.listarRecentes(30);
+  const st = textoStatusBackup(lista), tab = document.getElementById('tabelaBackups');
+  if(tab){ let el = document.getElementById('statusBackup'); if(!el){ el = document.createElement('p'); el.id = 'statusBackup'; el.style.cssText = 'margin:0 0 10px;font-weight:700;'; tab.closest('.table-wrap').before(el); }
+    el.style.color = st.ok ? 'var(--ok)' : 'var(--accent)'; el.textContent = (st.ok ? '✅ ' : '⚠ ') + st.txt; }
+  window._statusBackup = st;
+  if(typeof renderPainelHoje === 'function') renderPainelHoje();
   const tbody = document.querySelector('#tabelaBackups tbody');
   if(!tbody) return;
   tbody.innerHTML = lista.map(b => `
