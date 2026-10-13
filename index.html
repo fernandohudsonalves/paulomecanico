@@ -727,6 +727,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
 
     <nav class="nav">
       <button class="nav-item nav-principal active" data-view="dashboard">Painel</button>
+      <button class="nav-item nav-principal" data-view="marketing" style="font-size:15px;">Marketing</button>
       <button class="nav-item nav-principal" data-view="treinamentos" style="font-size:15px;">Treinamentos e dicas</button>
 
       <div class="nav-group open">
@@ -1074,6 +1075,18 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
       <div class="panel" style="margin-bottom:14px;"><label style="margin:0;max-width:260px;">Período
         <select id="lucroPeriodo"><option value="mes">Este mês</option><option value="tudo">Tudo</option></select></label></div>
       <div id="lucroConteudo"></div>
+    </section>
+
+    <section class="view" id="view-marketing">
+      <header class="view-head"><h1>Marketing</h1><p>Planeje as postagens, acompanhe as avaliações dos clientes e não perca as datas importantes</p></header>
+      <div id="mktResumo"></div>
+      <div class="abas" id="abasMkt">
+        <button type="button" class="aba" data-aba="posts">📅 Calendário de postagens</button>
+        <button type="button" class="aba" data-aba="aval">⭐ Avaliações</button>
+        <button type="button" class="aba" data-aba="datas">🎉 Datas e feriados</button>
+        <button type="button" class="aba" data-aba="ideias">💡 Ideias e legendas</button>
+      </div>
+      <div id="mktConteudo"></div>
     </section>
 
     <section class="view" id="view-treinamentos">
@@ -2500,6 +2513,7 @@ const ICO_PATHS = {
   truck:'<rect x="2" y="6" width="12" height="10" rx="1"/><path d="M14 9h4l4 4v3h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
   magnet:'<path d="M6 3v9a6 6 0 0 0 12 0V3h-4v9a2 2 0 0 1-4 0V3z"/><path d="M6 7h4M14 7h4"/>',
   book:'<path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/>',
+  megafone:'<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/>',
   register:'<path d="M7 11V4h10v7"/><path d="M9 7h6"/><rect x="3" y="11" width="18" height="9" rx="2"/><path d="M7 15h2M12 15h2M17 15h.01"/>',
   home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   clipboard:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 12h6M9 16h4"/>',
@@ -2678,7 +2692,7 @@ document.querySelectorAll('.nav-group-toggle').forEach(btn => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 document.getElementById('btnAdminTop').addEventListener('click', () => irPara('administracao'));
-Object.entries({ treinamentos:'book', dashboard:'home', ordens:'clipboard', agenda:'calendar', garantias:'shield', historico:'car', galeria:'camera', oficina:'factory', clientes:'users', servicos:'wrench', estoque:'box', fornecedores:'store', caixa:'register', resultado:'bars', metas:'target', lucro:'trend', despesas:'arrowdown', pagar:'arrowup', receber:'inbox', relatorios:'filetext' }).forEach(([v, k]) => {
+Object.entries({ marketing:'megafone', treinamentos:'book', dashboard:'home', ordens:'clipboard', agenda:'calendar', garantias:'shield', historico:'car', galeria:'camera', oficina:'factory', clientes:'users', servicos:'wrench', estoque:'box', fornecedores:'store', caixa:'register', resultado:'bars', metas:'target', lucro:'trend', despesas:'arrowdown', pagar:'arrowup', receber:'inbox', relatorios:'filetext' }).forEach(([v, k]) => {
   const b = document.querySelector(`.nav-item[data-view="${v}"]`);
   if(b) b.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, v === 'dashboard' ? 20 : 16)}</span>`);
   const h1 = document.querySelector(`#view-${v} .view-head h1`); if(h1) h1.insertAdjacentHTML('afterbegin', `<span class="ico">${svgIco(k, 30)}</span>`);
@@ -2737,6 +2751,7 @@ async function renderRelatoriosVendas(){
 }
 
 function irPara(view){
+  if(view === 'marketing') setTimeout(renderMarketing, 0);
   if(view === 'treinamentos') setTimeout(renderTreinamentos, 0);
   if(view === 'garantias') setTimeout(renderGarantias, 0);
   if(view === 'historico'){ hvVeiculoId = null; setTimeout(renderHistoricoVeiculo, 0); }
@@ -4460,6 +4475,7 @@ const linhaOrdem = o => `
         <button class="btn-icon" title="Fotos (antes/depois)" onclick="abrirFotosOS(${o.id})">📷</button>
         <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
         <button class="btn-icon" title="Enviar ao cliente (orçamento, link, nota, WhatsApp)" onclick="abrirEnviarCliente(${o.id})" style="color:var(--accent);font-size:18px;">📲</button>
+        <button class="btn-icon" title="Pagamentos: valores, formas, parcelas e observações" onclick="abrirPagamentosOS(${o.id})" style="font-size:18px;">💳</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
@@ -5495,6 +5511,83 @@ function paginarTabelasDe(el, prefixo){ if(el) el.querySelectorAll('table').forE
 });
 
 /* ==========================================================
+   PAGAMENTOS DA O.S. — janela própria (valores, forma, parcelas, observações)
+   ========================================================== */
+document.body.insertAdjacentHTML('beforeend', `
+<div class="modal" id="modalPagamentosOS"><div class="modal-box" style="width:760px;max-width:96vw;max-height:92vh;overflow-y:auto;">
+  <h3 id="poTitulo" style="margin-top:0;">💳 Pagamentos</h3>
+  <p class="hint" id="poSub" style="margin:0 0 10px;"></p>
+  <div id="poConteudo"></div>
+  <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-ghost" onclick="fecharModal('modalPagamentosOS')">Fechar</button></div>
+</div></div>`);
+let pagOSId = null;
+const FORMAS_PAG = ['Pix', 'Dinheiro', 'Cartão de débito', 'Cartão de crédito', 'Outros'];
+function abrirPagamentosOS(id){ pagOSId = id; renderPagamentosOS(); abrirModal('modalPagamentosOS'); }
+function renderPagamentosOS(){
+  const o = stateOrdens.find(x => x.id === pagOSId); if(!o) return;
+  const n = v => Number(v) || 0;
+  const pags = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id);
+  const total = n(o.valor), recebido = pags.reduce((t, p) => t + n(p.valor), 0), falta = Math.max(0, Math.round((total - recebido) * 100) / 100);
+  const situ = total <= 0 ? ['Sem valor', '#e8b93b'] : (falta <= 0.004 ? ['✅ Pago', '#2fb872'] : (recebido > 0 ? ['🟡 Parcial', '#e8b93b'] : ['⏳ Em aberto', '#ff3b17']));
+  document.getElementById('poTitulo').textContent = `💳 Pagamentos — O.S. #${o.id}`;
+  document.getElementById('poSub').innerHTML = `${escImp(o.cliente_nome || '')} · ${escImp(o.veiculo || '')} <span style="margin-left:8px;padding:2px 10px;border-radius:10px;font-weight:700;color:#fff;background:${situ[1]};">${situ[0]}</span>`;
+  const tile = (t, v, c) => `<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;flex:1;min-width:140px;"><div class="hint">${t}</div><div style="font-size:20px;font-weight:800;color:${c || 'var(--text)'};">${v}</div></div>`;
+  const rotuloForma = p => { const par = Number(p.parcelas) || 1; return escImp(p.forma_pagamento || '—') + (par > 1 ? ` <b>em ${par}x</b> <span class="hint">(${par}x de ${moeda(n(p.valor) / par)})</span>` : ''); };
+  document.getElementById('poConteudo').innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+      ${tile('Total da O.S.', moeda(total))}${tile('Já recebido', moeda(recebido), '#2fb872')}${tile('Falta receber', moeda(falta), falta > 0.004 ? '#ff3b17' : '#2fb872')}
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Referente a</th><th>Forma</th><th>Valor</th><th>Observação</th><th></th></tr></thead><tbody>
+      ${pags.map(p => `<tr><td style="white-space:nowrap;">${dataBR(String(p.data).slice(0, 10))}</td><td>${p.bucket === 'pecas' ? '🔩 Peças' : '🔧 Mão de obra'}${p.destino === 'terceiro' ? '<div class="hint">pago direto na autopeça</div>' : ''}</td><td>${rotuloForma(p)}</td><td><b>${moeda(p.valor)}</b></td><td style="max-width:220px;white-space:normal;font-size:13px;">${escImp(p.obs || '—')}</td><td><button type="button" class="btn-icon danger" title="Excluir este pagamento" onclick="excluirPagamentoOS(${p.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum pagamento registrado ainda.</td></tr>'}
+    </tbody></table></div>
+    <div class="panel" style="margin-top:14px;border:1px solid #9b5cf6;">
+      <b>➕ Novo pagamento</b> <span class="hint">(pode pagar em partes: registre um de cada vez)</span>
+      <div class="grid2" style="margin-top:8px;align-items:end;">
+        <label>Valor pago agora (R$) 🟣<input type="number" id="poValor" class="campo-valor" step="0.01" min="0.01" placeholder="0,00"></label>
+        <label>Data<input type="date" id="poData" value="${hojeLocal()}"></label>
+        <label>Forma de pagamento<select id="poForma">${FORMAS_PAG.map(f => `<option>${f}</option>`).join('')}</select></label>
+        <label id="poParcelasWrap" style="display:none;">Parcelas (vezes)<input type="number" id="poParcelas" min="1" max="24" step="1" value="1"></label>
+        <label>Referente a<select id="poBucket"><option value="servico">Mão de obra</option><option value="pecas">Peças</option></select></label>
+        <label id="poDestinoWrap" style="display:none;">Esse dinheiro...<select id="poDestino"><option value="oficina">Entrou na oficina</option><option value="terceiro">Cliente pagou direto na autopeça</option></select></label>
+      </div>
+      <label>Observação (opcional)<input type="text" id="poObs" placeholder="Ex: Pix na conta do Tom · cartão do Tom · entrada de metade"></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn-primary" onclick="registrarPagamentoOS()">Registrar pagamento</button>
+        <button type="button" class="btn-ghost" onclick="document.getElementById('poValor').value = ${falta.toFixed(2)}">Preencher o que falta (${moeda(falta)})</button>
+      </div>
+    </div>`;
+  const atualiza = () => {
+    const f = document.getElementById('poForma').value;
+    document.getElementById('poParcelasWrap').style.display = f === 'Cartão de crédito' ? '' : 'none';
+    if(f !== 'Cartão de crédito') document.getElementById('poParcelas').value = 1;
+    document.getElementById('poDestinoWrap').style.display = document.getElementById('poBucket').value === 'pecas' ? '' : 'none';
+  };
+  document.getElementById('poForma').addEventListener('change', atualiza); document.getElementById('poBucket').addEventListener('change', atualiza);
+}
+async function registrarPagamentoOS(){
+  const o = stateOrdens.find(x => x.id === pagOSId); if(!o) return;
+  const valor = Math.round((Number(document.getElementById('poValor').value) || 0) * 100) / 100;
+  if(!(valor > 0)){ alert('Digite o valor pago.'); return; }
+  const recebido = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).reduce((t, p) => t + (Number(p.valor) || 0), 0), falta = Math.max(0, (Number(o.valor) || 0) - recebido);
+  if(valor > falta + 0.005 && !confirm(`Esse valor (${moeda(valor)}) é maior que o que falta receber (${moeda(falta)}). Registrar mesmo assim?`)) return;
+  const bucket = document.getElementById('poBucket').value, forma = document.getElementById('poForma').value;
+  const ok = await DB.ordemPagamentos.criar({
+    ordem_id: o.id, bucket, valor, forma_pagamento: forma, data: document.getElementById('poData').value || hojeLocal(),
+    destino: bucket === 'pecas' ? document.getElementById('poDestino').value : 'oficina',
+    obs: document.getElementById('poObs').value.trim() || null,
+    parcelas: forma === 'Cartão de crédito' ? Math.max(1, Number(document.getElementById('poParcelas').value) || 1) : 1,
+  });
+  if(!ok) return;
+  mostrarAviso('Pagamento registrado.');
+  await render(); renderPagamentosOS();
+}
+async function excluirPagamentoOS(id){
+  if(!confirm('Excluir este pagamento?')) return;
+  await DB.ordemPagamentos.excluir(id);
+  await render(); renderPagamentosOS();
+}
+
+/* ==========================================================
    ENVIAR AO CLIENTE — um só lugar para link, orçamento, nota e WhatsApp
    ========================================================== */
 document.body.insertAdjacentHTML('beforeend', `
@@ -5693,7 +5786,7 @@ async function renderMetaSalario(){
   const liquido = entrou - gastou, falta = Math.max(0, meta - liquido), pct = meta ? Math.max(0, liquido) / meta * 100 : 0;
   // dias de trabalho: segunda a sábado (6 por semana)
   const [ano, mm] = mes.split('-').map(Number), diasMes = new Date(ano, mm, 0).getDate(), diaHoje = Number(hoje.slice(8));
-  const util = d => new Date(ano, mm - 1, d).getDay() !== 0;
+  const util = d => new Date(ano, mm - 1, d).getDay() !== 0 && !feriadoNacional(`${mes}-${String(d).padStart(2, '0')}`);
   let uteisMes = 0, uteisPassados = 0, uteisRestantes = 0;
   for(let d = 1; d <= diasMes; d++){ if(!util(d)) continue; uteisMes++; if(d < diaHoje) uteisPassados++; else uteisRestantes++; }
   const hojeUtil = util(diaHoje), entrouHoje = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro' && String(p.data).slice(0, 10) === hoje).reduce((t, p) => t + n(p.valor), 0);
@@ -5753,6 +5846,255 @@ function marcarCamposValor(){
 marcarCamposValor();
 
 /* ==========================================================
+   MARKETING: postagens, avaliações, feriados e datas
+   ========================================================== */
+const MKT_CANAIS = ['Instagram', 'Facebook', 'WhatsApp Status', 'Google Meu Negócio', 'TikTok', 'Outro'];
+const MKT_TIPOS = ['Foto', 'Vídeo / Reels', 'Story', 'Carrossel', 'Texto'];
+const MKT_STATUS = { ideia: ['💭 Ideia', '#8a8a86'], planejado: ['🗓 Planejado', '#e8b93b'], postado: ['✅ Postado', '#2fb872'] };
+let mktAba = (() => { try { return localStorage.getItem('mktAba') || 'posts'; } catch(e){ return 'posts'; } })();
+let mktMes = hojeLocal().slice(0, 7), mktDados = { posts: [], aval: [], datas: [], config: {} }, mktFiltroAval = 'todas';
+
+/* --- datas e feriados (fixos + móveis calculados) --- */
+function pascoa(ano){
+  const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(ano, mes - 1, dia, 12);
+}
+const isoDia = d => d.toLocaleDateString('sv-SE');
+const somaDiasD = (d, k) => { const x = new Date(d); x.setDate(x.getDate() + k); return x; };
+function enesimoDiaSemana(ano, mes, dow, n){ let c = 0; for(let d = 1; d <= 31; d++){ const x = new Date(ano, mes - 1, d, 12); if(x.getMonth() !== mes - 1) break; if(x.getDay() === dow && ++c === n) return x; } }
+function datasMarketingDoAno(ano){
+  const P = pascoa(ano), L = [], add = (data, titulo, tipo, ideia) => L.push({ data: typeof data === 'string' ? data : isoDia(data), titulo, tipo, ideia: ideia || '' });
+  add(`${ano}-01-01`, 'Confraternização Universal', 'feriado', 'Post de feliz ano novo + horário de funcionamento.');
+  add(somaDiasD(P, -48), 'Carnaval (segunda)', 'facultativo', 'Aviso de horário. Dica: revisão antes de pegar a estrada.');
+  add(somaDiasD(P, -47), 'Carnaval (terça)', 'facultativo', 'Aviso de horário de funcionamento.');
+  add(somaDiasD(P, -2), 'Sexta-feira Santa', 'feriado', 'Revisão antes de viajar no feriadão: freios, pneus, óleo e fluidos.');
+  add(P, 'Páscoa', 'data', 'Mensagem de Páscoa + lembrete de revisão.');
+  add(`${ano}-04-21`, 'Tiradentes', 'feriado', 'Feriadão: dica de checklist antes da viagem.');
+  add(`${ano}-05-01`, 'Dia do Trabalho · início do Maio Amarelo', 'feriado', 'Homenagem aos trabalhadores + Maio Amarelo: dicas de segurança no trânsito durante o mês.');
+  add(enesimoDiaSemana(ano, 5, 0, 2), 'Dia das Mães', 'data', 'Revisão de presente: check-up com brinde (lavagem) para a mãe.');
+  add(`${ano}-06-12`, 'Dia dos Namorados', 'data', 'Pacote casal: revisão + lavagem. Foto do carro limpo.');
+  add(somaDiasD(P, 60), 'Corpus Christi', 'facultativo', 'Feriadão: checklist de viagem.');
+  add(`${ano}-07-25`, 'Dia do Motorista', 'data', 'Parabenize os clientes e ofereça uma revisão com desconto.');
+  add(enesimoDiaSemana(ano, 8, 0, 2), 'Dia dos Pais', 'data', 'Presente: revisão completa ou lavagem detalhada para o pai.');
+  add(`${ano}-09-07`, 'Independência do Brasil', 'feriado', 'Feriadão: dica de revisão antes da viagem.');
+  add(`${ano}-09-15`, 'Dia do Cliente', 'data', 'Agradecimento aos clientes + brinde ou desconto para quem voltar.');
+  add(`${ano}-09-25`, 'Dia Nacional do Trânsito', 'data', 'Dicas de segurança: pneus, freios e luzes.');
+  add(`${ano}-10-12`, 'N. Sra. Aparecida · Dia das Crianças', 'feriado', 'Feriadão: revisão antes de viajar com a família.');
+  add(`${ano}-11-02`, 'Finados', 'feriado', 'Feriadão: checklist de viagem.');
+  add(`${ano}-11-15`, 'Proclamação da República', 'feriado', 'Feriadão: aviso de horário.');
+  add(`${ano}-11-20`, 'Consciência Negra', 'feriado', 'Aviso de horário de funcionamento.');
+  const bf = enesimoDiaSemana(ano, 11, 4, 4); add(somaDiasD(bf, 1), 'Black Friday', 'data', 'Pacote de revisão com desconto por tempo limitado.');
+  add(`${ano}-12-24`, 'Véspera de Natal', 'data', 'Revisão antes das viagens de fim de ano. Aviso de horário.');
+  add(`${ano}-12-25`, 'Natal', 'feriado', 'Mensagem de Natal e agradecimento pelo ano.');
+  add(`${ano}-12-31`, 'Réveillon', 'data', 'Retrospectiva do ano: antes e depois dos serviços mais marcantes.');
+  return L.sort((a, b) => a.data.localeCompare(b.data));
+}
+const feriadoNacional = iso => datasMarketingDoAno(Number(iso.slice(0, 4))).some(d => d.data === iso && d.tipo === 'feriado');
+function todasAsDatas(ano){ return [...datasMarketingDoAno(ano), ...mktDados.datas.filter(d => String(d.data).startsWith(String(ano))).map(d => ({ data: String(d.data).slice(0, 10), titulo: d.titulo, tipo: 'minha', ideia: d.obs || '', id: d.id }))].sort((a, b) => a.data.localeCompare(b.data)); }
+const TIPO_DATA = { feriado: ['🏛 Feriado', '#ff3b17'], facultativo: ['🏛 Ponto facultativo', '#e8b93b'], data: ['💡 Data comemorativa', '#9b5cf6'], minha: ['⭐ Minha data', '#2fb872'] };
+
+/* --- carregar --- */
+async function renderMarketing(){
+  const q = t => supabaseClient.from(t).select('*');
+  const [p, a, d, c] = await Promise.all([q('marketing_posts').order('data'), q('marketing_avaliacoes').order('data', { ascending:false }), q('marketing_datas').order('data'), q('marketing_config')]);
+  mktDados = { posts: p.data || [], aval: a.data || [], datas: d.data || [], config: Object.fromEntries((c.data || []).map(x => [x.chave, x.valor])) };
+  document.querySelectorAll('#abasMkt .aba').forEach(b => b.classList.toggle('active', b.dataset.aba === mktAba));
+  renderMktResumo();
+  ({ posts: renderMktPosts, aval: renderMktAval, datas: renderMktDatas, ideias: renderMktIdeias }[mktAba] || renderMktPosts)();
+}
+document.querySelectorAll('#abasMkt .aba').forEach(b => b.addEventListener('click', () => { mktAba = b.dataset.aba; try { localStorage.setItem('mktAba', mktAba); } catch(e){} renderMarketing(); }));
+function renderMktResumo(){
+  const hoje = hojeLocal(), mes = hoje.slice(0, 7), n = v => Number(v) || 0;
+  const doMes = mktDados.posts.filter(x => String(x.data).slice(0, 7) === mes), postados = doMes.filter(x => x.status === 'postado').length;
+  const aval = mktDados.aval, media = aval.length ? aval.reduce((t, x) => t + n(x.nota), 0) / aval.length : 0, semResp = aval.filter(x => !x.respondida).length;
+  const prox = [...todasAsDatas(Number(hoje.slice(0, 4))), ...todasAsDatas(Number(hoje.slice(0, 4)) + 1)].find(d => d.data >= hoje && d.tipo !== 'facultativo');
+  const dias = prox ? Math.round((new Date(prox.data + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 86400000) : null;
+  const cartao = (t, v, sub, c) => `<div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:170px;"><div class="hint">${t}</div><div style="font-size:21px;font-weight:800;${c ? 'color:' + c : ''}">${v}</div><div class="hint">${sub}</div></div>`;
+  document.getElementById('mktResumo').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    ${cartao('📅 Postagens do mês', `${postados} / ${doMes.length}`, 'postadas / planejadas', doMes.length && postados === doMes.length ? 'var(--ok)' : '')}
+    ${cartao('⭐ Nota média', aval.length ? media.toFixed(1).replace('.', ',') : '—', `${aval.length} avaliação(ões)`, aval.length ? (media >= 4.5 ? 'var(--ok)' : media >= 4 ? 'var(--wait)' : 'var(--accent)') : '')}
+    ${cartao('💬 Sem resposta', semResp, 'avaliações para responder', semResp ? 'var(--wait)' : 'var(--ok)')}
+    ${cartao('🎉 Próxima data', prox ? escImp(prox.titulo) : '—', prox ? (dias === 0 ? 'é hoje!' : `em ${dias} dia(s) · ${dataBR(prox.data)}`) : '')}</div>`;
+}
+
+/* --- aba 1: calendário de postagens --- */
+function renderMktPosts(){
+  const el = document.getElementById('mktConteudo'), [ano, mm] = mktMes.split('-').map(Number), dias = new Date(ano, mm, 0).getDate(), off = new Date(ano, mm - 1, 1).getDay();
+  const datas = todasAsDatas(ano), nomeMes = new Date(ano, mm - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const posts = mktDados.posts.filter(x => String(x.data).slice(0, 7) === mktMes);
+  let cel = ''; for(let i = 0; i < off; i++) cel += '<div></div>';
+  for(let d = 1; d <= dias; d++){
+    const iso = `${mktMes}-${String(d).padStart(2, '0')}`, ps = posts.filter(x => String(x.data).slice(0, 10) === iso), ds = datas.filter(x => x.data === iso);
+    cel += `<div onclick="mktNovoPost('${iso}')" style="min-height:92px;border:1px solid ${iso === hojeLocal() ? 'var(--accent)' : 'var(--border)'};border-radius:8px;padding:4px 6px;cursor:pointer;background:var(--surface);overflow:hidden;">
+      <div style="font-size:12px;font-weight:700;color:${new Date(ano, mm - 1, d).getDay() === 0 ? 'var(--accent)' : 'var(--text-dim)'};">${d}</div>
+      ${ds.slice(0, 2).map(x => `<div style="font-size:10px;line-height:1.2;color:${TIPO_DATA[x.tipo][1]};font-weight:700;">${x.tipo === 'feriado' ? '🏛' : '🎉'} ${escImp(x.titulo)}</div>`).join('')}
+      ${ps.slice(0, 3).map(x => `<div onclick="event.stopPropagation();mktEditarPost(${x.id})" style="margin-top:2px;font-size:10px;padding:1px 5px;border-radius:5px;background:${MKT_STATUS[x.status][1]}33;border-left:3px solid ${MKT_STATUS[x.status][1]};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escImp(x.canal.slice(0, 2))} ${escImp(x.titulo)}</div>`).join('')}${ps.length > 3 ? `<div class="hint" style="font-size:10px;">+${ps.length - 3}</div>` : ''}</div>`;
+  }
+  el.innerHTML = `<div class="panel" style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-ghost" onclick="mktMudarMes(-1)">‹</button><b style="font-size:17px;text-transform:capitalize;min-width:170px;text-align:center;">${nomeMes}</b><button type="button" class="btn-ghost" onclick="mktMudarMes(1)">›</button></div>
+      <button type="button" class="btn-primary" onclick="mktNovoPost('${mktMes === hojeLocal().slice(0, 7) ? hojeLocal() : mktMes + '-01'}')">+ Nova postagem</button></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;color:var(--text-dim);text-align:center;margin-bottom:4px;">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(x => `<div>${x}</div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cel}</div>
+    <p class="hint" style="margin:8px 0 0;">Clique num dia para planejar uma postagem. 🏛 feriado · 🎉 data comemorativa · cor da postagem: cinza = ideia, amarelo = planejado, verde = postado.</p></div>
+    <div class="panel"><h3 style="margin:0 0 8px;">Postagens do mês</h3>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Canal</th><th>Tipo</th><th>Título / ideia</th><th>Status</th><th></th></tr></thead><tbody>
+    ${posts.map(x => `<tr><td style="white-space:nowrap;">${dataBR(String(x.data).slice(0, 10))}</td><td>${escImp(x.canal)}</td><td>${escImp(x.tipo || '—')}</td><td style="white-space:normal;"><b>${escImp(x.titulo)}</b>${x.link ? ` <a href="${escImp(x.link)}" target="_blank" rel="noopener">🔗</a>` : ''}</td>
+      <td><select onchange="mktStatusPost(${x.id}, this.value)">${Object.entries(MKT_STATUS).map(([k, v]) => `<option value="${k}"${x.status === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select></td>
+      <td class="icon-row"><button class="btn-icon" title="Editar" onclick="mktEditarPost(${x.id})">${ICON_EDIT}</button><button class="btn-icon danger" title="Excluir" onclick="mktExcluirPost(${x.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhuma postagem neste mês. Clique em um dia do calendário.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+function mktMudarMes(k){ const [a, m] = mktMes.split('-').map(Number), d = new Date(a, m - 1 + k, 1); mktMes = d.toLocaleDateString('sv-SE').slice(0, 7); renderMktPosts(); }
+document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modalPostMkt"><div class="modal-box" style="width:560px;max-width:96vw;max-height:92vh;overflow-y:auto;"><h3 id="mktPostTitulo" style="margin-top:0;">Nova postagem</h3><div id="mktPostForm"></div></div></div>`);
+let mktPostId = null;
+function mktNovoPost(data, titulo){ mktPostId = null; mktFormPost({ data, canal: 'Instagram', tipo: 'Foto', titulo: titulo || '', status: 'planejado' }); }
+function mktEditarPost(id){ const x = mktDados.posts.find(p => p.id === id); if(!x) return; mktPostId = id; mktFormPost(x); }
+function mktFormPost(x){
+  document.getElementById('mktPostTitulo').textContent = mktPostId ? 'Editar postagem' : 'Nova postagem';
+  const opt = (arr, v) => arr.map(o => `<option${o === v ? ' selected' : ''}>${o}</option>`).join('');
+  document.getElementById('mktPostForm').innerHTML = `
+    <div class="grid2"><label>Data<input type="date" id="mpData" value="${String(x.data).slice(0, 10)}"></label>
+      <label>Canal<select id="mpCanal">${opt(MKT_CANAIS, x.canal)}</select></label>
+      <label>Tipo<select id="mpTipo">${opt(MKT_TIPOS, x.tipo)}</select></label>
+      <label>Status<select id="mpStatus">${Object.entries(MKT_STATUS).map(([k, v]) => `<option value="${k}"${x.status === k ? ' selected' : ''}>${v[0]}</option>`).join('')}</select></label></div>
+    <label>Título / ideia<input type="text" id="mpTitulo" value="${escImp(x.titulo || '')}" placeholder="Ex: Antes e depois da troca de embreagem"></label>
+    <label>Legenda<textarea id="mpLegenda" rows="4" placeholder="Texto da postagem (pode deixar para depois)">${escImp(x.legenda || '')}</textarea></label>
+    <label>Link da postagem (depois de publicar)<input type="text" id="mpLink" value="${escImp(x.link || '')}" placeholder="https://instagram.com/p/..."></label>
+    <label>Observações<input type="text" id="mpObs" value="${escImp(x.obs || '')}"></label>
+    <div class="modal-actions"><button type="button" class="btn-ghost" onclick="fecharModal('modalPostMkt')">Cancelar</button><button type="button" class="btn-primary" onclick="mktSalvarPost()">Salvar</button></div>`;
+  abrirModal('modalPostMkt');
+}
+async function mktSalvarPost(){
+  const g = id => document.getElementById(id).value, titulo = g('mpTitulo').trim();
+  if(!titulo){ alert('Escreva um título ou ideia.'); return; }
+  const dados = { data: g('mpData'), canal: g('mpCanal'), tipo: g('mpTipo'), status: g('mpStatus'), titulo, legenda: g('mpLegenda').trim() || null, link: g('mpLink').trim() || null, obs: g('mpObs').trim() || null };
+  const r = mktPostId ? await supabaseClient.from('marketing_posts').update(dados).eq('id', mktPostId) : await supabaseClient.from('marketing_posts').insert([dados]);
+  if(r.error){ alert('Erro ao salvar: ' + r.error.message); return; }
+  fecharModal('modalPostMkt'); mktMes = dados.data.slice(0, 7); renderMarketing();
+}
+async function mktStatusPost(id, st){ await supabaseClient.from('marketing_posts').update({ status: st }).eq('id', id); renderMarketing(); }
+async function mktExcluirPost(id){ if(!confirm('Excluir esta postagem?')) return; await supabaseClient.from('marketing_posts').delete().eq('id', id); renderMarketing(); }
+
+/* --- aba 2: avaliações --- */
+const estrelas = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+function renderMktAval(){
+  const el = document.getElementById('mktConteudo'), aval = mktDados.aval, n = v => Number(v) || 0;
+  const media = aval.length ? aval.reduce((t, x) => t + n(x.nota), 0) / aval.length : 0;
+  const dist = [5, 4, 3, 2, 1].map(k => [k, aval.filter(x => n(x.nota) === k).length]);
+  const lista = aval.filter(x => mktFiltroAval === 'todas' || !x.respondida);
+  const recentes = stateOrdens.filter(o => o.status === 'concluida').sort((a, b) => String(b.concluida_em || b.created_at).localeCompare(String(a.concluida_em || a.created_at))).slice(0, 12);
+  el.innerHTML = `
+    <div class="panel" style="margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+      <div style="text-align:center;min-width:130px;"><div style="font-size:42px;font-weight:800;color:#e8b93b;">${aval.length ? media.toFixed(1).replace('.', ',') : '—'}</div><div style="color:#e8b93b;">${estrelas(Math.round(media))}</div><div class="hint">${aval.length} avaliação(ões)</div></div>
+      <div style="flex:1;min-width:240px;">${dist.map(([k, q]) => `<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0;"><span style="width:28px;">${k}★</span><div style="flex:1;height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;"><div style="width:${aval.length ? q / aval.length * 100 : 0}%;height:100%;background:#e8b93b;"></div></div><span style="width:24px;text-align:right;">${q}</span></div>`).join('')}</div>
+    </div>
+    <div class="panel" style="margin-bottom:14px;">
+      <h3 style="margin:0 0 6px;">📲 Pedir avaliação a um cliente</h3>
+      <p class="hint" style="margin:0 0 8px;">Cliente satisfeito é a melhor propaganda: mande o link para ele avaliar a oficina no Google.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:8px;">
+        <label style="margin:0;flex:1;min-width:260px;">Link de avaliação do Google<input type="text" id="mktLinkGoogle" value="${escImp(mktDados.config.link_google || '')}" placeholder="Cole aqui o link de avaliações do Google Meu Negócio"></label>
+        <button type="button" class="btn-ghost" onclick="mktSalvarLinkGoogle()" style="height:40px;">Salvar link</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;">
+        <label style="margin:0;flex:1;min-width:260px;">Serviço concluído<select id="mktOsAval">${recentes.map(o => `<option value="${o.id}">#${o.id} — ${escImp(o.cliente_nome || '')} · ${escImp(o.veiculo || '')}</option>`).join('') || '<option value="">Nenhuma O.S. concluída</option>'}</select></label>
+        <button type="button" class="btn-primary" onclick="mktPedirAvaliacao()" style="height:40px;">📲 Pedir avaliação no WhatsApp</button></div>
+    </div>
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+      <h3 style="margin:0;">Avaliações recebidas</h3>
+      <div style="display:flex;gap:8px;"><select onchange="mktFiltroAval = this.value; renderMktAval()"><option value="todas"${mktFiltroAval === 'todas' ? ' selected' : ''}>Todas</option><option value="sem"${mktFiltroAval === 'sem' ? ' selected' : ''}>Sem resposta</option></select>
+      <button type="button" class="btn-primary" onclick="mktFormAval()">+ Registrar avaliação</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Nota</th><th>Comentário</th><th>Origem</th><th>Respondida</th><th></th></tr></thead><tbody>
+    ${lista.map(x => `<tr><td style="white-space:nowrap;">${dataBR(String(x.data).slice(0, 10))}</td><td>${escImp(x.cliente_nome || '—')}</td><td style="color:#e8b93b;white-space:nowrap;">${estrelas(n(x.nota))}</td><td style="white-space:normal;max-width:280px;font-size:13px;">${escImp(x.comentario || '—')}${x.resposta ? `<div class="hint">↪ ${escImp(x.resposta)}</div>` : ''}</td><td>${escImp(x.origem)}</td>
+      <td style="text-align:center;"><input type="checkbox" ${x.respondida ? 'checked' : ''} onchange="mktRespondida(${x.id}, this.checked)"></td>
+      <td class="icon-row"><button class="btn-icon" title="Editar" onclick="mktFormAval(${x.id})">${ICON_EDIT}</button><button class="btn-icon danger" title="Excluir" onclick="mktExcluirAval(${x.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nenhuma avaliação registrada ainda.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+async function mktSalvarLinkGoogle(){ const v = document.getElementById('mktLinkGoogle').value.trim(); const r = await supabaseClient.from('marketing_config').upsert({ chave: 'link_google', valor: v }); if(r.error){ alert('Erro: ' + r.error.message); return; } mostrarAviso('Link salvo.'); renderMarketing(); }
+function mktPedirAvaliacao(){
+  const o = stateOrdens.find(x => x.id === Number(document.getElementById('mktOsAval').value)); if(!o){ alert('Escolha um serviço concluído.'); return; }
+  const link = mktDados.config.link_google; if(!link){ alert('Primeiro cole e salve o link de avaliação do Google acima.'); return; }
+  const cli = stateClientes.find(c => c.id === o.cliente_id) || {}, nome = (o.cliente_nome || '').split(' ')[0] || '';
+  const msg = `Olá, ${nome}! Aqui é da ${statePerfil.nome_oficina || 'oficina'}. Obrigado por confiar no nosso trabalho no seu ${o.veiculo || 'veículo'}! 🙏 Se você ficou satisfeito, pode nos avaliar? Leva 1 minuto e ajuda muito a oficina: ${link}`;
+  window.open((cli.telefone ? linkWhats(cli.telefone) : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
+}
+let mktAvalId = null;
+document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modalAvalMkt"><div class="modal-box" style="width:520px;max-width:96vw;"><h3 id="mktAvalTitulo" style="margin-top:0;">Registrar avaliação</h3><div id="mktAvalForm"></div></div></div>`);
+function mktFormAval(id){
+  mktAvalId = id || null; const x = id ? mktDados.aval.find(a => a.id === id) : { data: hojeLocal(), origem: 'Google', nota: 5 };
+  document.getElementById('mktAvalTitulo').textContent = id ? 'Editar avaliação' : 'Registrar avaliação';
+  document.getElementById('mktAvalForm').innerHTML = `<div class="grid2"><label>Data<input type="date" id="maData" value="${String(x.data).slice(0, 10)}"></label>
+    <label>Origem<select id="maOrigem">${['Google', 'Facebook', 'Instagram', 'WhatsApp', 'Indicação', 'Outro'].map(o => `<option${o === x.origem ? ' selected' : ''}>${o}</option>`).join('')}</select></label>
+    <label>Cliente<input type="text" id="maCliente" value="${escImp(x.cliente_nome || '')}"></label>
+    <label>Nota<select id="maNota">${[5, 4, 3, 2, 1].map(k => `<option value="${k}"${Number(x.nota) === k ? ' selected' : ''}>${estrelas(k)} (${k})</option>`).join('')}</select></label></div>
+    <label>Comentário do cliente<textarea id="maComent" rows="3">${escImp(x.comentario || '')}</textarea></label>
+    <label>Nossa resposta (opcional)<textarea id="maResp" rows="2">${escImp(x.resposta || '')}</textarea></label>
+    <label style="flex-direction:row;align-items:center;gap:8px;"><input type="checkbox" id="maRespondida" ${x.respondida ? 'checked' : ''}> Já respondi esta avaliação</label>
+    <div class="modal-actions"><button type="button" class="btn-ghost" onclick="fecharModal('modalAvalMkt')">Cancelar</button><button type="button" class="btn-primary" onclick="mktSalvarAval()">Salvar</button></div>`;
+  abrirModal('modalAvalMkt');
+}
+async function mktSalvarAval(){
+  const g = id => document.getElementById(id).value;
+  const dados = { data: g('maData'), origem: g('maOrigem'), cliente_nome: g('maCliente').trim() || null, nota: Number(g('maNota')), comentario: g('maComent').trim() || null, resposta: g('maResp').trim() || null, respondida: document.getElementById('maRespondida').checked };
+  const r = mktAvalId ? await supabaseClient.from('marketing_avaliacoes').update(dados).eq('id', mktAvalId) : await supabaseClient.from('marketing_avaliacoes').insert([dados]);
+  if(r.error){ alert('Erro ao salvar: ' + r.error.message); return; }
+  fecharModal('modalAvalMkt'); renderMarketing();
+}
+async function mktRespondida(id, v){ await supabaseClient.from('marketing_avaliacoes').update({ respondida: v }).eq('id', id); renderMarketing(); }
+async function mktExcluirAval(id){ if(!confirm('Excluir esta avaliação?')) return; await supabaseClient.from('marketing_avaliacoes').delete().eq('id', id); renderMarketing(); }
+
+/* --- aba 3: datas e feriados --- */
+function renderMktDatas(){
+  const el = document.getElementById('mktConteudo'), hoje = hojeLocal(), ano = Number(hoje.slice(0, 4));
+  const lista = [...todasAsDatas(ano), ...todasAsDatas(ano + 1)].filter(d => d.data >= hoje).slice(0, 40);
+  const dias = d => Math.round((new Date(d + 'T12:00:00') - new Date(hoje + 'T12:00:00')) / 86400000);
+  el.innerHTML = `<div class="panel" style="margin-bottom:14px;">
+      <h3 style="margin:0 0 8px;">Próximas datas</h3>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Quando</th><th>Data / feriado</th><th>Ideia de ação</th><th></th></tr></thead><tbody>
+      ${lista.map(d => { const f = dias(d.data), t = TIPO_DATA[d.tipo], jaTem = mktDados.posts.some(p => String(p.data).slice(0, 10) === d.data);
+        return `<tr><td style="white-space:nowrap;">${dataBR(d.data)}<div class="hint">${new Date(d.data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' })}</div></td>
+        <td style="white-space:nowrap;"><b style="color:${f <= 7 ? 'var(--accent)' : 'var(--text)'}">${f === 0 ? 'hoje' : f === 1 ? 'amanhã' : 'em ' + f + ' dias'}</b></td>
+        <td><b>${escImp(d.titulo)}</b><div style="font-size:11px;color:${t[1]};font-weight:700;">${t[0]}</div></td>
+        <td style="white-space:normal;max-width:340px;font-size:13px;">${escImp(d.ideia || '—')}</td>
+        <td class="icon-row" style="white-space:nowrap;">${jaTem ? '<span class="hint">✅ post planejado</span>' : `<button type="button" class="btn-ghost" onclick="mktNovoPost('${d.data}', '${escImp(d.titulo).replace(/'/g, '')}')">+ Criar post</button>`}${d.tipo === 'minha' ? `<button class="btn-icon danger" title="Excluir" onclick="mktExcluirData(${d.id})">${ICON_DELETE}</button>` : ''}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <p class="hint" style="margin:8px 0 0;">Feriados nacionais e datas comemorativas calculados automaticamente (inclui Páscoa, Carnaval e Corpus Christi, que mudam todo ano). Feriados estaduais e municipais não entram: cadastre abaixo.</p></div>
+    <div class="panel"><h3 style="margin:0 0 8px;">⭐ Minhas datas (feriado da cidade, aniversário da oficina, promoções…)</h3>
+      <div class="grid2" style="align-items:end;"><label>Data<input type="date" id="mdData"></label><label>Nome<input type="text" id="mdTitulo" placeholder="Ex: Aniversário da oficina"></label></div>
+      <label>Ideia / observação (opcional)<input type="text" id="mdObs"></label>
+      <button type="button" class="btn-primary" onclick="mktSalvarData()">Adicionar data</button></div>`;
+}
+async function mktSalvarData(){
+  const data = document.getElementById('mdData').value, titulo = document.getElementById('mdTitulo').value.trim();
+  if(!data || !titulo){ alert('Preencha a data e o nome.'); return; }
+  const r = await supabaseClient.from('marketing_datas').insert([{ data, titulo, obs: document.getElementById('mdObs').value.trim() || null }]);
+  if(r.error){ alert('Erro: ' + r.error.message); return; }
+  renderMarketing();
+}
+async function mktExcluirData(id){ if(!confirm('Excluir esta data?')) return; await supabaseClient.from('marketing_datas').delete().eq('id', id); renderMarketing(); }
+
+/* --- aba 4: ideias e legendas --- */
+const MKT_IDEIAS = [
+  ['🔧 Antes e depois', 'Foto/vídeo do serviço: peça velha x peça nova ou carro sujo x limpo.', 'Antes ➜ Depois 🔧 Troca de [serviço] no [modelo do carro]. Segurança e conforto de volta! Agende pelo WhatsApp: [telefone]'],
+  ['💡 Dica da semana', 'Uma dica curta: pressão dos pneus, nível do óleo, barulho no freio.', 'Dica da oficina 💡 Você sabia que [dica]? Faça isso todo mês e evite dor de cabeça. Dúvidas? Chama a gente!'],
+  ['👀 Bastidores', 'Mostre a oficina, as ferramentas, o mecânico trabalhando.', 'Bastidores da oficina 🛠 Aqui cada serviço é feito com atenção e transparência. Venha conhecer!'],
+  ['⭐ Depoimento de cliente', 'Print de elogio no WhatsApp ou avaliação do Google (com autorização).', 'Obrigado pela confiança, [nome]! 🙏 Ver clientes satisfeitos é o nosso melhor resultado. ⭐⭐⭐⭐⭐'],
+  ['🎁 Promoção da semana', 'Revisão, troca de óleo ou lavagem com brinde por tempo limitado.', 'Promoção até [data]! Revisão completa + brinde: lavagem do motor. Vagas limitadas, chame no WhatsApp.'],
+  ['🚗 Carro entregue', 'Foto do carro pronto com o cliente (com autorização).', 'Mais um carro entregue! ✅ Obrigado, [nome], por confiar na [oficina].'],
+  ['🧰 Peça da vez', 'Explique em 1 minuto uma peça: para que serve e quando trocar.', 'Você sabe o que faz o [peça]? 🤔 Serve para [função]. Troque a cada [prazo]. Qualquer dúvida, é só chamar!'],
+  ['📅 Lembrete de revisão', 'Lembre o cliente de revisões por km ou tempo.', 'Já faz [X] meses da última revisão? 🔧 Agende a sua e viaje tranquilo.'],
+  ['🤝 Parceiros e fornecedores', 'Mostre as parcerias e a qualidade das peças.', 'Trabalhamos só com peças de qualidade e fornecedores de confiança. 🔩 Transparência do orçamento à entrega.'],
+  ['❓ Perguntas e respostas', 'Responda as dúvidas mais comuns dos clientes.', 'Pergunta do cliente: "[pergunta]" Resposta: [resposta]. Tem outra dúvida? Manda pra gente!'],
+];
+function renderMktIdeias(){
+  document.getElementById('mktConteudo').innerHTML = `<div class="panel"><h3 style="margin:0 0 8px;">💡 Ideias e modelos de legenda</h3><p class="hint" style="margin:0 0 10px;">Troque o que está entre [colchetes] e publique. Clique em “Copiar” ou em “Planejar” para levar a ideia para o calendário.</p>
+    ${MKT_IDEIAS.map(([t, i, l], k) => `<details style="padding:8px 0;border-bottom:1px solid var(--border);"><summary style="cursor:pointer;font-weight:700;">${t}</summary><p class="hint" style="margin:6px 0;">${i}</p>
+      <div style="background:var(--surface-2);border-radius:8px;padding:8px 10px;font-size:13px;">${escImp(l)}</div>
+      <div style="display:flex;gap:8px;margin-top:6px;"><button type="button" class="btn-ghost" onclick="navigator.clipboard.writeText(MKT_IDEIAS[${k}][2]); mostrarAviso('Legenda copiada.')">📋 Copiar legenda</button><button type="button" class="btn-ghost" onclick="mktNovoPostIdeia(${k})">🗓 Planejar</button></div></details>`).join('')}</div>`;
+}
+function mktNovoPostIdeia(k){ mktNovoPost(hojeLocal(), MKT_IDEIAS[k][0].replace(/^\S+\s/, '')); document.getElementById('mpLegenda').value = MKT_IDEIAS[k][2]; }
+
+/* ==========================================================
    TREINAMENTOS E DICAS
    ========================================================== */
 function treinoFeito(k){ try { return localStorage.getItem('treino:' + k) === '1'; } catch(e){ return false; } }
@@ -5776,7 +6118,7 @@ function renderTreinamentos(){
         ${passo(6, 'De onde vêm as peças', `<p>• <b>Estoque da oficina:</b> escolha na lista, o preço de venda vem junto.<br>• <b>Loja parceira:</b> digite a peça e a <b>marca</b>; a cotação da loja pode ir em <b>Anexos da O.S.</b>.<br>• <b>O cliente trouxe:</b> marque <b>“Cliente trouxe as peças”</b> — nada é cobrado por elas.</p>`)}
         ${passo(7, 'Garantia e detalhes', `<p>Clique em <b>▶ Mais detalhes</b>: km, <b>garantia</b> (já vem 2 meses; dá para usar dias) e <b>Concluída em</b>. A garantia começa a contar no dia em que a O.S. é concluída.</p>`)}
         ${passo(8, 'Salvar', `<p>Clique em <b>Salvar OS</b>. Se clicar fora da janela sem querer, <b>nada se perde</b>: vira um <b>Rascunho</b> na lista, que você continua pelo lápis.</p>`)}
-        ${passo(9, '🟣 Registrar o pagamento (e os gastos)', `<p>O valor da O.S. <b>não é</b> dinheiro recebido. Abra a O.S. pelo lápis e use <b>+ Registrar pagamento</b>: valor pago agora (roxo), forma (Pix, dinheiro, cartão) e data. Pode pagar em partes.</p>${mock('Valor pago agora ' + roxo('R$ 800,00') + ' Forma <span class="m-campo">Pix</span> <span class="m-btn">Registrar</span>')}<p>Gastou com a O.S.? Vá em <b>Financeiro → Despesas do dia</b>, coloque o valor (roxo), escolha a <b>O.S. relacionada</b> e <b>quem pagou</b> (Tom, Fernando ou Paulo).</p>`)}
+        ${passo(9, '🟣 Registrar o pagamento (e os gastos)', `<p>O valor da O.S. <b>não é</b> dinheiro recebido. Na linha da O.S., clique no botão <b>💳 Pagamentos</b>: ali você vê o total, o que já entrou e o que falta, e registra cada pagamento com valor (roxo), forma (Pix, dinheiro, cartão — com <b>número de parcelas</b> no crédito), data e observação. Pode pagar em partes.</p>${mock('Valor pago agora ' + roxo('R$ 800,00') + ' Forma <span class="m-campo">Pix</span> <span class="m-btn">Registrar</span>')}<p>Gastou com a O.S.? Vá em <b>Financeiro → Despesas do dia</b>, coloque o valor (roxo), escolha a <b>O.S. relacionada</b> e <b>quem pagou</b> (Tom, Fernando ou Paulo).</p>`)}
         <div class="trein-erro"><b>⚠ Os 3 erros mais comuns</b><br>1) Salvar a O.S. <b>sem valor</b> — ela fica zerada. · 2) Esquecer de <b>registrar o pagamento</b> — a O.S. continua “a receber”. · 3) Lançar despesa sem escolher <b>quem pagou</b> — o acerto entre vocês fica errado.</div>
         <label style="flex-direction:row;align-items:center;gap:8px;margin-top:12px;cursor:pointer;"><input type="checkbox" ${feito ? 'checked' : ''} onchange="marcarTreino('ordem', this.checked)"> Já fiz este treinamento</label>
       </details>
