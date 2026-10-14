@@ -1084,6 +1084,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button type="button" class="aba" data-aba="posts">📅 Calendário de postagens</button>
         <button type="button" class="aba" data-aba="aval">⭐ Avaliações</button>
         <button type="button" class="aba" data-aba="datas">🎉 Datas e feriados</button>
+        <button type="button" class="aba" data-aba="reativar">🔁 Reativar clientes</button>
         <button type="button" class="aba" data-aba="ideias">💡 Ideias e legendas</button>
       </div>
       <div id="mktConteudo"></div>
@@ -1247,6 +1248,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         <button type="button" class="aba" data-aba="ranking">Ranking de clientes</button>
         <button type="button" class="aba" data-aba="mensal">Ticket médio e comparativo mensal</button>
         <button type="button" class="aba" data-aba="servicos">Serviços mais vendidos</button>
+        <button type="button" class="aba" data-aba="cartao">💳 Cartão: parcelas a receber</button>
       </div>
 
       <div class="rel-aba" data-aba="vencidas" style="display:none;"><div class="panel">
@@ -1319,6 +1321,7 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
         <p class="empty" id="rankingServicosEmpty">Nenhum serviço em OS concluídas ainda.</p>
       </div></div>
+          <div class="rel-aba" data-aba="cartao" style="display:none;"><div id="relCartaoConteudo"></div></div>
     </section>
 
     <!-- ADMINISTRAÇÃO -->
@@ -2173,6 +2176,7 @@ try {
       order(){ return cadeia; },
       limit(){ return cadeia; },
       range(){ return cadeia; }, in(){ return cadeia; }, neq(){ return cadeia; }, gt(){ return cadeia; }, gte(){ return cadeia; }, lt(){ return cadeia; }, lte(){ return cadeia; }, like(){ return cadeia; }, ilike(){ return cadeia; }, upsert(){ escrita = true; return cadeia; },
+      maybeSingle(){ return Promise.resolve({ data: null, error: null }); },
       single(){ return Promise.resolve(escrita
         ? { data:null, error:{ message:'Prévia sem conexão com o banco — abra o site publicado para salvar de verdade.' } }
         : { data:null, error:null }); },
@@ -4476,6 +4480,7 @@ const linhaOrdem = o => `
         <button class="btn-icon" title="Imprimir OS" onclick="imprimirOrdem(${o.id})">${ICON_PRINT}</button>
         <button class="btn-icon" title="Enviar ao cliente (orçamento, link, nota, WhatsApp)" onclick="abrirEnviarCliente(${o.id})" style="color:var(--accent);font-size:18px;">📲</button>
         <button class="btn-icon" title="Pagamentos: valores, formas, parcelas e observações" onclick="abrirPagamentosOS(${o.id})" style="font-size:18px;">💳</button>
+        <button class="btn-icon" title="Checklist de entrada do veículo (combustível, pertences, avarias)" onclick="abrirChecklist(${o.id})" style="font-size:18px;">📋</button>
         ${o.status === 'concluida' ? `<button class="btn-icon" title="Agendar revisão" onclick="agendarRevisao(${o.id})">${ICON_CALENDAR}</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoOrdem(${o.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirOrdem(${o.id})">${ICON_DELETE}</button>
@@ -5762,6 +5767,7 @@ function abrirAbaRelatorio(k){
   document.querySelectorAll('#abasRelatorios .aba').forEach(b => b.classList.toggle('active', b.dataset.aba === k));
   document.querySelectorAll('#view-relatorios .rel-aba').forEach(d => { d.style.display = d.dataset.aba === k ? '' : 'none'; });
   try { localStorage.setItem('abaRelatorio', k); } catch(e){}
+  if(k === 'cartao') renderRecebiveisCartao();
 }
 document.querySelectorAll('#abasRelatorios .aba').forEach(b => b.addEventListener('click', () => abrirAbaRelatorio(b.dataset.aba)));
 abrirAbaRelatorio((() => { try { return localStorage.getItem('abaRelatorio') || 'vencidas'; } catch(e){ return 'vencidas'; } })());
@@ -5902,7 +5908,7 @@ async function renderMarketing(){
   mktDados = { posts: p.data || [], aval: a.data || [], datas: d.data || [], config: Object.fromEntries((c.data || []).map(x => [x.chave, x.valor])) };
   document.querySelectorAll('#abasMkt .aba').forEach(b => b.classList.toggle('active', b.dataset.aba === mktAba));
   renderMktResumo();
-  ({ posts: renderMktPosts, aval: renderMktAval, datas: renderMktDatas, ideias: renderMktIdeias }[mktAba] || renderMktPosts)();
+  ({ posts: renderMktPosts, aval: renderMktAval, datas: renderMktDatas, reativar: renderMktReativar, ideias: renderMktIdeias }[mktAba] || renderMktPosts)();
 }
 document.querySelectorAll('#abasMkt .aba').forEach(b => b.addEventListener('click', () => { mktAba = b.dataset.aba; try { localStorage.setItem('mktAba', mktAba); } catch(e){} renderMarketing(); }));
 function renderMktResumo(){
@@ -5930,11 +5936,11 @@ function renderMktPosts(){
     cel += `<div onclick="mktNovoPost('${iso}')" style="min-height:92px;border:1px solid ${iso === hojeLocal() ? 'var(--accent)' : 'var(--border)'};border-radius:8px;padding:4px 6px;cursor:pointer;background:var(--surface);overflow:hidden;">
       <div style="font-size:12px;font-weight:700;color:${new Date(ano, mm - 1, d).getDay() === 0 ? 'var(--accent)' : 'var(--text-dim)'};">${d}</div>
       ${ds.slice(0, 2).map(x => `<div style="font-size:10px;line-height:1.2;color:${TIPO_DATA[x.tipo][1]};font-weight:700;">${x.tipo === 'feriado' ? '🏛' : '🎉'} ${escImp(x.titulo)}</div>`).join('')}
-      ${ps.slice(0, 3).map(x => `<div onclick="event.stopPropagation();mktEditarPost(${x.id})" style="margin-top:2px;font-size:10px;padding:1px 5px;border-radius:5px;background:${MKT_STATUS[x.status][1]}33;border-left:3px solid ${MKT_STATUS[x.status][1]};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escImp(x.canal.slice(0, 2))} ${escImp(x.titulo)}</div>`).join('')}${ps.length > 3 ? `<div class="hint" style="font-size:10px;">+${ps.length - 3}</div>` : ''}</div>`;
+      ${ps.slice(0, 3).map(x => `<div onclick="event.stopPropagation();mktEditarPost(${x.id})" style="margin-top:2px;font-size:10px;padding:1px 5px;border-radius:5px;background:${MKT_STATUS[x.status][1]}33;border-left:3px solid ${MKT_STATUS[x.status][1]};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${({ 'Instagram':'📸', 'Facebook':'👍', 'WhatsApp Status':'💬', 'Google Meu Negócio':'📍', 'TikTok':'🎵' })[x.canal] || '📌'} ${escImp(x.titulo)}</div>`).join('')}${ps.length > 3 ? `<div class="hint" style="font-size:10px;">+${ps.length - 3}</div>` : ''}</div>`;
   }
   el.innerHTML = `<div class="panel" style="margin-bottom:14px;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-ghost" onclick="mktMudarMes(-1)">‹</button><b style="font-size:17px;text-transform:capitalize;min-width:170px;text-align:center;">${nomeMes}</b><button type="button" class="btn-ghost" onclick="mktMudarMes(1)">›</button></div>
+      <div style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-ghost" onclick="mktMudarMes(-1)">‹</button><b style="font-size:17px;min-width:170px;text-align:center;">${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}</b><button type="button" class="btn-ghost" onclick="mktMudarMes(1)">›</button></div>
       <button type="button" class="btn-primary" onclick="mktNovoPost('${mktMes === hojeLocal().slice(0, 7) ? hojeLocal() : mktMes + '-01'}')">+ Nova postagem</button></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px;color:var(--text-dim);text-align:center;margin-bottom:4px;">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(x => `<div>${x}</div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cel}</div>
@@ -6093,6 +6099,107 @@ function renderMktIdeias(){
       <div style="display:flex;gap:8px;margin-top:6px;"><button type="button" class="btn-ghost" onclick="navigator.clipboard.writeText(MKT_IDEIAS[${k}][2]); mostrarAviso('Legenda copiada.')">📋 Copiar legenda</button><button type="button" class="btn-ghost" onclick="mktNovoPostIdeia(${k})">🗓 Planejar</button></div></details>`).join('')}</div>`;
 }
 function mktNovoPostIdeia(k){ mktNovoPost(hojeLocal(), MKT_IDEIAS[k][0].replace(/^\S+\s/, '')); document.getElementById('mpLegenda').value = MKT_IDEIAS[k][2]; }
+
+/* ==========================================================
+   NOVIDADES: cartão a receber · reativar clientes · checklist de entrada
+   ========================================================== */
+/* --- Relatórios: parcelas do cartão que ainda vão cair --- */
+function renderRecebiveisCartao(){
+  const el = document.getElementById('relCartaoConteudo'); if(!el) return;
+  const n = v => Number(v) || 0, hoje = hojeLocal(), mesHoje = hoje.slice(0, 7), porMes = {}, detalhe = {};
+  stateOrdemPagamentos.filter(p => p.forma_pagamento === 'Cartão de crédito' && p.destino !== 'terceiro').forEach(p => {
+    const N = Math.max(1, Number(p.parcelas) || 1), v = n(p.valor) / N, ini = String(p.data).slice(0, 10), o = stateOrdens.find(x => x.id === p.ordem_id) || {};
+    for(let k = 1; k <= N; k++){
+      const d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + k); const m = d.toLocaleDateString('sv-SE').slice(0, 7);
+      if(m < mesHoje) continue;
+      porMes[m] = (porMes[m] || 0) + v; (detalhe[m] = detalhe[m] || []).push(`${escImp((o.cliente_nome || '').split(' ')[0] || 'O.S. #' + p.ordem_id)} (${k}/${N}: ${moeda(v)})`);
+    }
+  });
+  const meses = Object.keys(porMes).sort(), total = meses.reduce((t, m) => t + porMes[m], 0);
+  el.innerHTML = `<div class="panel"><div class="panel-head"><h2>💳 Cartão de crédito: parcelas que ainda vão cair</h2></div>
+    <p class="hint">Calculado a partir dos pagamentos no cartão de crédito registrados nas O.S. (com o número de parcelas). Considera que a 1ª parcela cai 30 dias depois da venda e <b>não desconta a taxa da maquininha</b>.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;"><div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:180px;"><div class="hint">Ainda vai cair (bruto)</div><div style="font-size:22px;font-weight:800;color:var(--ok);">${moeda(total)}</div></div>
+    <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:180px;"><div class="hint">Próximo mês (${meses[0] ? meses[0].split('-').reverse().join('/') : '—'})</div><div style="font-size:22px;font-weight:800;">${moeda(porMes[meses[0]] || 0)}</div></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Mês</th><th>Parcelas</th><th>Total do mês</th></tr></thead><tbody>
+    ${meses.map(m => `<tr><td><b>${m.split('-').reverse().join('/')}</b></td><td style="white-space:normal;font-size:13px;">${detalhe[m].join(' · ')}</td><td><b>${moeda(porMes[m])}</b></td></tr>`).join('') || '<tr><td colspan="3" class="empty">Nenhuma parcela de cartão pendente. Registre pagamentos no cartão (com as parcelas) no botão 💳 da O.S.</td></tr>'}
+    </tbody></table></div></div>`;
+}
+
+/* --- Marketing: reativar clientes que sumiram --- */
+let mktReativarDias = 90;
+function renderMktReativar(){
+  const el = document.getElementById('mktConteudo'), hoje = hojeLocal();
+  const dia = o => String(o.concluida_em || o.created_at || '').slice(0, 10);
+  const linhas = stateClientes.map(c => {
+    const oss = stateOrdens.filter(o => o.cliente_id === c.id && o.status === 'concluida').sort((a, b) => dia(b).localeCompare(dia(a)));
+    if(!oss.length) return null; const u = oss[0], dias = Math.round((new Date(hoje + 'T12:00:00') - new Date(dia(u) + 'T12:00:00')) / 86400000);
+    return { c, u, dias, qtd: oss.length };
+  }).filter(x => x && x.dias >= mktReativarDias).sort((a, b) => b.dias - a.dias);
+  el.innerHTML = `<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;"><h3 style="margin:0;">🔁 Clientes que não voltam há um tempo</h3>
+    <label style="margin:0;flex-direction:row;align-items:center;gap:8px;">Sem serviço há mais de <select onchange="mktReativarDias = Number(this.value); renderMktReativar()">${[30, 60, 90, 180, 365].map(d => `<option value="${d}"${d === mktReativarDias ? ' selected' : ''}>${d} dias</option>`).join('')}</select></label></div>
+    <p class="hint" style="margin:0 0 8px;">Quem já foi atendido é o cliente mais barato de conquistar. Mande uma mensagem lembrando da revisão.</p>
+    <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Veículo</th><th>Último serviço</th><th>Há quanto tempo</th><th>Vezes</th><th></th></tr></thead><tbody>
+    ${linhas.map(x => `<tr><td><b>${escImp(x.c.nome)}</b></td><td>${escImp(x.u.veiculo || '')}</td><td style="white-space:normal;max-width:260px;font-size:13px;">${dataBR(dia(x.u))} — ${escImp(String(x.u.servico || '').replace(/\s*\n\s*/g, '; ').slice(0, 70))}</td>
+      <td><b style="color:${x.dias > 180 ? 'var(--accent)' : 'var(--wait)'}">${x.dias >= 60 ? Math.round(x.dias / 30) + ' meses' : x.dias + ' dias'}</b></td><td>${x.qtd}</td>
+      <td><button type="button" class="btn-ghost" onclick="mktChamarCliente(${x.c.id}, ${x.u.id})">📲 Chamar</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Ninguém sumiu por esse tempo. 🎉</td></tr>'}
+    </tbody></table></div></div>`;
+}
+function mktChamarCliente(cid, oid){
+  const c = stateClientes.find(x => x.id === cid) || {}, o = stateOrdens.find(x => x.id === oid) || {};
+  const meses = Math.max(1, Math.round((Date.now() - new Date(String(o.concluida_em || o.created_at).slice(0, 10) + 'T12:00:00')) / 2592000000));
+  const msg = `Olá, ${(c.nome || '').split(' ')[0]}! Aqui é da ${statePerfil.nome_oficina || 'oficina'}. Faz uns ${meses} meses desde o último serviço no seu ${o.veiculo || 'veículo'}. Que tal fazermos uma revisão para viajar e rodar tranquilo? Posso reservar um horário pra você! 🔧`;
+  window.open((c.telefone ? linkWhats(c.telefone) : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+/* --- Checklist de entrada do veículo --- */
+document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="modalChecklist"><div class="modal-box" style="width:640px;max-width:96vw;max-height:92vh;overflow-y:auto;"><h3 id="ckTitulo" style="margin-top:0;">📋 Checklist de entrada</h3><div id="ckForm"></div></div></div>`);
+const CK_PERTENCES = ['Estepe', 'Macaco', 'Chave de roda', 'Triângulo', 'Tapetes', 'Som / central multimídia', 'Documentos do veículo', 'Antena', 'Calotas'];
+const CK_LUZES = ['Injeção (motor)', 'Óleo', 'Bateria', 'ABS', 'Airbag', 'Freio', 'Temperatura'];
+let ckOrdemId = null, ckDados = null;
+async function abrirChecklist(id){
+  const o = stateOrdens.find(x => x.id === id); if(!o) return; ckOrdemId = id;
+  const { data } = await supabaseClient.from('checklists_entrada').select('*').eq('ordem_id', id).maybeSingle();
+  ckDados = data || null; const x = data || { combustivel: '1/2', km: o.km || '', pertences: [], luzes: [], avarias: '', observacoes: '', recebido_de: o.cliente_nome || '' };
+  document.getElementById('ckTitulo').textContent = `📋 Checklist de entrada — O.S. #${o.id}`;
+  const chk = (arr, sel, nome) => arr.map(i => `<label style="flex-direction:row;align-items:center;gap:6px;margin:0;font-weight:400;"><input type="checkbox" name="${nome}" value="${escImp(i)}"${sel.includes(i) ? ' checked' : ''}> ${i}</label>`).join('');
+  document.getElementById('ckForm').innerHTML = `<p class="hint" style="margin-top:0;">${escImp(o.cliente_nome || '')} · ${escImp(o.veiculo || '')} — registre como o veículo chegou. Protege a oficina e o cliente.</p>
+    <div class="grid2"><label>Nível de combustível<select id="ckComb">${['Reserva', '1/4', '1/2', '3/4', 'Cheio'].map(c => `<option${c === x.combustivel ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+      <label>Quilometragem<input type="number" id="ckKm" value="${x.km || ''}" min="0"></label></div>
+    <b>Pertences que ficaram no veículo</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;margin:6px 0 12px;">${chk(CK_PERTENCES, x.pertences || [], 'ckPert')}</div>
+    <b>Luzes acesas no painel</b><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:6px 0 12px;">${chk(CK_LUZES, x.luzes || [], 'ckLuz')}</div>
+    <label>Avarias que o veículo já tinha (riscos, amassados, trincas)<textarea id="ckAvarias" rows="3" placeholder="Ex: risco na porta traseira direita; farol esquerdo trincado">${escImp(x.avarias || '')}</textarea></label>
+    <label>Observações<textarea id="ckObs" rows="2">${escImp(x.observacoes || '')}</textarea></label>
+    <label>Nome de quem deixou o veículo (confirma o estado acima)<input type="text" id="ckRecebido" value="${escImp(x.recebido_de || '')}"></label>
+    <div class="modal-actions"><button type="button" class="btn-ghost" onclick="fecharModal('modalChecklist')">Fechar</button><button type="button" class="btn-ghost" onclick="imprimirChecklist()">🖨 Imprimir</button><button type="button" class="btn-primary" onclick="salvarChecklist()">Salvar checklist</button></div>`;
+  abrirModal('modalChecklist');
+}
+const ckLer = () => ({
+  combustivel: document.getElementById('ckComb').value, km: Number(document.getElementById('ckKm').value) || null,
+  pertences: [...document.querySelectorAll('input[name="ckPert"]:checked')].map(e => e.value), luzes: [...document.querySelectorAll('input[name="ckLuz"]:checked')].map(e => e.value),
+  avarias: document.getElementById('ckAvarias').value.trim() || null, observacoes: document.getElementById('ckObs').value.trim() || null, recebido_de: document.getElementById('ckRecebido').value.trim() || null,
+});
+async function salvarChecklist(){
+  const dados = { ...ckLer(), ordem_id: ckOrdemId };
+  const r = await supabaseClient.from('checklists_entrada').upsert(dados, { onConflict: 'ordem_id' });
+  if(r.error){ alert('Erro ao salvar o checklist: ' + r.error.message); return; }
+  mostrarAviso('Checklist salvo.'); fecharModal('modalChecklist');
+}
+function imprimirChecklist(){
+  const o = stateOrdens.find(x => x.id === ckOrdemId), d = ckLer(), agora = new Date().toLocaleString('pt-BR');
+  const lista = a => a.length ? a.map(escImp).join(', ') : '—';
+  const w = window.open('', '_blank'); if(!w){ alert('Libere as janelas pop-up para imprimir.'); return; }
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>Checklist O.S. #${o.id}</title><body style="font-family:Arial,sans-serif;max-width:720px;margin:20px auto;color:#111;">
+    <h2 style="margin:0;">${escImp(statePerfil.nome_oficina || 'Oficina')} — Checklist de entrada</h2><p style="margin:4px 0 14px;color:#555;">O.S. #${o.id} · ${agora}</p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;" border="1" cellpadding="6">
+    <tr><td width="30%"><b>Cliente</b></td><td>${escImp(o.cliente_nome || '')}</td></tr><tr><td><b>Veículo</b></td><td>${escImp(o.veiculo || '')}</td></tr>
+    <tr><td><b>Combustível / km</b></td><td>${escImp(d.combustivel || '—')} · ${d.km ? d.km.toLocaleString('pt-BR') + ' km' : '—'}</td></tr>
+    <tr><td><b>Pertences no veículo</b></td><td>${lista(d.pertences)}</td></tr><tr><td><b>Luzes acesas no painel</b></td><td>${lista(d.luzes)}</td></tr>
+    <tr><td><b>Avarias existentes</b></td><td>${escImp(d.avarias || 'Nenhuma informada')}</td></tr><tr><td><b>Observações</b></td><td>${escImp(d.observacoes || '—')}</td></tr></table>
+    <p style="margin-top:50px;">Declaro que o veículo foi entregue nas condições descritas acima.</p>
+    <div style="display:flex;gap:40px;margin-top:50px;"><div style="flex:1;border-top:1px solid #111;padding-top:4px;text-align:center;">${escImp(d.recebido_de || 'Cliente')}</div><div style="flex:1;border-top:1px solid #111;padding-top:4px;text-align:center;">${escImp(statePerfil.nome_oficina || 'Oficina')}</div></div>
+    <script>setTimeout(function(){ window.print(); }, 300);<\/script></body>`);
+  w.document.close();
+}
 
 /* ==========================================================
    TREINAMENTOS E DICAS
@@ -6997,7 +7104,7 @@ function paraCSV(linhas){
   return [colunas.map(escapar).join(','), ...linhas.map(l => colunas.map(c => escapar(l[c])).join(','))].join('\n');
 }
 async function exportarBackupCompleto(){
-  const tabelas = ['agendamentos','caixa_sessoes','clientes','contas_pagar','contas_receber','despesas','estoque','estoque_movimentos','fornecedores','interacoes_cliente','metas_mensais','midias','ordem_itens','ordem_pagamentos','ordens','perfil','repasses','servicos','veiculos'];
+  const tabelas = ['agendamentos','caixa_sessoes','clientes','contas_pagar','contas_receber','despesas','estoque','estoque_movimentos','fornecedores','interacoes_cliente','metas_mensais','midias','ordem_itens','ordem_pagamentos','ordens','perfil','repasses','servicos','veiculos','marketing_posts','marketing_avaliacoes','marketing_datas','marketing_config','checklists_entrada'];
   const backup = {};
   try {
     for(const t of tabelas){
