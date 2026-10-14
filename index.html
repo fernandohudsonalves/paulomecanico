@@ -5353,8 +5353,11 @@ async function renderAcertoTom(){
   const semQuem = soma(d => !d.pago_por);
   const jaDevolvido = soma(d => d.reembolsado);
   const pagaOutros = soma(d => d.pago_por === 'Tom Gás' || d.pago_por === 'Fernando');
-  const pagoPaulo = soma(d => d.pago_por === 'Paulo mecânico');
-  const sobra = entrou - pagaOutros + pagoPaulo;
+  const proprioPaulo = soma(d => d.pago_por === 'Paulo mecânico' && d.reembolsado);   // custo que o Paulo pagou do próprio bolso
+  const emprestimosAbertos = (repasses || []).filter(r => r.tipo === 'emprestimo' && !r.devolvido);
+  const totalEmprestimos = emprestimosAbertos.reduce((t, r) => t + Number(r.valor), 0);
+  const sobra = entrou - pagaOutros + pauloAberto;
+  const naConta = sobra - proprioPaulo - totalEmprestimos;
   const caixa = (t, v, cor, dica) => `<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;flex:1;min-width:150px;"><div style="font-size:12px;color:var(--text-dim);">${t}</div><div style="font-size:20px;font-weight:800;${cor ? 'color:' + cor : ''}">${moeda(v)}</div>${dica ? `<div style="font-size:11px;color:var(--text-dim);">${dica}</div>` : ''}</div>`;
   const linhasOS = stateOrdens.map(o => {
     const ent = stateOrdemPagamentos.filter(p => p.ordem_id === o.id && p.destino !== 'terceiro').reduce((t, p) => t + n(p.valor), 0);
@@ -5370,6 +5373,7 @@ async function renderAcertoTom(){
       ${caixa('↩ Devolver ao Fernando', ferAberto, '', 'gastos pagos pelo Fernando')}
       ${caixa('↩ Devolver ao Paulo mecânico', pauloAberto, '', 'gastos pagos pelo Paulo')}
       ${caixa('🔧 Sobra pro Paulo mecânico', sobra, 'var(--ok)', 'entrou − gastos pagos por Tom e Fernando')}
+      ${caixa('🏦 Estimativa na conta do Paulo', naConta, naConta >= 0 ? 'var(--ok)' : 'var(--accent)', 'sobra − compras dele − empréstimos em aberto')}
     </div>
     ${semQuem > 0 ? `<p class="hint" style="margin:8px 0 0;color:var(--wait);">⚠ ${moeda(semQuem)} em gastos sem "quem pagou" — escolha na tabela abaixo para entrar na conta.</p>` : ''}
     ${jaDevolvido > 0 ? `<p class="hint" style="margin:6px 0 0;">Já devolvido (marcado na tabela): ${moeda(jaDevolvido)}</p>` : ''}
@@ -5381,9 +5385,10 @@ async function renderAcertoTom(){
       ${pauloAberto > 0 ? `<button type="button" class="btn-ghost" onclick="pagarAcerto('Paulo mecânico')">Devolver ao Paulo — ${moeda(pauloAberto)}</button>` : ''}
       <span class="hint" style="flex-basis:100%;">Cada botão quita tudo o que está pendente daquele pagador: registra a transferência e marca os gastos como "Devolvido". Para quitar só alguns gastos, use a caixinha "Devolvido" direto na tabela.</span>
     </div>
-    ${(repasses || []).length ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:700;">Pagamentos já feitos (${repasses.length}) — total ${moeda(repasses.reduce((t, r) => t + Number(r.valor), 0))}</summary>
+    ${emprestimosAbertos.length ? `<div style="margin-top:10px;padding:10px;border:1px solid var(--wait);border-radius:10px;"><b>🤝 Empréstimos em aberto: Tom Gás deve ${moeda(totalEmprestimos)} ao Paulo mecânico</b>${emprestimosAbertos.map(r => `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:13px;">${dataBR(r.data)} — ${moeda(r.valor)} · ${escImp(r.obs || '')} <button type="button" class="btn-ghost" onclick="marcarEmprestimoDevolvido(${r.id})">Marcar como devolvido</button><button type="button" class="btn-ghost" onclick="desfazerRepasse(${r.id})">Excluir</button></div>`).join('')}</div>` : ''}
+    ${(repasses || []).filter(r => r.tipo !== 'emprestimo').length ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:700;">Pagamentos já feitos (${repasses.filter(r => r.tipo !== 'emprestimo').length}) — total ${moeda(repasses.filter(r => r.tipo !== 'emprestimo').reduce((t, r) => t + Number(r.valor), 0))}</summary>
       <div class="table-wrap"><table><thead><tr><th>Data</th><th>De</th><th>Para</th><th>Valor</th><th></th></tr></thead><tbody>
-      ${repasses.map(r => `<tr><td>${dataBR(r.data)}</td><td>${escImp(r.de)}</td><td>${escImp(r.para)}</td><td><b>${moeda(r.valor)}</b></td><td><button type="button" class="btn-ghost" onclick="desfazerRepasse(${r.id})">Desfazer</button></td></tr>`).join('')}
+      ${repasses.filter(r => r.tipo !== 'emprestimo').map(r => `<tr><td>${dataBR(r.data)}</td><td>${escImp(r.de)}</td><td>${escImp(r.para)}</td><td><b>${moeda(r.valor)}</b></td><td><button type="button" class="btn-ghost" onclick="desfazerRepasse(${r.id})">Desfazer</button></td></tr>`).join('')}
       </tbody></table></div></details>` : ''}
     <div class="table-wrap" style="margin-top:10px;"><table><thead><tr><th>O.S.</th><th>Cliente</th><th>Entrou</th><th>Gastos</th><th>Sobra</th></tr></thead><tbody>
       ${linhasOS.map(x => `<tr><td>#${x.o.id}</td><td>${escImp(x.o.cliente_nome || '')}</td><td>${moeda(x.ent)}</td><td>${moeda(x.gas)}</td><td><b>${moeda(x.ent - x.gas)}</b></td></tr>`).join('')}
@@ -5402,6 +5407,10 @@ async function pagarAcerto(para){
   if(up.error){ alert('Pagamento registrado, mas falhou ao marcar os gastos: ' + up.error.message); }
   await render();
   mostrarAviso(`Pagamento de ${moeda(total)} para ${para} registrado.`);
+}
+async function marcarEmprestimoDevolvido(id){
+  if(!confirm('O Tom Gás devolveu esse empréstimo ao Paulo?')) return;
+  await supabaseClient.from('repasses').update({ devolvido: true }).eq('id', id); await render();
 }
 async function desfazerRepasse(id){
   if(!confirm('Desfazer este pagamento? Os gastos voltam a aparecer como não devolvidos.')) return;
