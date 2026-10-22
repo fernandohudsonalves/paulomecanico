@@ -2919,6 +2919,11 @@ document.getElementById('formCliente').addEventListener('submit', async e => {
   const f = new FormData(e.target);
   const dados = { nome: f.get('nome'), telefone: f.get('telefone'), cpf: (f.get('cpf') || '').trim() || null };
   if(dados.cpf && !cpfValido(dados.cpf)){ alert('CPF inválido — confira os 11 números.'); return; }
+  if(!editingClienteId){
+    const dig = t => String(t || '').replace(/\D/g, ''), nm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    const dup = stateClientes.find(c => (dig(dados.telefone).length >= 8 && dig(c.telefone) === dig(dados.telefone)) || nm(c.nome) === nm(dados.nome));
+    if(dup && !confirm(`Já existe um cliente parecido: "${dup.nome}" (${dup.telefone || 'sem telefone'}).\n\nSe ele só tem outro veículo, cancele e use "+ Adicionar outro veículo" na linha dele.\n\nCadastrar como cliente novo mesmo assim?`)) return;
+  }
   if(!editingClienteId){ // cliente novo: o veículo do formulário vira o primeiro veículo dele
     Object.assign(dados, {
       veiculo: f.get('veiculo'), placa: f.get('placa').toUpperCase(), tipo_veiculo: f.get('tipo_veiculo') || null,
@@ -3004,6 +3009,11 @@ document.getElementById('formVeiculo').addEventListener('submit', async e => {
     revisao_intervalo_meses: f.get('revisao_intervalo_meses') ? Number(f.get('revisao_intervalo_meses')) : null,
     revisao_intervalo_km: f.get('revisao_intervalo_km') ? Number(f.get('revisao_intervalo_km')) : null,
   };
+  if(dados.placa){
+    const normP = t => String(t || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const igual = stateVeiculos.find(v => v.id !== editingVeiculoId && normP(v.placa) === normP(dados.placa));
+    if(igual && !confirm(`A placa ${dados.placa} já está cadastrada em outro veículo (${igual.modelo}). Cadastrar mesmo assim?`)) return;
+  }
   const ok = editingVeiculoId ? await DB.veiculos.atualizar(editingVeiculoId, dados) : await DB.veiculos.criar(dados);
   if(!ok) return;
   await sincronizarVeiculoPrincipalCliente(veiculoClienteAtualId);
@@ -4470,6 +4480,7 @@ function renderTabelaClientes(){
       <td class="icon-row">
         <button class="btn-icon whats" title="Abrir WhatsApp" onclick="window.open('${linkWhats(c.telefone)}','_blank')">${ICON_WHATS}</button>
         <button class="btn-icon" title="Histórico e CRM do cliente" onclick="abrirHistorico(${c.id})">${ICON_HISTORY}</button>
+        <button class="btn-icon" title="Nova O.S. para este cliente" onclick="novaOSparaCliente(${c.id})" style="color:var(--accent);font-weight:800;">＋</button>
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoCliente(${c.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirCliente(${c.id})">${ICON_DELETE}</button>
       </td>
@@ -4605,6 +4616,14 @@ function renderLembretes(){
     lem.push({ pri:4, txt:`Revisão a oferecer: ${c.nome} — ${c.veiculo} (prevista para ${dataBR(prox.toISOString().slice(0,10))})`, acao:`window.open('${linkWhats(c.telefone)}','_blank')`, rotulo:'WhatsApp' });
   });
 
+  // despesas sem "quem pagou" e acertos pendentes entre Tom, Fernando e Paulo
+  const semQuem = stateDespesas.filter(d => !d.pago_por);
+  if(semQuem.length) lem.push({ pri:2, txt:`${semQuem.length} despesa(s) sem "quem pagou" (${moeda(semQuem.reduce((t, d) => t + (Number(d.valor) || 0), 0))}) — o acerto fica errado`, acao:`irPara('despesas')`, rotulo:'Corrigir' });
+  ['Tom Gás', 'Fernando'].forEach(nomePag => { const v = stateDespesas.filter(d => d.pago_por === nomePag && !d.reembolsado).reduce((t, d) => t + (Number(d.valor) || 0), 0); if(v > 0.004) lem.push({ pri:3, txt:`Acerto pendente: devolver ${moeda(v)} ao ${nomePag}`, acao:`irPara('despesas')`, rotulo:'Acertar' }); });
+  // backup baixado para o computador há mais de 7 dias
+  { let ult = 0; try { ult = Number(localStorage.getItem('ultimoBackupBaixado')) || 0; } catch(e){}
+    const dBk = ult ? Math.floor((Date.now() - ult) / DIA) : null;
+    if(dBk === null || dBk >= 7) lem.push({ pri:3, txt: dBk === null ? '💾 Você ainda não baixou um backup para o seu computador. Baixe um agora.' : `💾 Faz ${dBk} dias que você não baixa um backup para o seu computador.`, acao:`irPara('administracao')`, rotulo:'Ir para o backup' }); }
   lem.sort((a, b) => a.pri - b.pri);
   document.getElementById('painelLembretes').style.display = lem.length ? '' : 'none';
   document.getElementById('lembretesTotal').textContent = lem.length ? `(${lem.length})` : '';
@@ -5310,6 +5329,7 @@ function desenharContasReceber(){
         </select>
       </td>
       <td class="icon-row">
+        ${x.status === 'pendente' ? `<button class="btn-icon" title="Cobrar pelo WhatsApp" onclick="cobrarContaReceber(${x.id})" style="font-size:16px;">📲</button>` : ''}
         <button class="btn-icon" title="Editar" onclick="abrirEdicaoContaReceber(${x.id})">${ICON_EDIT}</button>
         <button class="btn-icon danger" title="Excluir" onclick="excluirContaReceber(${x.id})">${ICON_DELETE}</button>
       </td>
@@ -5473,6 +5493,8 @@ function renderDespesas(){
 document.getElementById('formDespesa').addEventListener('submit', async e => {
   e.preventDefault();
   const f = new FormData(e.target);
+  const igual = stateDespesas.find(d => String(d.descricao || '').trim().toLowerCase() === String(f.get('descricao') || '').trim().toLowerCase() && Number(d.valor) === Number(f.get('valor')) && String(d.data).slice(0, 10) === f.get('data'));
+  if(igual && !confirm('Já existe uma despesa igual (mesma descrição, valor e data). Lançar de novo mesmo assim?')) return;
   const ok = await DB.despesas.criar({
     descricao: f.get('descricao'), valor: Number(f.get('valor')), forma_pagamento: f.get('forma_pagamento'),
     data: f.get('data'), ordem_id: f.get('ordem_id') ? Number(f.get('ordem_id')) : null, pago_por: f.get('pago_por') || null,
@@ -5563,25 +5585,26 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="poConteudo"></div>
   <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn-ghost" onclick="fecharModal('modalPagamentosOS')">Fechar</button></div>
 </div></div>`);
-let pagOSId = null;
+let pagOSId = null, poEditId = null;
 const FORMAS_PAG = ['Pix', 'Dinheiro', 'Cartão de débito', 'Cartão de crédito', 'Outros'];
-function abrirPagamentosOS(id){ pagOSId = id; renderPagamentosOS(); abrirModal('modalPagamentosOS'); }
+function abrirPagamentosOS(id){ pagOSId = id; poEditId = null; renderPagamentosOS(); abrirModal('modalPagamentosOS'); }
 function renderPagamentosOS(){
   const o = stateOrdens.find(x => x.id === pagOSId); if(!o) return;
   const n = v => Number(v) || 0;
   const pags = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id);
+  const taxaTotal = pags.reduce((t, p) => t + n(p.taxa), 0);
   const total = n(o.valor), recebido = pags.reduce((t, p) => t + n(p.valor), 0), falta = Math.max(0, Math.round((total - recebido) * 100) / 100);
   const situ = total <= 0 ? ['Sem valor', '#e8b93b'] : (falta <= 0.004 ? ['✅ Pago', '#2fb872'] : (recebido > 0 ? ['🟡 Parcial', '#e8b93b'] : ['⏳ Em aberto', '#ff3b17']));
   document.getElementById('poTitulo').textContent = `💳 Pagamentos — O.S. #${o.id}`;
   document.getElementById('poSub').innerHTML = `${escImp(o.cliente_nome || '')} · ${escImp(o.veiculo || '')} <span style="margin-left:8px;padding:2px 10px;border-radius:10px;font-weight:700;color:#fff;background:${situ[1]};">${situ[0]}</span>`;
   const tile = (t, v, c) => `<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;flex:1;min-width:140px;"><div class="hint">${t}</div><div style="font-size:20px;font-weight:800;color:${c || 'var(--text)'};">${v}</div></div>`;
-  const rotuloForma = p => { const par = Number(p.parcelas) || 1; return escImp(p.forma_pagamento || '—') + (par > 1 ? ` <b>em ${par}x</b> <span class="hint">(${par}x de ${moeda(n(p.valor) / par)})</span>` : ''); };
+  const rotuloForma = p => { const par = Number(p.parcelas) || 1; return escImp(p.forma_pagamento || '—') + (par > 1 ? ` <b>em ${par}x</b> <span class="hint">(${par}x de ${moeda(n(p.valor) / par)})</span>` : '') + (n(p.taxa) > 0 ? `<div class="hint" style="color:#e8b93b;">taxa ${moeda(p.taxa)} · líquido ${moeda(n(p.valor) - n(p.taxa))}</div>` : ''); };
   document.getElementById('poConteudo').innerHTML = `
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      ${tile('Total da O.S.', moeda(total))}${tile('Já recebido', moeda(recebido), '#2fb872')}${tile('Falta receber', moeda(falta), falta > 0.004 ? '#ff3b17' : '#2fb872')}
+      ${tile('Total da O.S.', moeda(total))}${tile('Já recebido', moeda(recebido), '#2fb872')}${tile('Falta receber', moeda(falta), falta > 0.004 ? '#ff3b17' : '#2fb872')}${taxaTotal > 0 ? tile('Taxa da maquininha', moeda(taxaTotal), '#e8b93b') + tile('Líquido recebido', moeda(recebido - taxaTotal), '#2fb872') : ''}
     </div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Referente a</th><th>Forma</th><th>Valor</th><th>Observação</th><th></th></tr></thead><tbody>
-      ${pags.map(p => `<tr><td style="white-space:nowrap;">${dataBR(String(p.data).slice(0, 10))}</td><td>${p.bucket === 'pecas' ? '🔩 Peças' : '🔧 Mão de obra'}${p.destino === 'terceiro' ? '<div class="hint">pago direto na autopeça</div>' : ''}</td><td>${rotuloForma(p)}</td><td><b>${moeda(p.valor)}</b></td><td style="max-width:220px;white-space:normal;font-size:13px;">${escImp(p.obs || '—')}</td><td><button type="button" class="btn-icon danger" title="Excluir este pagamento" onclick="excluirPagamentoOS(${p.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum pagamento registrado ainda.</td></tr>'}
+      ${pags.map(p => `<tr><td style="white-space:nowrap;">${dataBR(String(p.data).slice(0, 10))}</td><td>${p.bucket === 'pecas' ? '🔩 Peças' : '🔧 Mão de obra'}${p.destino === 'terceiro' ? '<div class="hint">pago direto na autopeça</div>' : ''}</td><td>${rotuloForma(p)}</td><td><b>${moeda(p.valor)}</b></td><td style="max-width:220px;white-space:normal;font-size:13px;">${escImp(p.obs || '—')}</td><td class="icon-row" style="white-space:nowrap;"><button type="button" class="btn-icon" title="Editar este pagamento" onclick="editarPagamentoOS(${p.id})">${ICON_EDIT}</button><button type="button" class="btn-icon danger" title="Excluir este pagamento" onclick="excluirPagamentoOS(${p.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum pagamento registrado ainda.</td></tr>'}
     </tbody></table></div>
     <div class="panel" style="margin-top:14px;border:1px solid #9b5cf6;">
       <b>➕ Novo pagamento</b> <span class="hint">(pode pagar em partes: registre um de cada vez)</span>
@@ -5590,46 +5613,129 @@ function renderPagamentosOS(){
         <label>Data<input type="date" id="poData" value="${hojeLocal()}"></label>
         <label>Forma de pagamento<select id="poForma">${FORMAS_PAG.map(f => `<option>${f}</option>`).join('')}</select></label>
         <label id="poParcelasWrap" style="display:none;">Parcelas (vezes)<input type="number" id="poParcelas" min="1" max="24" step="1" value="1"></label>
+        <label id="poTaxaWrap" style="display:none;">Taxa / juros da maquininha (R$) 🟣<input type="number" id="poTaxa" class="campo-valor" step="0.01" min="0" placeholder="0,00"></label>
+        <label id="poArcaWrap" style="display:none;">Quem arca com a taxa<select id="poArca"><option value="paulo">Paulo (sai da parte dele)</option><option value="cliente">Já está no preço (cliente pagou)</option></select></label>
         <label>Referente a<select id="poBucket"><option value="servico">Mão de obra</option><option value="pecas">Peças</option></select></label>
         <label id="poDestinoWrap" style="display:none;">Esse dinheiro...<select id="poDestino"><option value="oficina">Entrou na oficina</option><option value="terceiro">Cliente pagou direto na autopeça</option></select></label>
       </div>
       <label>Observação (opcional)<input type="text" id="poObs" placeholder="Ex: Pix na conta do Tom · cartão do Tom · entrada de metade"></label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="btn-primary" onclick="registrarPagamentoOS()">Registrar pagamento</button>
+        <button type="button" class="btn-primary" id="poBtnSalvar" onclick="registrarPagamentoOS()">${poEditId ? 'Salvar alteração' : 'Registrar pagamento'}</button>
+        ${poEditId ? '<button type="button" class="btn-ghost" onclick="poEditId = null; renderPagamentosOS()">Cancelar edição</button>' : ''}
         <button type="button" class="btn-ghost" onclick="document.getElementById('poValor').value = ${falta.toFixed(2)}">Preencher o que falta (${moeda(falta)})</button>
       </div>
     </div>`;
   const atualiza = () => {
     const f = document.getElementById('poForma').value;
     document.getElementById('poParcelasWrap').style.display = f === 'Cartão de crédito' ? '' : 'none';
+    document.getElementById('poTaxaWrap').style.display = f === 'Cartão de crédito' ? '' : 'none';
+    document.getElementById('poArcaWrap').style.display = f === 'Cartão de crédito' ? '' : 'none';
     if(f !== 'Cartão de crédito') document.getElementById('poParcelas').value = 1;
     document.getElementById('poDestinoWrap').style.display = document.getElementById('poBucket').value === 'pecas' ? '' : 'none';
   };
   document.getElementById('poForma').addEventListener('change', atualiza); document.getElementById('poBucket').addEventListener('change', atualiza);
 }
+function editarPagamentoOS(id){
+  const p = stateOrdemPagamentos.find(x => x.id === id); if(!p) return;
+  poEditId = id; renderPagamentosOS();
+  const set = (i, v) => { const e = document.getElementById(i); if(e) e.value = v; };
+  set('poValor', p.valor); set('poData', String(p.data).slice(0, 10)); set('poForma', p.forma_pagamento); document.getElementById('poForma').dispatchEvent(new Event('change'));
+  set('poBucket', p.bucket || 'servico'); document.getElementById('poBucket').dispatchEvent(new Event('change')); set('poDestino', p.destino || 'oficina');
+  set('poParcelas', p.parcelas || 1); set('poTaxa', Number(p.taxa) || ''); set('poArca', p.taxa_despesa_id ? 'paulo' : 'cliente'); set('poObs', p.obs || '');
+  document.getElementById('poValor').scrollIntoView({ block: 'center' });
+}
 async function registrarPagamentoOS(){
   const o = stateOrdens.find(x => x.id === pagOSId); if(!o) return;
   const valor = Math.round((Number(document.getElementById('poValor').value) || 0) * 100) / 100;
   if(!(valor > 0)){ alert('Digite o valor pago.'); return; }
-  const recebido = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).reduce((t, p) => t + (Number(p.valor) || 0), 0), falta = Math.max(0, (Number(o.valor) || 0) - recebido);
+  const recebido = stateOrdemPagamentos.filter(p => p.ordem_id === o.id && p.id !== poEditId).reduce((t, p) => t + (Number(p.valor) || 0), 0), falta = Math.max(0, (Number(o.valor) || 0) - recebido);
   if(valor > falta + 0.005 && !confirm(`Esse valor (${moeda(valor)}) é maior que o que falta receber (${moeda(falta)}). Registrar mesmo assim?`)) return;
   const bucket = document.getElementById('poBucket').value, forma = document.getElementById('poForma').value;
+  const taxa = forma === 'Cartão de crédito' ? Math.max(0, Math.round((Number(document.getElementById('poTaxa').value) || 0) * 100) / 100) : 0;
+  const parc = forma === 'Cartão de crédito' ? Math.max(1, Number(document.getElementById('poParcelas').value) || 1) : 1;
+  if(poEditId){
+    const antigo = stateOrdemPagamentos.find(x => x.id === poEditId) || {}, dataP = document.getElementById('poData').value || hojeLocal();
+    let despId = antigo.taxa_despesa_id || null;
+    const dDados = { descricao: `Taxa da maquininha — O.S. #${o.id}${parc > 1 ? ` (${parc}x)` : ''}, por conta do Paulo`, valor: taxa, data: dataP };
+    if(taxa > 0 && document.getElementById('poArca').value === 'paulo'){
+      if(despId) await DB.despesas.atualizar(despId, dDados);
+      else { const d = await DB.despesas.criar({ ...dDados, forma_pagamento: 'Outros', ordem_id: o.id, pago_por: 'Tom Gás', reembolsado: true }); despId = d ? d.id : null; }
+    } else if(despId){ await DB.despesas.excluir(despId); despId = null; }
+    const okEd = await DB.ordemPagamentos.atualizar(poEditId, { bucket, valor, forma_pagamento: forma, data: dataP, destino: bucket === 'pecas' ? document.getElementById('poDestino').value : 'oficina',
+      obs: document.getElementById('poObs').value.trim() || null, parcelas: parc, taxa, taxa_despesa_id: despId });
+    if(!okEd) return;
+    poEditId = null; mostrarAviso('Pagamento atualizado.'); await render(); renderPagamentosOS(); return;
+  }
+  let taxaDespesaId = null;
+  if(taxa > 0 && document.getElementById('poArca').value === 'paulo'){
+    const dsp = await DB.despesas.criar({ descricao: `Taxa da maquininha — O.S. #${o.id}${parc > 1 ? ` (${parc}x)` : ''}, por conta do Paulo`, valor: taxa, forma_pagamento: 'Outros',
+      data: document.getElementById('poData').value || hojeLocal(), ordem_id: o.id, pago_por: 'Tom Gás', reembolsado: true });
+    if(!dsp) return; taxaDespesaId = dsp.id;
+  }
   const ok = await DB.ordemPagamentos.criar({
+    taxa, taxa_despesa_id: taxaDespesaId,
     ordem_id: o.id, bucket, valor, forma_pagamento: forma, data: document.getElementById('poData').value || hojeLocal(),
     destino: bucket === 'pecas' ? document.getElementById('poDestino').value : 'oficina',
     obs: document.getElementById('poObs').value.trim() || null,
     parcelas: forma === 'Cartão de crédito' ? Math.max(1, Number(document.getElementById('poParcelas').value) || 1) : 1,
   });
   if(!ok) return;
+  // quitou a O.S.? então fecha também a conta a receber ligada a ela (evita ficar "pendente" em dois lugares)
+  if((Number(o.valor) || 0) - (recebido + valor) <= 0.004){
+    await supabaseClient.from('contas_receber').update({ status: 'recebido', data_recebimento: new Date().toISOString() }).like('descricao', `OS #${o.id} %`).eq('status', 'pendente');
+  }
   mostrarAviso('Pagamento registrado.');
   await render(); renderPagamentosOS();
 }
 async function excluirPagamentoOS(id){
-  if(!confirm('Excluir este pagamento?')) return;
+  if(!confirm('Excluir este pagamento? (se ele tiver taxa de maquininha lançada, essa despesa também é excluída)')) return;
+  const pg = stateOrdemPagamentos.find(x => x.id === id);
   await DB.ordemPagamentos.excluir(id);
+  if(pg && pg.taxa_despesa_id) await DB.despesas.excluir(pg.taxa_despesa_id);
   await render(); renderPagamentosOS();
 }
 
+
+function imprimirFechamentoMes(){
+  const r = prompt('Fechamento de qual mês? (AAAA-MM)', hojeLocal().slice(0, 7)); if(!r) return;
+  const mes = r.trim(); if(!/^\d{4}-\d{2}$/.test(mes)){ alert('Use o formato AAAA-MM, por exemplo 2026-10.'); return; }
+  const n = v => Number(v) || 0, doMes = d => String(d || '').slice(0, 7) === mes, esc = escImp;
+  const pags = stateOrdemPagamentos.filter(p => p.destino !== 'terceiro' && doMes(p.data)), desp = stateDespesas.filter(d => doMes(d.data));
+  const contasPagas = stateContasPagar.filter(c => c.status === 'pago' && doMes(c.data_pagamento));
+  const entrou = pags.reduce((t, p) => t + n(p.valor), 0), taxas = pags.reduce((t, p) => t + n(p.taxa), 0);
+  const gDesp = desp.reduce((t, d) => t + n(d.valor), 0), gContas = contasPagas.reduce((t, c) => t + n(c.valor), 0), gastou = gDesp + gContas;
+  const porForma = {}; pags.forEach(p => { porForma[p.forma_pagamento || '—'] = (porForma[p.forma_pagamento || '—'] || 0) + n(p.valor); });
+  const porQuem = {}; desp.forEach(d => { const k = d.pago_por || 'Não informado'; porQuem[k] = (porQuem[k] || 0) + n(d.valor); });
+  const sobra = entrou - (porQuem['Tom Gás'] || 0) - (porQuem['Fernando'] || 0) + desp.filter(d => d.pago_por === 'Paulo mecânico' && !d.reembolsado).reduce((t, d) => t + n(d.valor), 0);
+  const oss = stateOrdens.filter(o => !['rascunho', 'orcamento'].includes(o.status) && diaBR(o.created_at).slice(0, 7) === mes);
+  const nomeMes = new Date(mes + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const tr = (...c) => `<tr>${c.map((x, i) => `<td style="padding:5px 8px;border:1px solid #ccc;${i > 0 && typeof x === 'string' && x.startsWith('R$') ? 'text-align:right;' : ''}">${x}</td>`).join('')}</tr>`;
+  const w = window.open('', '_blank'); if(!w){ alert('Libere as janelas pop-up para imprimir.'); return; }
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>Fechamento ${mes}</title><body style="font-family:Arial,sans-serif;max-width:820px;margin:20px auto;color:#111;font-size:13px;">
+    <h2 style="margin:0;">${esc(statePerfil.nome_oficina || 'Oficina')} — Fechamento de ${nomeMes}</h2><p style="color:#555;margin:2px 0 14px;">Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+    <h3>Resumo</h3><table style="border-collapse:collapse;width:100%;">${tr('<b>Entrou (pagamentos de O.S.)</b>', moeda(entrou))}${taxas > 0 ? tr('Taxas de maquininha já descontadas', moeda(taxas)) : ''}${tr('<b>Gastou (despesas + contas pagas)</b>', moeda(gastou))}${tr('<b>Saldo do mês (entrou − gastou)</b>', '<b>' + moeda(entrou - gastou) + '</b>')}${tr('<b>Sobra para o Paulo mecânico</b> (entrou − gastos pagos por Tom e Fernando)', '<b>' + moeda(sobra) + '</b>')}</table>
+    <h3>Entradas por forma de pagamento</h3><table style="border-collapse:collapse;width:100%;">${Object.entries(porForma).map(([k, v]) => tr(esc(k), moeda(v))).join('') || tr('Sem pagamentos no mês', '')}</table>
+    <h3>Despesas por quem pagou</h3><table style="border-collapse:collapse;width:100%;">${Object.entries(porQuem).map(([k, v]) => tr(esc(k), moeda(v))).join('') || tr('Sem despesas no mês', '')}${gContas ? tr('Contas a pagar quitadas', moeda(gContas)) : ''}</table>
+    <h3>Despesas do mês (detalhe)</h3><table style="border-collapse:collapse;width:100%;">${desp.sort((a, b) => String(a.data).localeCompare(String(b.data))).map(d => tr(dataBR(String(d.data).slice(0, 10)), esc(d.descricao), esc(d.pago_por || '—'), moeda(d.valor))).join('') || tr('—', '', '', '')}</table>
+    <h3>Ordens de serviço abertas no mês</h3><table style="border-collapse:collapse;width:100%;"><tr><th style="border:1px solid #ccc;padding:4px;">O.S.</th><th style="border:1px solid #ccc;">Cliente / veículo</th><th style="border:1px solid #ccc;">Valor</th><th style="border:1px solid #ccc;">Recebido</th><th style="border:1px solid #ccc;">Falta</th></tr>
+    ${oss.map(o => { const rec = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).reduce((t, p) => t + n(p.valor), 0); return tr('#' + o.id, esc(o.cliente_nome) + ' · ' + esc(o.veiculo || ''), moeda(o.valor), moeda(rec), moeda(Math.max(0, n(o.valor) - rec))); }).join('') || tr('—', 'Nenhuma O.S. no mês', '', '', '')}</table>
+    <script>setTimeout(function(){ window.print(); }, 400);<\/script></body>`);
+  w.document.close();
+}
+/* --- atalhos de produtividade --- */
+function novaOSparaCliente(id){
+  irPara('ordens');
+  document.getElementById('btnNovaOrdem').click();
+  setTimeout(() => { const sel = document.getElementById('selectCliente'); if(sel){ sel.value = String(id); sel.dispatchEvent(new Event('change')); } }, 300);
+}
+function cobrarContaReceber(id){
+  const c = stateContasReceber.find(x => x.id === id); if(!c) return;
+  const cli = stateClientes.find(x => x.id === c.cliente_id) || stateClientes.find(x => x.nome === c.cliente_nome) || {};
+  const nome = String(c.cliente_nome || cli.nome || '').split(' ')[0];
+  const resumo = String(c.descricao || '').replace(/^OS #\d+ \([^)]*\)\s*[—-]\s*/, '').slice(0, 80);
+  const msg = `Olá, ${nome}! Tudo bem? Passando para lembrar do valor de ${moeda(c.valor)}${resumo ? ' referente a ' + resumo : ''}. Qualquer dúvida é só me chamar. Obrigado! 🙏`;
+  window.open((cli.telefone ? linkWhats(cli.telefone) : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
+}
 /* ==========================================================
    ENVIAR AO CLIENTE — um só lugar para link, orçamento, nota e WhatsApp
    ========================================================== */
@@ -6146,7 +6252,7 @@ function renderRecebiveisCartao(){
   const el = document.getElementById('relCartaoConteudo'); if(!el) return;
   const n = v => Number(v) || 0, hoje = hojeLocal(), mesHoje = hoje.slice(0, 7), porMes = {}, detalhe = {};
   stateOrdemPagamentos.filter(p => p.forma_pagamento === 'Cartão de crédito' && p.destino !== 'terceiro').forEach(p => {
-    const N = Math.max(1, Number(p.parcelas) || 1), v = n(p.valor) / N, ini = String(p.data).slice(0, 10), o = stateOrdens.find(x => x.id === p.ordem_id) || {};
+    const N = Math.max(1, Number(p.parcelas) || 1), v = (n(p.valor) - n(p.taxa)) / N, ini = String(p.data).slice(0, 10), o = stateOrdens.find(x => x.id === p.ordem_id) || {};
     for(let k = 1; k <= N; k++){
       const d = new Date(ini + 'T12:00:00'); d.setMonth(d.getMonth() + k); const m = d.toLocaleDateString('sv-SE').slice(0, 7);
       if(m < mesHoje) continue;
@@ -6155,7 +6261,7 @@ function renderRecebiveisCartao(){
   });
   const meses = Object.keys(porMes).sort(), total = meses.reduce((t, m) => t + porMes[m], 0);
   el.innerHTML = `<div class="panel"><div class="panel-head"><h2>💳 Cartão de crédito: parcelas que ainda vão cair</h2></div>
-    <p class="hint">Calculado a partir dos pagamentos no cartão de crédito registrados nas O.S. (com o número de parcelas). Considera que a 1ª parcela cai 30 dias depois da venda e <b>não desconta a taxa da maquininha</b>.</p>
+    <p class="hint">Calculado a partir dos pagamentos no cartão de crédito registrados nas O.S. (com o número de parcelas). Considera que a 1ª parcela cai 30 dias depois da venda. Quando o pagamento tem <b>taxa da maquininha</b> informada, o valor mostrado já é o <b>líquido</b>.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;"><div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:180px;"><div class="hint">Ainda vai cair (bruto)</div><div style="font-size:22px;font-weight:800;color:var(--ok);">${moeda(total)}</div></div>
     <div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:180px;"><div class="hint">Próximo mês (${meses[0] ? meses[0].split('-').reverse().join('/') : '—'})</div><div style="font-size:22px;font-weight:800;">${moeda(porMes[meses[0]] || 0)}</div></div></div>
     <div class="table-wrap"><table><thead><tr><th>Mês</th><th>Parcelas</th><th>Total do mês</th></tr></thead><tbody>
@@ -6249,7 +6355,7 @@ function renderTreinamentos(){
   const passo = (n, t, corpo) => `<div class="trein-passo"><div class="trein-num">${n}</div><div class="trein-corpo"><b>${t}</b>${corpo}</div></div>`;
   const mock = h => `<div class="mock">${h}</div>`;
   const roxo = t => `<span class="m-roxo">${t}</span>`;
-  const feito = treinoFeito('ordem');
+  const feito = treinoFeito('ordem'), feito2 = treinoFeito('dinheiro');
   el.innerHTML = `
     <div class="panel" style="margin-bottom:16px;border:1px solid ${feito ? '#2fb872' : 'var(--accent)'};">
       <details ${feito ? '' : 'open'}>
@@ -6269,6 +6375,21 @@ function renderTreinamentos(){
       </details>
     </div>
 
+    <div class="panel" style="margin-bottom:16px;border:1px solid ${feito2 ? '#2fb872' : 'var(--border)'};">
+      <details ${feito && !feito2 ? 'open' : ''}>
+        <summary style="cursor:pointer;font-weight:800;font-size:17px;">${feito2 ? '✅' : '💰'} Treinamento 2 — Pagamentos, despesas e acerto entre vocês <span class="hint" style="font-weight:400;">· 6 passos · uns 4 minutos</span></summary>
+        <p class="hint" style="margin:8px 0;">Tudo entra pela conta do Tom (Pix, cartão, financeira) e cada gasto precisa dizer <b>quem pagou</b>, para o dinheiro voltar ao lugar certo.</p>
+        ${passo(1, '🟣 Registrar o que o cliente pagou', `<p>Na lista de O.S., clique em <b>💳 Pagamentos</b>. Digite o valor (roxo), escolha a forma e a data. No <b>cartão de crédito</b> informe as <b>parcelas</b>. Escreva uma observação se ajudar (ex.: “Pix na conta do Tom”). O sistema mostra Total, Recebido e Falta.</p>${mock('Valor ' + roxo('R$ 800,00') + ' Forma <span class="m-campo">Pix</span> Obs <span class="m-campo">Pix na conta do Tom</span> <span class="m-btn">Registrar pagamento</span>')}`)}
+        ${passo(2, 'Pagou em partes?', `<p>Registre um pagamento de cada vez. A etiqueta da O.S. muda de <b>Em aberto</b> para <b>Parcial</b> e depois para <b>Pago</b>. Errou? Use a lixeira da linha e lance de novo.</p>`)}
+        ${passo(3, '🟣 Lançar uma despesa', `<p>Vá em <b>Financeiro → Despesas do dia</b>. Coloque a descrição, o valor (roxo), a data, a forma de pagamento e <b>quem pagou</b> (Tom, Fernando ou Paulo). Se o gasto foi de um serviço, escolha a <b>O.S. relacionada</b>. Vários gastos de uma vez? Use <b>Lançar várias de uma vez</b>.</p>`)}
+        ${passo(4, 'Entender o painel de acerto', `<p>No topo de Despesas do dia: <b>Já entrou</b>, quanto <b>devolver ao Tom</b> e ao <b>Fernando</b>, e a <b>Sobra pro Paulo</b> (entrou menos o que os outros pagaram). A <b>Estimativa na conta do Paulo</b> ainda desconta compras dele e empréstimos em aberto.</p>`)}
+        ${passo(5, 'Devolver o dinheiro', `<p>Quando o Paulo pagar o Tom ou o Fernando, clique em <b>Pagar Tom Gás</b> (ou Fernando) no painel. Isso registra a transferência e marca os gastos como <b>Devolvido</b>. Errou? Use <b>Desfazer</b> na lista de pagamentos já feitos.</p>`)}
+        ${passo(6, 'Empréstimos entre vocês', `<p>Um empréstimo não é despesa: ele aparece no quadro <b>🤝 Empréstimos em aberto</b>, com o botão <b>Marcar como devolvido</b> quando o dinheiro voltar.</p>`)}
+        <div class="trein-erro"><b>⚠ Erros comuns</b><br>1) Lançar despesa <b>sem “quem pagou”</b> — o acerto fica errado. · 2) Registrar o pagamento na O.S. errada. · 3) Esquecer de marcar o <b>Devolvido</b> depois de acertar com o Tom.</div>
+        <label style="flex-direction:row;align-items:center;gap:8px;margin-top:12px;cursor:pointer;"><input type="checkbox" ${feito2 ? 'checked' : ''} onchange="marcarTreino('dinheiro', this.checked)"> Já fiz este treinamento</label>
+      </details>
+    </div>
+
     <div class="panel" style="margin-bottom:16px;">
       <h3 style="margin:0 0 8px;">💡 Dicas rápidas</h3>
       ${[
@@ -6284,7 +6405,7 @@ function renderTreinamentos(){
 
     <div class="panel">
       <h3 style="margin:0 0 8px;">📚 Próximos treinamentos</h3>
-      <p class="hint" style="margin:0;">Em preparo — me peça que eu crio: <b>2)</b> Registrar pagamentos e despesas · <b>3)</b> Acerto com o Tom e o Fernando · <b>4)</b> Orçamento e aprovação do cliente · <b>5)</b> Estoque e fornecedores.</p>
+      <p class="hint" style="margin:0;">Em preparo — me peça que eu crio: <b>3)</b> Orçamento e aprovação do cliente · <b>4)</b> Estoque e fornecedores · <b>5)</b> Marketing e avaliações.</p>
     </div>`;
 }
 
@@ -6424,6 +6545,7 @@ function renderResultado(){
   if(pts.length > 1) svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
   svg += '</svg>';
   el.innerHTML = `
+    <div style="text-align:right;margin-bottom:8px;"><button type="button" class="btn-ghost" onclick="imprimirFechamentoMes()">🖨 Fechamento do mês (imprimir / PDF)</button></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
       ${cartao('💵 Entrou', moeda(totE), VERDE, 'pagamentos recebidos de O.S.')}
       ${cartao('💸 Gastou', moeda(totG), VERM, 'despesas + contas pagas')}
@@ -6993,6 +7115,7 @@ function montarOrcamentoClienteHTML(o, itens, imgsAnexo = []){
         <div style="background:${K};color:#fff;padding:14px 16px;flex:1;font-size:15px;">VALOR TOTAL DO ORÇAMENTO <span style="font-weight:400;font-size:12px;">(serviços + peças)</span></div>
         <div style="background:${R};color:#fff;padding:14px 18px;font-size:22px;">${moeda(o.valor)}</div>
       </div>
+      <p style="margin:10px 0 0;font-size:11px;color:#555;text-align:center;">Orçamento válido por 7 dias a partir de ${dataOS}. Valores de peças podem variar conforme a disponibilidade e o fornecedor.</p>
       <div style="margin-top:46px;display:flex;gap:40px;font-size:12px;text-align:center;">
         <div style="flex:1;border-top:1px solid #111;padding-top:6px;"><b>${escImp(statePerfil.nome_oficina || 'Oficina')}</b><br>Responsável técnico</div>
         <div style="flex:1;border-top:1px solid #111;padding-top:6px;">Assinatura do cliente</div>
@@ -7159,6 +7282,7 @@ function paraCSV(linhas){
   return [colunas.map(escapar).join(','), ...linhas.map(l => colunas.map(c => escapar(l[c])).join(','))].join('\n');
 }
 async function exportarBackupCompleto(){
+  try { localStorage.setItem('ultimoBackupBaixado', String(Date.now())); } catch(e){}
   const tabelas = ['agendamentos','caixa_sessoes','clientes','contas_pagar','contas_receber','despesas','estoque','estoque_movimentos','fornecedores','interacoes_cliente','metas_mensais','midias','ordem_itens','ordem_pagamentos','ordens','perfil','repasses','servicos','veiculos','marketing_posts','marketing_avaliacoes','marketing_datas','marketing_config','checklists_entrada'];
   const backup = {};
   try {
