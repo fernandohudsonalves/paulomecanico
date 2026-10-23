@@ -44,7 +44,7 @@
   --text:#f2f2f0;
   --text-dim:#9a9a96;
   --ok:#2fb872;
-  --wait:#e8b93b;
+  --wait:var(--wait);
 }
 [data-theme="light"]{
   --bg:#f4f4f2;
@@ -54,6 +54,8 @@
   --text:#161513;
   --text-dim:#6b6863;
   --accent-dim:#ffd9cf;
+  --wait:#b7791f;
+  --ok:#1f9d5c;
 }
 
 *{box-sizing:border-box; margin:0; padding:0;}
@@ -5224,7 +5226,7 @@ async function abrirPortalCliente(token){
     const mudou = Number(os.aprovado_valor) !== Number(os.valor);
     bloco = `<div style="margin-top:16px;padding:12px 14px;border:2px solid #2fb872;border-radius:12px;background:rgba(47,184,114,.1);">
       <b>✅ Orçamento aprovado</b><br><span class="hint">por ${escImp(os.aprovado_nome)} em ${quando(os.aprovado_em)} · valor aprovado ${moeda(Number(os.aprovado_valor) || 0)}</span>
-      ${mudou ? `<br><span class="hint" style="color:#e8b93b;">⚠ O valor atual (${moeda(Number(os.valor) || 0)}) é diferente do aprovado — a oficina vai combinar com você.</span>` : ''}</div>`;
+      ${mudou ? `<br><span class="hint" style="color:var(--wait);">⚠ O valor atual (${moeda(Number(os.valor) || 0)}) é diferente do aprovado — a oficina vai combinar com você.</span>` : ''}</div>`;
   } else if(os.status === 'orcamento'){
     bloco = `<div style="margin-top:16px;padding:14px;border:2px solid var(--accent);border-radius:12px;">
       <b>Aprovar este orçamento</b>
@@ -5594,14 +5596,14 @@ function renderPagamentosOS(){
   const pags = stateOrdemPagamentos.filter(p => p.ordem_id === o.id).sort((a, b) => String(a.data).localeCompare(String(b.data)) || a.id - b.id);
   const taxaTotal = pags.reduce((t, p) => t + n(p.taxa), 0);
   const total = n(o.valor), recebido = pags.reduce((t, p) => t + n(p.valor), 0), falta = Math.max(0, Math.round((total - recebido) * 100) / 100);
-  const situ = total <= 0 ? ['Sem valor', '#e8b93b'] : (falta <= 0.004 ? ['✅ Pago', '#2fb872'] : (recebido > 0 ? ['🟡 Parcial', '#e8b93b'] : ['⏳ Em aberto', '#ff3b17']));
+  const situ = total <= 0 ? ['Sem valor', 'var(--wait)'] : (falta <= 0.004 ? ['✅ Pago', '#2fb872'] : (recebido > 0 ? ['🟡 Parcial', 'var(--wait)'] : ['⏳ Em aberto', '#ff3b17']));
   document.getElementById('poTitulo').textContent = `💳 Pagamentos — O.S. #${o.id}`;
   document.getElementById('poSub').innerHTML = `${escImp(o.cliente_nome || '')} · ${escImp(o.veiculo || '')} <span style="margin-left:8px;padding:2px 10px;border-radius:10px;font-weight:700;color:#fff;background:${situ[1]};">${situ[0]}</span>`;
   const tile = (t, v, c) => `<div style="background:var(--surface-2);border-radius:10px;padding:10px 12px;flex:1;min-width:140px;"><div class="hint">${t}</div><div style="font-size:20px;font-weight:800;color:${c || 'var(--text)'};">${v}</div></div>`;
-  const rotuloForma = p => { const par = Number(p.parcelas) || 1; return escImp(p.forma_pagamento || '—') + (par > 1 ? ` <b>em ${par}x</b> <span class="hint">(${par}x de ${moeda(n(p.valor) / par)})</span>` : '') + (n(p.taxa) > 0 ? `<div class="hint" style="color:#e8b93b;">taxa ${moeda(p.taxa)} · líquido ${moeda(n(p.valor) - n(p.taxa))}</div>` : ''); };
+  const rotuloForma = p => { const par = Number(p.parcelas) || 1; return escImp(p.forma_pagamento || '—') + (par > 1 ? ` <b>em ${par}x</b> <span class="hint">(${par}x de ${moeda(n(p.valor) / par)})</span>` : '') + (n(p.taxa) > 0 ? `<div class="hint" style="color:var(--wait);">taxa ${moeda(p.taxa)} · líquido ${moeda(n(p.valor) - n(p.taxa))}</div>` : ''); };
   document.getElementById('poConteudo').innerHTML = `
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-      ${tile('Total da O.S.', moeda(total))}${tile('Já recebido', moeda(recebido), '#2fb872')}${tile('Falta receber', moeda(falta), falta > 0.004 ? '#ff3b17' : '#2fb872')}${taxaTotal > 0 ? tile('Taxa da maquininha', moeda(taxaTotal), '#e8b93b') + tile('Líquido recebido', moeda(recebido - taxaTotal), '#2fb872') : ''}
+      ${tile('Total da O.S.', moeda(total))}${tile('Já recebido', moeda(recebido), '#2fb872')}${tile('Falta receber', moeda(falta), falta > 0.004 ? '#ff3b17' : '#2fb872')}${taxaTotal > 0 ? tile('Taxa da maquininha', moeda(taxaTotal), 'var(--wait)') + tile('Líquido recebido', moeda(recebido - taxaTotal), '#2fb872') : ''}
     </div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Referente a</th><th>Forma</th><th>Valor</th><th>Observação</th><th></th></tr></thead><tbody>
       ${pags.map(p => `<tr><td style="white-space:nowrap;">${dataBR(String(p.data).slice(0, 10))}</td><td>${p.bucket === 'pecas' ? '🔩 Peças' : '🔧 Mão de obra'}${p.destino === 'terceiro' ? '<div class="hint">pago direto na autopeça</div>' : ''}</td><td>${rotuloForma(p)}</td><td><b>${moeda(p.valor)}</b></td><td style="max-width:220px;white-space:normal;font-size:13px;">${escImp(p.obs || '—')}</td><td class="icon-row" style="white-space:nowrap;"><button type="button" class="btn-icon" title="Editar este pagamento" onclick="editarPagamentoOS(${p.id})">${ICON_EDIT}</button><button type="button" class="btn-icon danger" title="Excluir este pagamento" onclick="excluirPagamentoOS(${p.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum pagamento registrado ainda.</td></tr>'}
@@ -5822,7 +5824,7 @@ function renderGarantias(){
   const lista = todas.filter(x => filtro === 'todas' || (filtro === 'ativas' && x.dias >= 0) || (filtro === 'vencendo' && x.dias >= 0 && x.dias <= 30) || (filtro === 'vencidas' && x.dias < 0));
   if(!lista.length){ el.innerHTML = `<div class="panel"><p class="hint">${todas.length ? 'Nenhuma O.S. neste filtro.' : 'Nenhuma O.S. concluída com garantia ainda. Toda O.S. nova já vem com 2 meses; você pode mudar em <b>Mais detalhes</b> na O.S.'}</p></div>`; return; }
   el.innerHTML = `<div class="panel"><div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Veículo</th><th>Garantia</th><th>Concluída em</th><th>Vale até</th><th>Situação</th><th></th></tr></thead><tbody>
-    ${lista.map(x => { const cor = x.dias < 0 ? '#ff3b17' : (x.dias <= 30 ? '#e8b93b' : '#2fb872'); const txt = x.dias < 0 ? `venceu há ${-x.dias} dia(s)` : (x.dias === 0 ? 'vence hoje' : `faltam ${x.dias} dia(s)`);
+    ${lista.map(x => { const cor = x.dias < 0 ? '#ff3b17' : (x.dias <= 30 ? 'var(--wait)' : '#2fb872'); const txt = x.dias < 0 ? `venceu há ${-x.dias} dia(s)` : (x.dias === 0 ? 'vence hoje' : `faltam ${x.dias} dia(s)`);
       return `<tr><td>${escImp(x.o.cliente_nome)}</td><td>${escImp(x.o.veiculo || '')}</td><td>${textoGarantia(x.o)}</td><td>${dataBR(x.ini)}</td><td>${dataBR(x.fim)}</td><td><b style="color:${cor}">${x.dias < 0 ? '⛔' : (x.dias <= 30 ? '⚠' : '✅')} ${txt}</b></td><td><button type="button" class="btn-ghost" onclick="abrirEnviarCliente(${x.o.id}, 'posvenda')">📲 Pós-venda</button></td></tr>`; }).join('')}
     </tbody></table></div><p class="hint" style="margin-top:8px;">A garantia conta a partir da data em que a O.S. foi dada como concluída.</p></div>`;
   paginarTabelasDe(el, 'gar');
@@ -5950,7 +5952,7 @@ async function renderMetaSalario(){
   const lucros = validas.map(o => n(o.valor) - stateDespesas.filter(d => d.ordem_id === o.id).reduce((t, d) => t + n(d.valor), 0));
   const lucroMedio = lucros.length ? lucros.reduce((a, b) => a + b, 0) / lucros.length : 0;
   const servicosFaltam = lucroMedio > 0 ? Math.ceil(falta / lucroMedio) : null;
-  const VERDE = '#2fb872', AMA = '#e8b93b', VERM = '#ff3b17';
+  const VERDE = '#2fb872', AMA = 'var(--wait)', VERM = '#ff3b17';
   const noRitmo = liquido >= esperado, cor = liquido >= meta ? VERDE : (noRitmo ? VERDE : (liquido >= esperado * 0.7 ? AMA : VERM));
   const msg = liquido >= meta ? '🏆 Meta batida! Tudo daqui pra frente é bônus.'
     : (uteisPassados === 0 && liquido <= 0 ? '🚀 Mês novo, meta nova: bora pegar os primeiros serviços!'
@@ -5963,11 +5965,11 @@ async function renderMetaSalario(){
       <button type="button" class="btn-ghost" onclick="alterarMetaLiquida(${meta})" style="padding:4px 10px;font-size:12px;">✏ Alterar meta</button>
     </div>
     <div style="position:relative;height:30px;background:var(--surface-2);border-radius:15px;overflow:hidden;">
-      <div style="width:${Math.min(100, pct)}%;min-width:${liquido > 0 ? '34px' : '0'};height:100%;background:linear-gradient(90deg, ${cor}, ${cor}cc);border-radius:15px;transition:width .6s;"></div>
+      <div style="width:${Math.min(100, pct)}%;min-width:${liquido > 0 ? '34px' : '0'};height:100%;background:${cor};border-radius:15px;transition:width .6s;"></div>
       ${esperado > 0 ? `<div title="Onde deveria estar hoje (${brl(esperado)})" style="position:absolute;top:0;bottom:0;left:${Math.min(100, esperado / meta * 100)}%;width:3px;background:var(--text);opacity:.85;"></div>` : ''}
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.7);color:#fff;">${brl(Math.max(0, liquido))} de ${brl(meta)} · ${pct.toFixed(0)}%</div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--text);">${brl(Math.max(0, liquido))} de ${brl(meta)} · ${pct.toFixed(0)}%</div>
     </div>
-    <div style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">A risquinha branca marca onde ele deveria estar hoje para fechar a meta no ritmo certo.</div>
+    <div style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">A risquinha marca onde ele deveria estar hoje para fechar a meta no ritmo certo.</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
       ${tile('💵 Já fez (líquido)', moeda(liquido), `entrou ${brl(entrou)} − saiu ${brl(gastou)}`, liquido >= 0 ? VERDE : VERM)}
       ${tile('🎯 Falta pra meta', moeda(falta), falta ? '' : 'meta batida ✅', falta ? '' : VERDE)}
@@ -6043,7 +6045,7 @@ function datasMarketingDoAno(ano){
 }
 const feriadoNacional = iso => datasMarketingDoAno(Number(iso.slice(0, 4))).some(d => d.data === iso && d.tipo === 'feriado');
 function todasAsDatas(ano){ return [...datasMarketingDoAno(ano), ...mktDados.datas.filter(d => String(d.data).startsWith(String(ano))).map(d => ({ data: String(d.data).slice(0, 10), titulo: d.titulo, tipo: 'minha', ideia: d.obs || '', id: d.id }))].sort((a, b) => a.data.localeCompare(b.data)); }
-const TIPO_DATA = { feriado: ['🏛 Feriado', '#ff3b17'], facultativo: ['🏛 Ponto facultativo', '#e8b93b'], data: ['💡 Data comemorativa', '#9b5cf6'], minha: ['⭐ Minha data', '#2fb872'] };
+const TIPO_DATA = { feriado: ['🏛 Feriado', '#ff3b17'], facultativo: ['🏛 Ponto facultativo', 'var(--wait)'], data: ['💡 Data comemorativa', '#9b5cf6'], minha: ['⭐ Minha data', '#2fb872'] };
 
 /* --- carregar --- */
 async function renderMarketing(){
@@ -6137,8 +6139,8 @@ function renderMktAval(){
   const recentes = stateOrdens.filter(o => o.status === 'concluida').sort((a, b) => String(b.concluida_em || b.created_at).localeCompare(String(a.concluida_em || a.created_at))).slice(0, 12);
   el.innerHTML = `
     <div class="panel" style="margin-bottom:14px;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
-      <div style="text-align:center;min-width:130px;"><div style="font-size:42px;font-weight:800;color:#e8b93b;">${aval.length ? media.toFixed(1).replace('.', ',') : '—'}</div><div style="color:#e8b93b;">${estrelas(Math.round(media))}</div><div class="hint">${aval.length} avaliação(ões)</div></div>
-      <div style="flex:1;min-width:240px;">${dist.map(([k, q]) => `<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0;"><span style="width:28px;">${k}★</span><div style="flex:1;height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;"><div style="width:${aval.length ? q / aval.length * 100 : 0}%;height:100%;background:#e8b93b;"></div></div><span style="width:24px;text-align:right;">${q}</span></div>`).join('')}</div>
+      <div style="text-align:center;min-width:130px;"><div style="font-size:42px;font-weight:800;color:var(--wait);">${aval.length ? media.toFixed(1).replace('.', ',') : '—'}</div><div style="color:var(--wait);">${estrelas(Math.round(media))}</div><div class="hint">${aval.length} avaliação(ões)</div></div>
+      <div style="flex:1;min-width:240px;">${dist.map(([k, q]) => `<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin:3px 0;"><span style="width:28px;">${k}★</span><div style="flex:1;height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden;"><div style="width:${aval.length ? q / aval.length * 100 : 0}%;height:100%;background:var(--wait);"></div></div><span style="width:24px;text-align:right;">${q}</span></div>`).join('')}</div>
     </div>
     <div class="panel" style="margin-bottom:14px;">
       <h3 style="margin:0 0 6px;">📲 Pedir avaliação a um cliente</h3>
@@ -6155,7 +6157,7 @@ function renderMktAval(){
       <div style="display:flex;gap:8px;"><select onchange="mktFiltroAval = this.value; renderMktAval()"><option value="todas"${mktFiltroAval === 'todas' ? ' selected' : ''}>Todas</option><option value="sem"${mktFiltroAval === 'sem' ? ' selected' : ''}>Sem resposta</option></select>
       <button type="button" class="btn-primary" onclick="mktFormAval()">+ Registrar avaliação</button></div></div>
     <div class="table-wrap"><table><thead><tr><th>Data</th><th>Cliente</th><th>Nota</th><th>Comentário</th><th>Origem</th><th>Respondida</th><th></th></tr></thead><tbody>
-    ${lista.map(x => `<tr><td style="white-space:nowrap;">${dataBR(String(x.data).slice(0, 10))}</td><td>${escImp(x.cliente_nome || '—')}</td><td style="color:#e8b93b;white-space:nowrap;">${estrelas(n(x.nota))}</td><td style="white-space:normal;max-width:280px;font-size:13px;">${escImp(x.comentario || '—')}${x.resposta ? `<div class="hint">↪ ${escImp(x.resposta)}</div>` : ''}</td><td>${escImp(x.origem)}</td>
+    ${lista.map(x => `<tr><td style="white-space:nowrap;">${dataBR(String(x.data).slice(0, 10))}</td><td>${escImp(x.cliente_nome || '—')}</td><td style="color:var(--wait);white-space:nowrap;">${estrelas(n(x.nota))}</td><td style="white-space:normal;max-width:280px;font-size:13px;">${escImp(x.comentario || '—')}${x.resposta ? `<div class="hint">↪ ${escImp(x.resposta)}</div>` : ''}</td><td>${escImp(x.origem)}</td>
       <td style="text-align:center;"><input type="checkbox" ${x.respondida ? 'checked' : ''} onchange="mktRespondida(${x.id}, this.checked)"></td>
       <td class="icon-row"><button class="btn-icon" title="Editar" onclick="mktFormAval(${x.id})">${ICON_EDIT}</button><button class="btn-icon danger" title="Excluir" onclick="mktExcluirAval(${x.id})">${ICON_DELETE}</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nenhuma avaliação registrada ainda.</td></tr>'}
     </tbody></table></div></div>`;
@@ -6433,7 +6435,7 @@ async function renderMetas(){
   const noMesAtual = mes === mesHoje, diaHoje = Number(hoje.slice(8)), decorridos = noMesAtual ? diaHoje : (mes < mesHoje ? diasMes : 0);
   const projecao = noMesAtual && decorridos ? fat / decorridos * diasMes : null;
   const pct = meta ? fat / meta * 100 : 0, esperado = meta && decorridos ? meta * decorridos / diasMes : 0;
-  const VERDE = '#2fb872', VERM = '#ff3b17', AMA = '#e8b93b';
+  const VERDE = '#2fb872', VERM = '#ff3b17', AMA = 'var(--wait)';
   const corBarra = !meta ? 'var(--text-dim)' : (fat >= meta ? VERDE : (fat >= esperado ? AMA : VERM));
   const variacao = (a, b) => b ? ` <span style="color:${a >= b ? VERDE : VERM};font-size:12px;">${a >= b ? '▲' : '▼'} ${Math.abs((a - b) / b * 100).toFixed(0)}% vs mês anterior</span>` : '';
   const cartao = (t, v, sub, extra) => `<div style="background:var(--surface-2);border-radius:10px;padding:12px 14px;flex:1;min-width:190px;"><div style="font-size:12px;color:var(--text-dim);">${t}</div><div style="font-size:22px;font-weight:800;">${v}</div>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${sub}</div>` : ''}${extra || ''}</div>`;
@@ -7338,10 +7340,10 @@ async function renderUsoSistema(){
   const el = document.getElementById('usoConteudo'); if(!el) return;
   const u = await carregarUsoSistema(true);
   if(!u){ el.innerHTML = '<p class="hint">Não consegui medir agora.</p>'; return; }
-  const barra = (titulo, usado, limite, dica) => { const p = Math.min(100, usado / limite * 100), cor = p >= 90 ? '#ff3b17' : (p >= 70 ? '#e8b93b' : '#2fb872');
+  const barra = (titulo, usado, limite, dica) => { const p = Math.min(100, usado / limite * 100), cor = p >= 90 ? '#ff3b17' : (p >= 70 ? 'var(--wait)' : '#2fb872');
     return `<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;"><b>${titulo}</b><span><b style="color:${cor}">${fmtBytes(usado)}</b> de ${fmtBytes(limite)} (${p < 1 ? '<1' : p.toFixed(0)}%)</span></div>
       <div style="height:14px;background:var(--surface-2);border-radius:7px;overflow:hidden;margin:6px 0 4px;"><div style="width:${Math.max(p, 1)}%;height:100%;background:${cor};"></div></div>
-      <div class="hint">${dica}${p >= 90 ? ' <b style="color:#ff3b17;">⚠ Quase cheio!</b>' : (p >= 70 ? ' <b style="color:#e8b93b;">Atenção: passou de 70%.</b>' : '')}</div></div>`; };
+      <div class="hint">${dica}${p >= 90 ? ' <b style="color:#ff3b17;">⚠ Quase cheio!</b>' : (p >= 70 ? ' <b style="color:var(--wait);">Atenção: passou de 70%.</b>' : '')}</div></div>`; };
   const livreStorage = Math.max(0, LIMITE_STORAGE - u.storage_bytes);
   el.innerHTML = `${barra('🗄️ Banco de dados (clientes, O.S., financeiro…)', Number(u.db_bytes), LIMITE_DB, 'Texto e números: dura muito tempo.')}
     ${barra('📷 Fotos e vídeos', Number(u.storage_bytes), LIMITE_STORAGE, `${u.arquivos} arquivo(s). Ainda cabem cerca de ${fmtBytes(livreStorage)} (≈ ${Math.floor(livreStorage / (0.4 * 1048576))} fotos de ~400 KB ou ${Math.floor(livreStorage / (30 * 1048576))} vídeos de 30 MB).`)}
