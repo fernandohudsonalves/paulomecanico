@@ -1630,7 +1630,8 @@ input:focus, select:focus, textarea:focus{outline:2px solid var(--accent); outli
         </div>
         <label>Nº da nota fiscal (automático)<input type="text" id="osNumeroNf" readonly tabindex="-1" placeholder="Gerado ao emitir a nota"></label>
         <label>Brindes (aparecem no orçamento do cliente — um por linha)<textarea name="brindes" rows="3" placeholder="Ex: Lavagem no motor&#10;Jet cera"></textarea></label>
-        <label>Comentários (só você vê)<textarea name="comentarios" rows="2" placeholder="Observações internas, recados..."></textarea></label>
+        <label>Próximos passos / recomendações ao cliente (aparecem no orçamento, na nota e no link do cliente)<textarea name="recomendacoes" rows="3" placeholder="Ex: Fazer limpeza de bico na próxima visita. Futuramente: embreagem."></textarea></label>
+        <label>Comentários (só você vê — não saem em nenhum documento do cliente)<textarea name="comentarios" rows="2" placeholder="Observações internas, recados..."></textarea></label>
       </details>
 
       <div class="modal-actions">
@@ -3102,6 +3103,7 @@ document.getElementById('formOrdem').addEventListener('submit', async e => {
     km: f.get('km') ? Number(f.get('km')) : null,
     comentarios: f.get('comentarios') || null,
     brindes: (f.get('brindes') || '').trim() || null,
+    recomendacoes: (f.get('recomendacoes') || '').trim() || null,
     pecas_cliente_obs: document.getElementById('chkPecasCliente').checked ? (document.getElementById('pecasClienteObs').value.trim() || null) : null,
   };
   const ok = editingOrdemId
@@ -3153,6 +3155,7 @@ async function abrirEdicaoOrdem(id){
   f.km.value = o.km || '';
   f.comentarios.value = o.comentarios || '';
   f.brindes.value = o.brindes || '';
+  f.recomendacoes.value = o.recomendacoes || '';
   document.getElementById('chkPecasCliente').checked = !!o.pecas_cliente_obs;
   document.getElementById('pecasClienteObs').value = o.pecas_cliente_obs || '';
   document.getElementById('chkPecasCliente').dispatchEvent(new Event('change'));
@@ -6791,6 +6794,7 @@ async function salvarRascunhoOSNoBanco(){
     garantia_meses: f.get('garantia_meses') ? Number(f.get('garantia_meses')) : null,
     km: f.get('km') ? Number(f.get('km')) : null, comentarios: f.get('comentarios') || null,
     brindes: (f.get('brindes') || '').trim() || null,
+    recomendacoes: (f.get('recomendacoes') || '').trim() || null,
     pecas_cliente_obs: document.getElementById('chkPecasCliente').checked ? (document.getElementById('pecasClienteObs').value.trim() || null) : null,
   };
   const ok = editando ? await DB.atualizarOrdem(editando.id, dados) : await DB.criarOrdem(dados);
@@ -6976,7 +6980,7 @@ async function imprimirOrdem(id){
   if(!o) return;
   const itens = await DB.ordemItens.listar(id);
   const linhasHtml = itens.length
-    ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
+    ? itens.map(i => `<tr><td style="white-space:pre-line;">${escImp(i.descricao)}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
     : `<tr><td colspan="4">${linhasTxt(o.servico)}</td></tr>`;
   let garantiaTxt = '';
   if(o.garantia_meses && o.created_at){
@@ -7015,7 +7019,7 @@ let ordemNotaFiscalAtual = null, docNotaModo = 'nota-fiscal';
 
 function montarNotaFiscalHTML(o, itens){
   const linhasHtml = itens.length
-    ? itens.map(i => `<tr><td>${i.descricao}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
+    ? itens.map(i => `<tr><td style="white-space:pre-line;">${escImp(i.descricao)}</td><td>${i.quantidade}</td><td>${moeda(i.valor_unitario)}</td><td>${moeda(i.valor_total)}</td></tr>`).join('')
     : `<tr><td colspan="4">${linhasTxt(o.servico)}</td></tr>`;
   const agora = new Date();
   const dataEmissao = agora.toLocaleDateString('pt-BR');
@@ -7047,7 +7051,7 @@ function montarNotaFiscalHTML(o, itens){
       </p>
       ${itens.length ? '' : `<p><strong>Serviço:</strong><br>${linhasTxt(o.servico)}</p>`}
       ${o.pecas_cliente_obs ? `<p><strong>Peças trazidas pelo cliente:</strong> ${escImp(o.pecas_cliente_obs)}</p>` : ''}
-      ${o.comentarios ? `<p><strong>Comentários:</strong><br>${linhasTxt(o.comentarios)}</p>` : ''}
+      ${o.recomendacoes ? `<p><strong>Próximos passos recomendados:</strong><br>${linhasTxt(o.recomendacoes)}</p>` : ''}
       <table style="width:100%; border-collapse:collapse; margin-top:10px;" border="1" cellpadding="6">
         <thead><tr><th>Item</th><th>Qtd</th><th>Valor unit.</th><th>Subtotal</th></tr></thead>
         <tbody>${linhasHtml}</tbody>
@@ -7112,7 +7116,7 @@ function montarOrcamentoClienteHTML(o, itens, imgsAnexo = []){
         ${pecas.length ? barra('TOTAL DAS PEÇAS', moeda(totPecas)) : ''}</div>` : ''}
       ${o.brindes ? `<div style="margin-top:12px;">${th('🎁 BRINDES')}<div style="background:#f1f1f1;padding:10px 12px;font-size:13px;line-height:1.7;">✔ ${escImp(o.brindes).split('\n').filter(x => x.trim()).join('<br>✔ ')}</div></div>` : ''}
       ${garantia}
-      ${o.comentarios ? `<div style="margin-top:12px;font-size:13px;white-space:pre-line;"><b>Observações:</b><br>${escImp(o.comentarios)}</div>` : ''}
+      ${o.recomendacoes ? `<div style="margin-top:12px;">${th('🔧 PRÓXIMOS PASSOS RECOMENDADOS')}<div style="background:#f1f1f1;padding:10px 12px;font-size:13px;white-space:pre-line;">${escImp(o.recomendacoes)}</div></div>` : ''}
       <div style="margin-top:14px;display:flex;border-radius:6px;overflow:hidden;font-weight:800;">
         <div style="background:${K};color:#fff;padding:14px 16px;flex:1;font-size:15px;">VALOR TOTAL DO ORÇAMENTO <span style="font-weight:400;font-size:12px;">(serviços + peças)</span></div>
         <div style="background:${R};color:#fff;padding:14px 18px;font-size:22px;">${moeda(o.valor)}</div>
